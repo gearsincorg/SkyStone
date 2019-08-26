@@ -56,7 +56,7 @@ public class SteveAutonomous extends LinearOpMode {
 
     public void scoreBucket() {
         //Drive straight to the bucket, dump rings in the bucket
-        robot.driveStraight(114,0,0.5,12);
+        robot.driveStraight(112,0,0.5,12);
         robot.prepareRings(2);
         robot.driveStraight(5,0,0.5,2);
         robot.dumpRings(2);
