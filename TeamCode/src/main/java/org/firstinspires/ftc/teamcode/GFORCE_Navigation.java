@@ -58,6 +58,7 @@ public class GFORCE_Navigation
     // Class Members
     private OpenGLMatrix lastLocation = null;
     private VuforiaLocalizer vuforia = null;
+    private VuforiaTrackables targetsSkyStone = null;
     private boolean targetVisible = false;
     private float phoneXRotate    = 0;
     private float phoneYRotate    = 0;
@@ -66,7 +67,7 @@ public class GFORCE_Navigation
     // Constants
     static final String TAG = "NAV";
 
-    private static final int     MAX_TARGETS         =   4;
+    private static final int     MAX_TARGETS         =  13;
     private static final double  ON_AXIS             =  10;      // Within 1 cm of centerline
     private static final double  CLOSE_ENOUGH        =  20;      // Within 2.0 cm of final target
     private static final double  NEAR_CENTER         = 300;      // Within 30 cm of center line
@@ -84,7 +85,6 @@ public class GFORCE_Navigation
     /* Private OpMode members. */
     private LinearOpMode        myOpMode;
     private GFORCE_Hardware     myRobot;
-    private VuforiaTrackables   targets;
 
     // Following data is only valid if targetFound == true;
     private boolean             targetFound;
@@ -105,7 +105,7 @@ public class GFORCE_Navigation
         targetName = null;
         robotLocation = null;
         navTime = new ElapsedTime();
-        targets = null;
+        targetsSkyStone = null;
     }
 
     /***
@@ -131,7 +131,6 @@ public class GFORCE_Navigation
      * @return
      */
     public boolean acquireTarget(int targetID, double standOffDistance, double axialDrift, double timeOutSEC){
-        // myOpMode.sleep(500);  // Removed when switched OFF Extended tracking
         navTime.reset();
         while (myOpMode.opModeIsActive() && !atTarget(targetID, standOffDistance, axialDrift) && (navTime.time() < timeOutSEC)) {
 
@@ -152,8 +151,8 @@ public class GFORCE_Navigation
     public void activateTracking() {
 
         /** Start tracking the data sets we care about. */
-        if (targets != null)
-            targets.activate();
+        if (targetsSkyStone != null)
+            targetsSkyStone.activate();
     }
 
     /***
@@ -231,7 +230,7 @@ public class GFORCE_Navigation
          * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
          * If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
          */
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        int cameraMonitorViewId = myOpMode.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", myOpMode.hardwareMap.appContext.getPackageName());
         VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
         // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
@@ -464,7 +463,7 @@ public class GFORCE_Navigation
      */
     public boolean targetIsVisible(int targetId) {
 
-        VuforiaTrackable target = targets.get(targetId);
+        VuforiaTrackable target = targetsSkyStone.get(targetId);
         VuforiaTrackableDefaultListener listener = (VuforiaTrackableDefaultListener)target.getListener();
         OpenGLMatrix location  = null;
 
