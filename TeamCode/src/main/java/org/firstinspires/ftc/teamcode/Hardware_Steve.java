@@ -54,7 +54,7 @@ public class Hardware_Steve
     private static LinearOpMode myOpMode = null;
 
     private double driveAxial = 0;
-    private double driveYaw = 0;
+    private double driveYaw = 0;  //  no motion
 
     // gyro
     private double lastHeading          = 0;
