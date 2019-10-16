@@ -54,6 +54,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
     /* Declare OpMode members. */
     GFORCE_Hardware robot = new GFORCE_Hardware();   // Use steve hardware
+    GFORCE_Navigation nav = new GFORCE_Navigation();
 
 
     @Override
@@ -65,6 +66,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(this, false);
+        nav.init(this,robot);
 
         //robot.homeArm();
 
@@ -73,9 +75,20 @@ public class GFORCE_Autonomous extends LinearOpMode {
         telemetry.update();
 
         while (!opModeIsActive() && !isStopRequested()) {
+            nav.showNavTelemetry(true);
+        }
+
+        //Starting autonomous reset heading to zero
+        robot.resetHeading();
+
+
+        nav.findTarget(0,0.2,0,0,10);
+
+        while(opModeIsActive()) {
 
         }
 
+        /*
         //Drive straight 24 inches
         robot.driveAxial(67,0,-0.8,15);
         robot.driveLateral(70,0,0.8,15);
@@ -84,6 +97,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
         while(opModeIsActive()) {
 
         }
+        */
     }
 
 }

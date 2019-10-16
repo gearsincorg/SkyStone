@@ -23,6 +23,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
+import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.FRONT;
 
 
 /**
@@ -70,9 +71,9 @@ public class GFORCE_Navigation
     private static final int     MAX_TARGETS         =  13;
     private static final double  ON_AXIS             =  10;      // Within 1 cm of centerline
     private static final double  CLOSE_ENOUGH        =  20;      // Within 2.0 cm of final target
-    private static final double  NEAR_CENTER         = 300;      // Within 30 cm of center line
+    private static final double  NEAR_CENTER         = 100;      // Within 4 inches of center line
 
-    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = VuforiaLocalizer.CameraDirection.FRONT;
+    private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = VuforiaLocalizer.CameraDirection.BACK;
 
     // Public Members
     public  double robotX;
@@ -212,6 +213,7 @@ public class GFORCE_Navigation
             }
             myOpMode.telemetry.addData("Path", myRobot.autoPathName);
             myOpMode.telemetry.addData("Find Targ", "A:L:H %5.3f %5.3f %3.0f", axial, lateral, heading);
+            showNavTelemetry(false);
             myOpMode.telemetry.update();
         }
         myRobot.stopRobot();
@@ -237,13 +239,14 @@ public class GFORCE_Navigation
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraDirection   = CAMERA_CHOICE;
+        parameters.useExtendedTracking = false;
 
         //  Instantiate the Vuforia engine
         vuforia = ClassFactory.getInstance().createVuforia(parameters);
 
         // Load the data sets for the trackable objects. These particular data
         // sets are stored in the 'assets' part of our application.
-        VuforiaTrackables targetsSkyStone = this.vuforia.loadTrackablesFromAsset("Skystone");
+        targetsSkyStone = this.vuforia.loadTrackablesFromAsset("Skystone");
 
         VuforiaTrackable stoneTarget = targetsSkyStone.get(0);
         stoneTarget.setName("Stone Target");
@@ -366,7 +369,7 @@ public class GFORCE_Navigation
         // The two examples below assume that the camera is facing forward out the front of the robot.
 
         // We need to rotate the camera around it's long axis to bring the correct camera forward.
-        if (CAMERA_CHOICE == BACK) {
+        if (CAMERA_CHOICE == FRONT) {
             phoneYRotate = -90;
         } else {
             phoneYRotate = 90;
@@ -504,6 +507,19 @@ public class GFORCE_Navigation
         }
 
         return targetFound;
+    }
+
+    public void showNavTelemetry(boolean doUpdate) {
+        if (targetFound) {
+            myOpMode.telemetry.addData("Target",targetName);
+            myOpMode.telemetry.addData("Robot Location","X: %5.0f,  Y: %5.0f,  B: %6.1f",robotX,robotY,robotBearing);
+            myOpMode.telemetry.addData("Target Location","R: %5.0f, B: %6.1f", targetRange,targetBearing);
+        } else {
+            myOpMode.telemetry.addData("Target","Not Found");
+        }
+        if (doUpdate) {
+            myOpMode.telemetry.update();
+        }
     }
 }
 

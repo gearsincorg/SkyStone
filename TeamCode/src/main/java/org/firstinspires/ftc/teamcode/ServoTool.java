@@ -49,7 +49,6 @@ import com.qualcomm.robotcore.hardware.Servo;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 @TeleOp(name = "ServoTool", group = "Concept")
-@Disabled
 public class ServoTool extends LinearOpMode {
 
     static final double INCREMENT   = 0.01;     // amount to slew servo each CYCLE_MS cycle
@@ -72,7 +71,7 @@ public class ServoTool extends LinearOpMode {
         servo2 = hardwareMap.get(Servo.class, "s2");
 
         // Scan servo till stop pressed.
-        while(opModeIsActive()){
+        while(!isStopRequested() ){
 
             if (gamepad1.y && (pos1 < MAX_POS))    {
                 pos1 += 0.01;
