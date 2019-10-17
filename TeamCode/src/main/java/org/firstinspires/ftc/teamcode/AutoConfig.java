@@ -8,30 +8,33 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.util.List;
-import java.util.ArrayList;
 
 public class AutoConfig
 {
   Context context;
   OpMode opMode;
 
-  public static int LOCATION_ITEMS = 6;
-  public static int NON_LOCATION_ITEMS = 3;
-  public static int MENU_ITEMS = LOCATION_ITEMS + NON_LOCATION_ITEMS;
+
+  public static int MENU_ITEMS = 7;
 
   public class Param {
-    public boolean redAlliance = false;
-    public int delayInSec = 0;
-    public int options = 0;
-    public List<AutoMenuItem> menuItems = new ArrayList<>(LOCATION_ITEMS);
+      //public boolean redAlliance = false;
+      public int delayInSec = 0;
+      public boolean disabled = false;
+      public boolean foundation = false;
+      public boolean frontSkystone = false;
+      public boolean backSkystone = false;
+      public boolean pushPartner = false;
+      public boolean partnerSample = false;
+
+      //public List<AutoMenuItem> menuItems = new ArrayList<>(LOCATION_ITEMS);
   }
 
   public int currentMenuIndex;
   public Param autoOptions;
 
   // variables used during the configuration process
-  AutoMenuItem currentMenuItem;
+  //AutoMenuItem currentMenuItem;
   boolean prev;
   boolean x1;
   boolean b1;
@@ -45,14 +48,6 @@ public class AutoConfig
   public AutoConfig() {
     autoOptions = new Param();
 
-    // Setup the menu file
-    for (int item = 0; item < LOCATION_ITEMS; item++)
-    {
-      if (item == 0)
-        autoOptions.menuItems.add(new AutoMenuItem("Start", true));
-      else
-        autoOptions.menuItems.add(new AutoMenuItem("Loc " + item, false));
-    }
   }
 
   public void init(Context context, OpMode opMode) {
@@ -97,42 +92,37 @@ public class AutoConfig
       currentMenuIndex = (currentMenuIndex + MENU_ITEMS - 1 ) % MENU_ITEMS;
     }
     // checking if we are moving to the next menu item.
-    else if (b1 && !lastB1) {
+    else if ((b1 && !lastB1) || (x1 && !lastX1)) {
       // select next option
-      if (currentMenuIndex == 0) {
-        autoOptions.redAlliance = !autoOptions.redAlliance;
-      }
-      else if (currentMenuIndex == 1) {
-        autoOptions.delayInSec++;
-      }
-      else if (currentMenuIndex == 2) {
-        autoOptions.options++;
-      }
-      else {
-        autoOptions.menuItems.get(currentMenuIndex - NON_LOCATION_ITEMS).next();
-      }
-      saveConfig();
-    }
-    // checking to see if we are moving to prev menu item
-    else if (x1 && !lastX1) {
-          // select prev option
-      if (currentMenuIndex == 0) {
-        autoOptions.redAlliance = !autoOptions.redAlliance;
-      }
-      else if (currentMenuIndex == 1) {
-        if (autoOptions.delayInSec > 0)
-          autoOptions.delayInSec--;
-      }
-      else if (currentMenuIndex == 2) {
-        if (autoOptions.options > 0)
-          autoOptions.options--;
-      }
-      else {
-        autoOptions.menuItems.get(currentMenuIndex - NON_LOCATION_ITEMS).prev();
+      switch (currentMenuIndex) {
+          case 0:
+              if (b1)
+                  autoOptions.delayInSec++;
+              else
+              if (autoOptions.delayInSec > 0)
+                  autoOptions.delayInSec--;
+              break;
+          case 1:
+              autoOptions.disabled = !autoOptions.disabled;
+              break;
+          case 2:
+              autoOptions.foundation = !autoOptions.foundation;
+              break;
+          case 3:
+              autoOptions.frontSkystone = !autoOptions.frontSkystone;
+              break;
+          case 4:
+              autoOptions.backSkystone = !autoOptions.backSkystone;
+              break;
+          case 5:
+              autoOptions.pushPartner = !autoOptions.pushPartner;
+              break;
+          case 6:
+              autoOptions.partnerSample = !autoOptions.partnerSample;
+              break;
       }
       saveConfig();
     }
-
     updateMenu();
 
     // update toggle memory for next call
@@ -140,7 +130,8 @@ public class AutoConfig
     lastX1 = x1;
     lastB1 = b1;
     lastNext  = next;
-    opMode.telemetry.update();
+
+
   }
 
 
@@ -149,11 +140,13 @@ public class AutoConfig
       OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(configFileName, Context.MODE_PRIVATE));
 
       // write each configuration parameter as a string on its own line
-      outputStreamWriter.write(Boolean.toString(autoOptions.redAlliance)  + "\n");
-      outputStreamWriter.write(Integer.toString(autoOptions.delayInSec)   + "\n");
-      outputStreamWriter.write(Integer.toString(autoOptions.options)      + "\n");
-      for (int item = 0; item < LOCATION_ITEMS; item++ )
-        outputStreamWriter.write(autoOptions.menuItems.get(item).getSelection() + "\n");
+        outputStreamWriter.write(Integer.toString(autoOptions.delayInSec)   + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.disabled)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.foundation)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.frontSkystone)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.backSkystone)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.pushPartner)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.partnerSample)  + "\n");
 
       outputStreamWriter.close();
     }
@@ -173,46 +166,30 @@ public class AutoConfig
         InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
-        autoOptions.redAlliance = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.delayInSec  = Integer.valueOf(bufferedReader.readLine());
-        autoOptions.options     = Integer.valueOf(bufferedReader.readLine());
-
-        for (int item = 0; item < LOCATION_ITEMS; item++)
-        {
-          String option = bufferedReader.readLine();
-          for (FieldLocation loc : FieldLocation.values())
-          {
-            if (loc.name().equals(option))
-            {
-              autoOptions.menuItems.get(item).setSelection(loc);
-            }
-          }
-        }
+        autoOptions.disabled = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.foundation = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.frontSkystone = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.backSkystone = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.pushPartner = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.partnerSample = Boolean.valueOf(bufferedReader.readLine());
         inputStream.close();
       }
     } catch (Exception e)
     {
-      opMode.telemetry.addData("Exception", "Auto settings file does not exist: " + e.toString());
+      opMode.telemetry.addData("Config", "Blank Config.");
     }
   }
 
   public void updateMenu ()
   {
-    opMode.telemetry.clearAll();
-    opMode.telemetry.addData((currentMenuIndex == 0) ? "0 > Color"   : "0   Color", autoOptions.redAlliance ? "RED" : "BLUE");
-    opMode.telemetry.addData((currentMenuIndex == 1) ? "1 > Delay"   : "1   Delay", autoOptions.delayInSec);
-    opMode.telemetry.addData((currentMenuIndex == 2) ? "2 > Option"  : "3   Option", autoOptions.options);
-    for (int item = NON_LOCATION_ITEMS; item < MENU_ITEMS; item++)
-    {
-      String itemName;
-      if (currentMenuIndex == item){
-        itemName = item + " > " + autoOptions.menuItems.get(item - NON_LOCATION_ITEMS).getName();
-      } else {
-        itemName = item + "   " + autoOptions.menuItems.get(item - NON_LOCATION_ITEMS).getName();
-      }
-
-      opMode.telemetry.addData(itemName , autoOptions.menuItems.get(item - NON_LOCATION_ITEMS).getSelection().toString());
-    }
-    opMode.telemetry.update();
+      opMode.telemetry.addData((currentMenuIndex == 0) ? "0 > Delay"   : "0   Delay", autoOptions.delayInSec);
+      opMode.telemetry.addData((currentMenuIndex == 1) ? "1 > Run Auto"   : "1   Run Auto", autoOptions.disabled ? "no" : "YES");
+      opMode.telemetry.addData((currentMenuIndex == 2) ? "2 > Latched"   : "2   Latched", autoOptions.foundation ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > Lander"   : "3   Lander", autoOptions.frontSkystone ? "Gold" : "Silver");
+      opMode.telemetry.addData((currentMenuIndex == 4) ? "4 > Sample"   : "4  Sample", autoOptions.backSkystone ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > Score Mineral"   : "5  Score Mineral", autoOptions.pushPartner ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 6) ? "6 > Partner Sample"   : "6   Partner Sample", autoOptions.partnerSample ? "YES" : "no");
+      opMode.telemetry.update();
   }
 }
