@@ -54,7 +54,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class GFORCE_Autonomous extends LinearOpMode {
 
     /* Declare OpMode members. */
-    GFORCE_Hardware robot = new GFORCE_Hardware();   // Use steve hardware
+    GFORCE_Hardware robot = new GFORCE_Hardware();
     GFORCE_Navigation nav = new GFORCE_Navigation();
     private AutoConfig autoConfig = new AutoConfig();
     ElapsedTime autoTime = new ElapsedTime();
