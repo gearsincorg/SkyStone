@@ -15,7 +15,7 @@ public class AutoConfig
   OpMode opMode;
 
 
-  public static int MENU_ITEMS = 7;
+  public static int MENU_ITEMS = 6;
 
   public class Param {
       //public boolean redAlliance = false;
@@ -25,7 +25,6 @@ public class AutoConfig
       public boolean frontSkystone = false;
       public boolean backSkystone = false;
       public boolean pushPartner = false;
-      public boolean partnerSample = false;
 
       //public List<AutoMenuItem> menuItems = new ArrayList<>(LOCATION_ITEMS);
   }
@@ -117,9 +116,6 @@ public class AutoConfig
           case 5:
               autoOptions.pushPartner = !autoOptions.pushPartner;
               break;
-          case 6:
-              autoOptions.partnerSample = !autoOptions.partnerSample;
-              break;
       }
       saveConfig();
     }
@@ -146,7 +142,6 @@ public class AutoConfig
         outputStreamWriter.write(Boolean.toString(autoOptions.frontSkystone)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.backSkystone)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.pushPartner)  + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.partnerSample)  + "\n");
 
       outputStreamWriter.close();
     }
@@ -172,7 +167,6 @@ public class AutoConfig
         autoOptions.frontSkystone = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.backSkystone = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.pushPartner = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.partnerSample = Boolean.valueOf(bufferedReader.readLine());
         inputStream.close();
       }
     } catch (Exception e)
@@ -185,11 +179,10 @@ public class AutoConfig
   {
       opMode.telemetry.addData((currentMenuIndex == 0) ? "0 > Delay"   : "0   Delay", autoOptions.delayInSec);
       opMode.telemetry.addData((currentMenuIndex == 1) ? "1 > Run Auto"   : "1   Run Auto", autoOptions.disabled ? "no" : "YES");
-      opMode.telemetry.addData((currentMenuIndex == 2) ? "2 > Latched"   : "2   Latched", autoOptions.foundation ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > Lander"   : "3   Lander", autoOptions.frontSkystone ? "Gold" : "Silver");
-      opMode.telemetry.addData((currentMenuIndex == 4) ? "4 > Sample"   : "4  Sample", autoOptions.backSkystone ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > Score Mineral"   : "5  Score Mineral", autoOptions.pushPartner ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 6) ? "6 > Partner Sample"   : "6   Partner Sample", autoOptions.partnerSample ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 2) ? "2 > Foundation"   : "2   Foundation", autoOptions.foundation ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > Front Skystone"   : "3   Front Skystone", autoOptions.frontSkystone ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 4) ? "4 > Back Skystone"   : "4  Back Skystone", autoOptions.backSkystone ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > Push Partner"   : "5  Push Partner", autoOptions.pushPartner ? "YES" : "no");
       opMode.telemetry.update();
   }
 }

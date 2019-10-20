@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 /**
@@ -55,7 +56,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
     /* Declare OpMode members. */
     GFORCE_Hardware robot = new GFORCE_Hardware();   // Use steve hardware
     GFORCE_Navigation nav = new GFORCE_Navigation();
-
+    private AutoConfig autoConfig = new AutoConfig();
+    ElapsedTime autoTime = new ElapsedTime();
 
     @Override
     public void runOpMode() {
@@ -67,6 +69,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
          */
         robot.init(this, false);
         nav.init(this,robot);
+        autoConfig.init(hardwareMap.appContext,this);
 
         //robot.homeArm();
 
@@ -75,7 +78,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
         telemetry.update();
 
         while (!opModeIsActive() && !isStopRequested()) {
-            nav.showNavTelemetry(true);
+            nav.showNavTelemetry(false);
+            autoConfig.init_loop(); //Run menu system
         }
 
         //Starting autonomous reset heading to zero
