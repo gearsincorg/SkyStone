@@ -82,13 +82,31 @@ public class GFORCE_Autonomous extends LinearOpMode {
             autoConfig.init_loop(); //Run menu system
         }
 
+        if (autoConfig.autoOptions.redAlliance) {
+            robot.allianceColor = GFORCE_Hardware.AllianceColor.RED;
+        } else {
+            robot.allianceColor = GFORCE_Hardware.AllianceColor.BLUE;
+        }
         //Starting autonomous reset heading to zero
         robot.resetHeading();
 
 
-        nav.findTarget(0,0.2,0,0,10);
+        //nav.findTarget(0,0.2,0,0,10);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
+        sleep(2000);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.READY);
+        sleep(2000);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_UP);
+        sleep(2000);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
+        sleep(2000);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.FOUNDATION_READY);
+        sleep(2000);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.FOUNDATION_RELEASE);
+
 
         while(opModeIsActive()) {
+
 
         }
 

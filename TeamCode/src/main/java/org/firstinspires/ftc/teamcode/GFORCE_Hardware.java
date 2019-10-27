@@ -32,6 +32,7 @@ import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
@@ -71,6 +72,13 @@ public class GFORCE_Hardware {
     public DcMotor leftBackDrive = null;
     public DcMotor rightBackDrive = null;
     public DcMotor arm = null;
+
+    public Servo skystoneGrabLeft = null;
+    public Servo skystoneLiftLeft = null;
+    public Servo skystoneGrabRight = null;
+    public Servo skystoneLiftRight = null;
+    public Servo stoneGrab = null;
+    public Servo stoneRotate = null;
 
     public static BNO055IMU imu = null;
 
@@ -165,6 +173,8 @@ public class GFORCE_Hardware {
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         //arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        setLeftSkystoneGrabber(SkystoneGrabberPositions.START);
+        setRightSkystoneGrabber(SkystoneGrabberPositions.START);
 
         timeoutSoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("squeek", "raw", myOpMode.hardwareMap.appContext.getPackageName());
         if (timeoutSoundID != 0) {
@@ -298,8 +308,8 @@ public class GFORCE_Hardware {
         double deltaLeftFront = leftFrontDrive.getCurrentPosition() - startLeftFront;
         double deltaRightBack = rightBackDrive.getCurrentPosition() - startRightBack;
         double deltaRightFront = rightFrontDrive.getCurrentPosition() - startRightFront;
-        axialMotion = ((deltaLeftBack+deltaLeftFront+deltaRightBack+deltaRightFront)/4);
-        return(axialMotion);
+        axialMotion = ((deltaLeftBack + deltaLeftFront + deltaRightBack + deltaRightFront) / 4);
+        return (axialMotion);
     }
 
     public double getLateralMotion() {
@@ -307,8 +317,8 @@ public class GFORCE_Hardware {
         double deltaLeftFront = leftFrontDrive.getCurrentPosition() - startLeftFront;
         double deltaRightBack = rightBackDrive.getCurrentPosition() - startRightBack;
         double deltaRightFront = rightFrontDrive.getCurrentPosition() - startRightFront;
-        lateralMotion = ((-deltaLeftBack+deltaLeftFront+deltaRightBack-deltaRightFront)/4);
-        return(lateralMotion);
+        lateralMotion = ((-deltaLeftBack + deltaLeftFront + deltaRightBack - deltaRightFront) / 4);
+        return (lateralMotion);
     }
 
     // turn with both wheels
@@ -368,9 +378,9 @@ public class GFORCE_Hardware {
     }
 
     public void showEncoders() {
-        myOpMode.telemetry.addData("left front",  "%d", leftFrontDrive.getCurrentPosition());
+        myOpMode.telemetry.addData("left front", "%d", leftFrontDrive.getCurrentPosition());
         myOpMode.telemetry.addData("right front", "%d", rightFrontDrive.getCurrentPosition());
-        myOpMode.telemetry.addData("left back",  "%d", leftBackDrive.getCurrentPosition());
+        myOpMode.telemetry.addData("left back", "%d", leftBackDrive.getCurrentPosition());
         myOpMode.telemetry.addData("right back", "%d", rightBackDrive.getCurrentPosition());
         myOpMode.telemetry.update();
     }
@@ -511,7 +521,114 @@ public class GFORCE_Hardware {
     public void stopRobot() {
         moveRobot(0, 0, 0);
     }
-}
+
+
+    // Actuator Methods
+    private final double GRAB_LEFT_SAFE = 0;
+    private final double GRAB_LEFT_READY = 0.5;
+    private final double GRAB_LEFT_CLOSE = 1;
+
+    private final double LIFT_LEFT_SAFE = 0;
+    private final double LIFT_LEFT_CARRY = 0.25;
+    private final double LIFT_LEFT_FOUNDATION = 0.5;
+    private final double LIFT_LEFT_READY = 1;
+
+    public void setLeftSkystoneGrabber(SkystoneGrabberPositions position) {
+
+        switch (position) {
+            case START:
+                skystoneGrabLeft.setPosition(GRAB_LEFT_SAFE);
+                skystoneLiftLeft.setPosition(LIFT_LEFT_SAFE);
+                break;
+
+            case READY:
+                skystoneGrabLeft.setPosition(GRAB_LEFT_READY);
+                skystoneLiftLeft.setPosition(GRAB_LEFT_READY);
+                break;
+
+            case GRAB_DOWN:
+                skystoneGrabLeft.setPosition(GRAB_LEFT_CLOSE);
+                skystoneLiftLeft.setPosition(LIFT_LEFT_READY);
+                break;
+
+            case GRAB_UP:
+                skystoneGrabLeft.setPosition(GRAB_LEFT_CLOSE);
+                skystoneLiftLeft.setPosition(LIFT_LEFT_CARRY);
+                break;
+
+            case FOUNDATION_READY:
+                skystoneGrabLeft.setPosition(GRAB_LEFT_CLOSE);
+                skystoneLiftLeft.setPosition(LIFT_LEFT_FOUNDATION);
+                break;
+
+            case FOUNDATION_RELEASE:
+                skystoneGrabLeft.setPosition(GRAB_LEFT_SAFE);
+                skystoneLiftLeft.setPosition(LIFT_LEFT_FOUNDATION);
+                break;
+        }
+    }
+
+    private final double GRAB_RIGHT_SAFE = 0;
+    private final double GRAB_RIGHT_READY = 0.5;
+    private final double GRAB_RIGHT_CLOSE = 1;
+
+    private final double LIFT_RIGHT_SAFE = 0;
+    private final double LIFT_RIGHT_CARRY = 0.25;
+    private final double LIFT_RIGHT_FOUNDATION = 0.5;
+    private final double LIFT_RIGHT_READY = 1;
+
+
+    public void setRightSkystoneGrabber(SkystoneGrabberPositions position) {
+
+        switch (position) {
+            case START:
+                skystoneGrabRight.setPosition(GRAB_RIGHT_SAFE);
+                skystoneLiftRight.setPosition(LIFT_RIGHT_SAFE);
+                break;
+
+            case READY:
+                skystoneGrabRight.setPosition(GRAB_RIGHT_READY);
+                skystoneLiftRight.setPosition(LIFT_RIGHT_READY);
+                break;
+
+            case GRAB_DOWN:
+                skystoneGrabRight.setPosition(GRAB_RIGHT_CLOSE);
+                skystoneLiftRight.setPosition(LIFT_RIGHT_READY);
+                break;
+
+            case GRAB_UP:
+                skystoneGrabRight.setPosition(GRAB_RIGHT_CLOSE);
+                skystoneLiftRight.setPosition(LIFT_RIGHT_CARRY);
+                break;
+
+            case FOUNDATION_READY:
+                skystoneGrabRight.setPosition(GRAB_RIGHT_CLOSE);
+                skystoneLiftRight.setPosition(LIFT_RIGHT_FOUNDATION);
+                break;
+
+            case FOUNDATION_RELEASE:
+                skystoneGrabRight.setPosition(GRAB_RIGHT_SAFE);
+                skystoneLiftRight.setPosition(LIFT_RIGHT_FOUNDATION);
+                break;
+        }
+    }
+
+    public void setSkystoneGrabber (SkystoneGrabberPositions position) {
+        switch (allianceColor) {
+            case UNKNOWN_COLOR:
+                break;
+
+            case RED:
+                setRightSkystoneGrabber(position);
+                break;
+
+            case BLUE:
+                setLeftSkystoneGrabber(position);
+                break;
+        }
+
+    }
+
 /*
 // Arm methods
 
@@ -560,5 +677,5 @@ public class GFORCE_Hardware {
         }
         arm.setPower(0);
     }
-}
 */
+}

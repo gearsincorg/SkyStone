@@ -15,10 +15,10 @@ public class AutoConfig
   OpMode opMode;
 
 
-  public static int MENU_ITEMS = 6;
+  public static int MENU_ITEMS = 7;
 
   public class Param {
-      //public boolean redAlliance = false;
+      public boolean redAlliance = false;
       public int delayInSec = 0;
       public boolean disabled = false;
       public boolean foundation = false;
@@ -95,25 +95,28 @@ public class AutoConfig
       // select next option
       switch (currentMenuIndex) {
           case 0:
+              autoOptions.redAlliance = !autoOptions.redAlliance;
+              break;
+          case 1:
               if (b1)
                   autoOptions.delayInSec++;
               else
               if (autoOptions.delayInSec > 0)
                   autoOptions.delayInSec--;
               break;
-          case 1:
+          case 2:
               autoOptions.disabled = !autoOptions.disabled;
               break;
-          case 2:
+          case 3:
               autoOptions.foundation = !autoOptions.foundation;
               break;
-          case 3:
+          case 4:
               autoOptions.frontSkystone = !autoOptions.frontSkystone;
               break;
-          case 4:
+          case 5:
               autoOptions.backSkystone = !autoOptions.backSkystone;
               break;
-          case 5:
+          case 6:
               autoOptions.pushPartner = !autoOptions.pushPartner;
               break;
       }
@@ -136,6 +139,7 @@ public class AutoConfig
       OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput(configFileName, Context.MODE_PRIVATE));
 
       // write each configuration parameter as a string on its own line
+        outputStreamWriter.write(Boolean.toString(autoOptions.redAlliance)   + "\n");
         outputStreamWriter.write(Integer.toString(autoOptions.delayInSec)   + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.disabled)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.foundation)  + "\n");
@@ -161,6 +165,7 @@ public class AutoConfig
         InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
 
+        autoOptions.redAlliance = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.delayInSec  = Integer.valueOf(bufferedReader.readLine());
         autoOptions.disabled = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.foundation = Boolean.valueOf(bufferedReader.readLine());
@@ -177,12 +182,13 @@ public class AutoConfig
 
   public void updateMenu ()
   {
-      opMode.telemetry.addData((currentMenuIndex == 0) ? "0 > Delay"   : "0   Delay", autoOptions.delayInSec);
-      opMode.telemetry.addData((currentMenuIndex == 1) ? "1 > Run Auto"   : "1   Run Auto", autoOptions.disabled ? "no" : "YES");
-      opMode.telemetry.addData((currentMenuIndex == 2) ? "2 > Foundation"   : "2   Foundation", autoOptions.foundation ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > Front Skystone"   : "3   Front Skystone", autoOptions.frontSkystone ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 4) ? "4 > Back Skystone"   : "4  Back Skystone", autoOptions.backSkystone ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > Push Partner"   : "5  Push Partner", autoOptions.pushPartner ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 0) ? "0 > Alliance"   : "0   Alliance", autoOptions.redAlliance ? "Blue" : "Red");
+      opMode.telemetry.addData((currentMenuIndex == 1) ? "1 > Delay"   : "1   Delay", autoOptions.delayInSec);
+      opMode.telemetry.addData((currentMenuIndex == 2) ? "2 > Run Auto"   : "2   Run Auto", autoOptions.disabled ? "no" : "YES");
+      opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > Foundation"   : "3   Foundation", autoOptions.foundation ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 4) ? "4 > Front Skystone"   : "4   Front Skystone", autoOptions.frontSkystone ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > Back Skystone"   : "5  Back Skystone", autoOptions.backSkystone ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 6) ? "6 > Push Partner"   : "6  Push Partner", autoOptions.pushPartner ? "YES" : "no");
       opMode.telemetry.update();
   }
 }
