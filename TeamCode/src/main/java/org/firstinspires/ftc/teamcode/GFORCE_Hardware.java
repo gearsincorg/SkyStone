@@ -106,7 +106,7 @@ public class GFORCE_Hardware {
     final double YAW_SCALE = 0.5;
 
     final double COUNTSPERDEGREE = 6.11;
-    final double AXIAL_ENCODER_COUNTS_PER_INCH = 23.2;
+    final double AXIAL_ENCODER_COUNTS_PER_INCH = 21.85; // Was 23.2
     final double LATERAL_ENCODER_COUNTS_PER_INCH = 23.2;
 
     private static LinearOpMode myOpMode = null;
@@ -173,6 +173,11 @@ public class GFORCE_Hardware {
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         //arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        skystoneGrabLeft = myOpMode.hardwareMap.get(Servo.class,"grab_left");
+        skystoneLiftLeft = myOpMode.hardwareMap.get(Servo.class,"lift_left");
+        skystoneGrabRight = myOpMode.hardwareMap.get(Servo.class,"grab_right");
+        skystoneLiftRight = myOpMode.hardwareMap.get(Servo.class,"lift_right");
         setLeftSkystoneGrabber(SkystoneGrabberPositions.START);
         setRightSkystoneGrabber(SkystoneGrabberPositions.START);
 
@@ -382,6 +387,7 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("right front", "%d", rightFrontDrive.getCurrentPosition());
         myOpMode.telemetry.addData("left back", "%d", leftBackDrive.getCurrentPosition());
         myOpMode.telemetry.addData("right back", "%d", rightBackDrive.getCurrentPosition());
+        myOpMode.telemetry.addData("motion","axial %5.0f lateral %5.0f",getAxialMotion(),getLateralMotion());
         myOpMode.telemetry.update();
     }
 
@@ -568,13 +574,13 @@ public class GFORCE_Hardware {
         }
     }
 
-    private final double GRAB_RIGHT_SAFE = 0;
-    private final double GRAB_RIGHT_READY = 0.5;
+    private final double GRAB_RIGHT_SAFE = 0.55;
+    private final double GRAB_RIGHT_READY = 0.55;
     private final double GRAB_RIGHT_CLOSE = 1;
 
-    private final double LIFT_RIGHT_SAFE = 0;
-    private final double LIFT_RIGHT_CARRY = 0.25;
-    private final double LIFT_RIGHT_FOUNDATION = 0.5;
+    private final double LIFT_RIGHT_SAFE = 0.4;
+    private final double LIFT_RIGHT_CARRY = 0.8;
+    private final double LIFT_RIGHT_FOUNDATION = 0.9;
     private final double LIFT_RIGHT_READY = 1;
 
 

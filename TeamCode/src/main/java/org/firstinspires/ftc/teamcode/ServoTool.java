@@ -67,8 +67,8 @@ public class ServoTool extends LinearOpMode {
 
         // Connect to servo (Assume PushBot Left Hand)
         // Change the text in quotes to match any servo name on your robot.
-        servo1 = hardwareMap.get(Servo.class, "s1");
-        servo2 = hardwareMap.get(Servo.class, "s2");
+        servo1 = hardwareMap.get(Servo.class, "lift_right");
+        servo2 = hardwareMap.get(Servo.class, "grab_right");
 
         // Scan servo till stop pressed.
         while(!isStopRequested() ){

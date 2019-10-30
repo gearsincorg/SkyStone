@@ -96,14 +96,16 @@ public class GFORCE_Autonomous extends LinearOpMode {
         sleep(2000);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.READY);
         sleep(2000);
-        robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_UP);
-        sleep(2000);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
+        sleep(2000);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_UP);
         sleep(2000);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.FOUNDATION_READY);
         sleep(2000);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.FOUNDATION_RELEASE);
 
+
+        //robot.driveAxial(24,0,0.1,15);
 
         while(opModeIsActive()) {
 

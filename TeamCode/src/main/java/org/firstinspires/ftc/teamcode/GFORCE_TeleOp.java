@@ -77,6 +77,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+        robot.startMotion();
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
