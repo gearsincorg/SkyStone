@@ -243,9 +243,11 @@ public class GFORCE_Hardware {
             speed = -Math.abs(speed);
         }
 
-        //Save the current encoder counts
+        //Save the current position
         startMotion();
+
         // Loop until the robot has driven to where it needs to go
+        // Remember to call updateMotion() once per loop cycle.
         while (myOpMode.opModeIsActive() && updateMotion() &&
                 (Math.abs(getAxialMotion()) < Math.abs(inches)) &&
                 (runTime.seconds() < endingTime)) {
@@ -285,9 +287,11 @@ public class GFORCE_Hardware {
             speed = -speed;
         }
 
-        //Save the current encoder counts
+        //Save the current position
         startMotion();
+
         // Loop until the robot has driven to where it needs to go
+        // Remember to call updateMotion() once per loop cycle.
         while (myOpMode.opModeIsActive() && updateMotion() &&
                 (Math.abs(getLateralMotion()) < desiredEncoderCounts) &&
                 (runTime.seconds() < endingTime)) {
