@@ -113,10 +113,16 @@ public class GFORCE_Hardware {
     private double driveAxial = 0;
     private double driveYaw = 0;
     private double driveLateral = 0;
+
     private double startLeftBack = 0;
     private double startLeftFront = 0;
     private double startRightBack = 0;
     private double startRightFront = 0;
+    private double deltaLeftBack = 0;
+    private double deltaLeftFront = 0;
+    private double deltaRightBack = 0;
+    private double deltaRightFront = 0;
+
     private double startTime = 0;
     private double rampDistance = 0;
     private double tGoal = 0;
@@ -240,14 +246,14 @@ public class GFORCE_Hardware {
         //Save the current encoder counts
         startMotion();
         // Loop until the robot has driven to where it needs to go
-        while (myOpMode.opModeIsActive() &&
-                (Math.abs(dTravelled = getAxialMotion()) < Math.abs(inches)) &&
+        while (myOpMode.opModeIsActive() && updateMotion() &&
+                (Math.abs(getAxialMotion()) < Math.abs(inches)) &&
                 (runTime.seconds() < endingTime)) {
-            setAxial(getProfileSpeed(speed, dTravelled, inches));
+            setAxial(getProfileSpeed(speed, getAxialMotion(), inches));
             setLateral(0);
             setYawToHoldHeading(heading);
             moveRobot();
-            // showEncoders(); // removed because it's taking too much time.
+            showEncoders();
         }
         stopRobot();
 
@@ -269,7 +275,6 @@ public class GFORCE_Hardware {
         int desiredEncoderCounts = (int) (Math.abs(inches) * LATERAL_ENCODER_COUNTS_PER_INCH);
         double endingTime = runTime.seconds() + timeOutSec;
 
-
         if ((inches < 0.0) || (speed < 0.0)) {
             speed = -Math.abs(speed);
         }
@@ -283,7 +288,7 @@ public class GFORCE_Hardware {
         //Save the current encoder counts
         startMotion();
         // Loop until the robot has driven to where it needs to go
-        while (myOpMode.opModeIsActive() &&
+        while (myOpMode.opModeIsActive() && updateMotion() &&
                 (Math.abs(getLateralMotion()) < desiredEncoderCounts) &&
                 (runTime.seconds() < endingTime)) {
             setAxial(0);
@@ -291,7 +296,6 @@ public class GFORCE_Hardware {
             setYawToHoldHeading(heading);
             moveRobot();
             showEncoders();
-
         }
         stopRobot();
 
@@ -336,8 +340,25 @@ public class GFORCE_Hardware {
         startLeftFront = leftFrontDrive.getCurrentPosition();
         startRightBack = rightBackDrive.getCurrentPosition();
         startRightFront = rightFrontDrive.getCurrentPosition();
+        deltaLeftBack = 0;
+        deltaLeftFront = 0;
+        deltaRightBack = 0;
+        deltaRightFront = 0;
         startTime = runTime.time();
         rampDistance = 0;
+    }
+
+    public boolean updateMotion() {
+        deltaLeftBack = leftBackDrive.getCurrentPosition() - startLeftBack;
+        deltaLeftFront = leftFrontDrive.getCurrentPosition() - startLeftFront;
+        deltaRightBack = rightBackDrive.getCurrentPosition() - startRightBack;
+        deltaRightFront = rightFrontDrive.getCurrentPosition() - startRightFront;
+        axialMotion = ((deltaLeftBack + deltaLeftFront + deltaRightBack + deltaRightFront) / 4);
+        axialMotion /= AXIAL_ENCODER_COUNTS_PER_INCH;
+        lateralMotion = ((-deltaLeftBack + deltaLeftFront + deltaRightBack - deltaRightFront) / 4);
+        lateralMotion /= LATERAL_ENCODER_COUNTS_PER_INCH;
+
+        return (true);
     }
 
     public double getMotionTime() {
@@ -345,22 +366,12 @@ public class GFORCE_Hardware {
     }
 
     public double getAxialMotion() {
-        double deltaLeftBack = leftBackDrive.getCurrentPosition() - startLeftBack;
-        double deltaLeftFront = leftFrontDrive.getCurrentPosition() - startLeftFront;
-        double deltaRightBack = rightBackDrive.getCurrentPosition() - startRightBack;
-        double deltaRightFront = rightFrontDrive.getCurrentPosition() - startRightFront;
-        axialMotion = ((deltaLeftBack + deltaLeftFront + deltaRightBack + deltaRightFront) / 4);
-        axialMotion /= AXIAL_ENCODER_COUNTS_PER_INCH;
+        // NOTE:  Must call updateMotion() once before calling this method;
         return (axialMotion);
     }
 
     public double getLateralMotion() {
-        double deltaLeftBack = leftBackDrive.getCurrentPosition() - startLeftBack;
-        double deltaLeftFront = leftFrontDrive.getCurrentPosition() - startLeftFront;
-        double deltaRightBack = rightBackDrive.getCurrentPosition() - startRightBack;
-        double deltaRightFront = rightFrontDrive.getCurrentPosition() - startRightFront;
-        lateralMotion = ((-deltaLeftBack + deltaLeftFront + deltaRightBack - deltaRightFront) / 4);
-        lateralMotion /= LATERAL_ENCODER_COUNTS_PER_INCH;
+        // NOTE:  Must call updateMotion() once before calling this method;
         return (lateralMotion);
     }
 
@@ -421,11 +432,9 @@ public class GFORCE_Hardware {
     }
 
     public void showEncoders() {
-        myOpMode.telemetry.addData("left front", "%d", leftFrontDrive.getCurrentPosition());
-        myOpMode.telemetry.addData("right front", "%d", rightFrontDrive.getCurrentPosition());
-        myOpMode.telemetry.addData("left back", "%d", leftBackDrive.getCurrentPosition());
-        myOpMode.telemetry.addData("right back", "%d", rightBackDrive.getCurrentPosition());
-        myOpMode.telemetry.addData("motion","axial %6.1f",getAxialMotion());
+        myOpMode.telemetry.addData("motion","axial %6.1f, lateral %6.1f", getAxialMotion(), getLateralMotion());
+        myOpMode.telemetry.addData("front", "%5d %5d ", deltaLeftFront, deltaRightFront);
+        myOpMode.telemetry.addData("back",  "%5d %5d ", deltaLeftBack, deltaRightBack);
         myOpMode.telemetry.update();
     }
 
