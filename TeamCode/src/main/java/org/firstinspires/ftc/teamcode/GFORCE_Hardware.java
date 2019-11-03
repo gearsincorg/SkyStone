@@ -28,6 +28,8 @@
  */
 package org.firstinspires.ftc.teamcode;
 
+import android.util.Log;
+
 import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -82,23 +84,19 @@ public class GFORCE_Hardware {
 
     public static BNO055IMU imu = null;
 
-    public static final double ARM_STOP = 0;
-    public static final double ARM_DUMP = -0.2;
-    public static final double ARM_COLLECT = 0.2;
-    public final int COLLECT_LIMIT = -12;
-    public final int AUTO_SCORE = -225;
-    public final int DUMP_LIMIT = -470;
-
-    // Driving constants Yaw heading
-    final double HEADING_GAIN = 0.012;  // Was 0.02
-    final double TURN_RATE_TC = 0.6;
-    final double STOP_TURNRATE = 20;
-    final double GYRO_360_READING = 360.0;
-    final double GYRO_SCALE_FACTOR = 360.0 / GYRO_360_READING;
-    final double COUNTS_PER_MM = 1; //FIX THIS
-    static final double YAW_GAIN = 0.010;  // Rate at which we respond to heading error 0.013
+    public static final double YAW_GAIN = 0.010;  // Rate at which we respond to heading error 0.013
     public static final double LATERAL_GAIN = 0.0025; // Distance from x axis that we start to slow down. 0027
     public static final double AXIAL_GAIN = 0.0015; // Distance from target that we start to slow down. 0017
+
+    // Driving constants Yaw heading
+    private final double HEADING_GAIN = 0.012;  // Was 0.02
+    private final double TURN_RATE_TC = 0.6;
+    private final double STOP_TURNRATE = 20;
+    private final double GYRO_360_READING = 360.0;
+    private final double GYRO_SCALE_FACTOR = 360.0 / GYRO_360_READING;
+    private final double ACCELERATION_LIMIT = 0.5;
+    private final double NUDGE_FACTOR = 0.1;
+
 
     final double YAW_IS_CLOSE = 2.0;  // angle within which we are "close"
 
@@ -119,6 +117,9 @@ public class GFORCE_Hardware {
     private double startLeftFront = 0;
     private double startRightBack = 0;
     private double startRightFront = 0;
+    private double startTime = 0;
+    private double rampDistance = 0;
+    private double tGoal = 0;
     public double axialMotion = 0;
     public double lateralMotion = 0;
 
@@ -224,8 +225,6 @@ public class GFORCE_Hardware {
      * @return
      */
     public boolean driveAxial(double inches, double heading, double speed, double timeOutSec) {
-
-        int desiredEncoderCounts = (int) (Math.abs(inches) * AXIAL_ENCODER_COUNTS_PER_INCH);
         double endingTime = runTime.seconds() + timeOutSec;
 
         //Reverse angles for red autonomous
@@ -241,9 +240,9 @@ public class GFORCE_Hardware {
         startMotion();
         // Loop until the robot has driven to where it needs to go
         while (myOpMode.opModeIsActive() &&
-                (Math.abs(getAxialMotion()) < desiredEncoderCounts) &&
+                (Math.abs(getAxialMotion()) < Math.abs(inches)) &&
                 (runTime.seconds() < endingTime)) {
-            setAxial(speed);
+            setAxial(getProfileSpeed(speed, getAxialMotion(), inches));
             setLateral(0);
             setYawToHoldHeading(heading);
             moveRobot();
@@ -288,7 +287,7 @@ public class GFORCE_Hardware {
                 (Math.abs(getLateralMotion()) < desiredEncoderCounts) &&
                 (runTime.seconds() < endingTime)) {
             setAxial(0);
-            setLateral(speed);
+            setLateral(getProfileSpeed(speed, getAxialMotion(), inches));
             setYawToHoldHeading(heading);
             moveRobot();
             showEncoders();
@@ -300,12 +299,49 @@ public class GFORCE_Hardware {
         return (runTime.seconds() < endingTime);
     }
 
+    //
+    public double getProfileSpeed(double topSpeed, double dTraveled,double dGoal) {
+        double profileSpeed = 0;
+        double rampTime = Math.abs(topSpeed / ACCELERATION_LIMIT);
+
+        //Determine if we are accelerating, constant, or decelerating
+        dTraveled = Math.abs(dTraveled);
+        if (getMotionTime() < rampTime) {
+            //Determine speed and ensure sign matches topSpeed
+            profileSpeed = ((getMotionTime() * ACCELERATION_LIMIT) + NUDGE_FACTOR) * Math.signum(topSpeed);
+        } else {
+            //Set the rampDistance the first time in the else
+            if (rampDistance == 0) {
+                rampDistance = dTraveled;
+            }
+
+            if (dTraveled < (dGoal-rampDistance)) {
+                //At the constant velocity
+                profileSpeed = topSpeed;
+                tGoal = (getMotionTime() + rampTime);
+            } else if (dTraveled < dGoal){
+                profileSpeed = ((tGoal-getMotionTime()) * ACCELERATION_LIMIT) * Math.signum(topSpeed);
+            } else {
+                profileSpeed = 0;
+            }
+        }
+
+        Log.d("GFORCE AUTO", String.format("D: %5.2f, S: %4.2f", dTraveled, profileSpeed));
+        return (profileSpeed);
+    }
+
     //Get the current encoder counts of the drive motors
     public void startMotion() {
         startLeftBack = leftBackDrive.getCurrentPosition();
         startLeftFront = leftFrontDrive.getCurrentPosition();
         startRightBack = rightBackDrive.getCurrentPosition();
         startRightFront = rightFrontDrive.getCurrentPosition();
+        startTime = runTime.time();
+        rampDistance = 0;
+    }
+
+    public double getMotionTime() {
+        return(runTime.time() - startTime);
     }
 
     public double getAxialMotion() {
@@ -314,6 +350,7 @@ public class GFORCE_Hardware {
         double deltaRightBack = rightBackDrive.getCurrentPosition() - startRightBack;
         double deltaRightFront = rightFrontDrive.getCurrentPosition() - startRightFront;
         axialMotion = ((deltaLeftBack + deltaLeftFront + deltaRightBack + deltaRightFront) / 4);
+        axialMotion /= AXIAL_ENCODER_COUNTS_PER_INCH;
         return (axialMotion);
     }
 
@@ -323,6 +360,7 @@ public class GFORCE_Hardware {
         double deltaRightBack = rightBackDrive.getCurrentPosition() - startRightBack;
         double deltaRightFront = rightFrontDrive.getCurrentPosition() - startRightFront;
         lateralMotion = ((-deltaLeftBack + deltaLeftFront + deltaRightBack - deltaRightFront) / 4);
+        lateralMotion /= LATERAL_ENCODER_COUNTS_PER_INCH;
         return (lateralMotion);
     }
 
@@ -383,11 +421,12 @@ public class GFORCE_Hardware {
     }
 
     public void showEncoders() {
+        myOpMode.telemetry.addData("axial : lateral", "%4.1f %4.1f", driveAxial, driveLateral);
         myOpMode.telemetry.addData("left front", "%d", leftFrontDrive.getCurrentPosition());
         myOpMode.telemetry.addData("right front", "%d", rightFrontDrive.getCurrentPosition());
         myOpMode.telemetry.addData("left back", "%d", leftBackDrive.getCurrentPosition());
         myOpMode.telemetry.addData("right back", "%d", rightBackDrive.getCurrentPosition());
-        myOpMode.telemetry.addData("motion","axial %5.0f lateral %5.0f",getAxialMotion(),getLateralMotion());
+        myOpMode.telemetry.addData("motion","axial %6.1f lateral %6.1f",getAxialMotion(),getLateralMotion());
         myOpMode.telemetry.update();
     }
 
@@ -578,10 +617,10 @@ public class GFORCE_Hardware {
     private final double GRAB_RIGHT_READY = 0.55;
     private final double GRAB_RIGHT_CLOSE = 1;
 
-    private final double LIFT_RIGHT_SAFE = 0.4;
-    private final double LIFT_RIGHT_CARRY = 0.8;
-    private final double LIFT_RIGHT_FOUNDATION = 0.9;
-    private final double LIFT_RIGHT_READY = 1;
+    private final double LIFT_RIGHT_SAFE = 0.0;
+    private final double LIFT_RIGHT_CARRY = 0.2;
+    private final double LIFT_RIGHT_FOUNDATION = 0.4;
+    private final double LIFT_RIGHT_READY = 0.5;
 
 
     public void setRightSkystoneGrabber(SkystoneGrabberPositions position) {

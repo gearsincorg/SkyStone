@@ -68,7 +68,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
          * The init() method of the hardware class does all the work here
          */
         robot.init(this, false);
-        nav.init(this,robot);
+        // nav.init(this,robot);
         autoConfig.init(hardwareMap.appContext,this);
 
         //robot.homeArm();
@@ -78,7 +78,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
         telemetry.update();
 
         while (!opModeIsActive() && !isStopRequested()) {
-            nav.showNavTelemetry(false);
+            // nav.showNavTelemetry(false);
             autoConfig.init_loop(); //Run menu system
         }
 
@@ -90,7 +90,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
         //Starting autonomous reset heading to zero
         robot.resetHeading();
 
-
+        /*
         //nav.findTarget(0,0.2,0,0,10);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
         sleep(2000);
@@ -103,9 +103,10 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.setSkystoneGrabber(SkystoneGrabberPositions.FOUNDATION_READY);
         sleep(2000);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.FOUNDATION_RELEASE);
+        */
 
 
-        //robot.driveAxial(24,0,0.1,15);
+        robot.driveAxial(100,0,0.6,20);
 
         while(opModeIsActive()) {
 
