@@ -226,6 +226,7 @@ public class GFORCE_Hardware {
      */
     public boolean driveAxial(double inches, double heading, double speed, double timeOutSec) {
         double endingTime = runTime.seconds() + timeOutSec;
+        double dTravelled;
 
         //Reverse angles for red autonomous
         if (redSide) {
@@ -240,14 +241,13 @@ public class GFORCE_Hardware {
         startMotion();
         // Loop until the robot has driven to where it needs to go
         while (myOpMode.opModeIsActive() &&
-                (Math.abs(getAxialMotion()) < Math.abs(inches)) &&
+                (Math.abs(dTravelled = getAxialMotion()) < Math.abs(inches)) &&
                 (runTime.seconds() < endingTime)) {
-            setAxial(getProfileSpeed(speed, getAxialMotion(), inches));
+            setAxial(getProfileSpeed(speed, dTravelled, inches));
             setLateral(0);
             setYawToHoldHeading(heading);
             moveRobot();
-            showEncoders();
-
+            // showEncoders(); // removed because it's taking too much time.
         }
         stopRobot();
 
@@ -326,7 +326,7 @@ public class GFORCE_Hardware {
             }
         }
 
-        Log.d("GFORCE AUTO", String.format("D: %5.2f, S: %4.2f", dTraveled, profileSpeed));
+        Log.d("G-FORCE AUTO", String.format("D: %5.2f, S: %4.2f", dTraveled, profileSpeed));
         return (profileSpeed);
     }
 
@@ -421,12 +421,11 @@ public class GFORCE_Hardware {
     }
 
     public void showEncoders() {
-        myOpMode.telemetry.addData("axial : lateral", "%4.1f %4.1f", driveAxial, driveLateral);
         myOpMode.telemetry.addData("left front", "%d", leftFrontDrive.getCurrentPosition());
         myOpMode.telemetry.addData("right front", "%d", rightFrontDrive.getCurrentPosition());
         myOpMode.telemetry.addData("left back", "%d", leftBackDrive.getCurrentPosition());
         myOpMode.telemetry.addData("right back", "%d", rightBackDrive.getCurrentPosition());
-        myOpMode.telemetry.addData("motion","axial %6.1f lateral %6.1f",getAxialMotion(),getLateralMotion());
+        myOpMode.telemetry.addData("motion","axial %6.1f",getAxialMotion());
         myOpMode.telemetry.update();
     }
 
