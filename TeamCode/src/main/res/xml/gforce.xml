@@ -2,10 +2,10 @@
 <Robot type="FirstInspires-FTC">
     <LynxUsbDevice name="Expansion Hub Portal 1" serialNumber="DQ2M4Q7K" parentModuleAddress="4">
         <LynxModule name="Expansion Hub 4" port="4">
-            <NeveRest40Gearmotor name="left_front_drive" port="3" />
-            <NeveRest40Gearmotor name="left_back_drive" port="2" />
-            <NeveRest40Gearmotor name="right_front_drive" port="1" />
-            <NeveRest40Gearmotor name="right_back_drive" port="0" />
+            <goBILDA5202SeriesMotor name="left_front_drive" port="3" />
+            <goBILDA5202SeriesMotor name="left_back_drive" port="2" />
+            <goBILDA5202SeriesMotor name="right_front_drive" port="1" />
+            <goBILDA5202SeriesMotor name="right_back_drive" port="0" />
             <Servo name="lift_right" port="0" />
             <Servo name="grab_right" port="1" />
             <Servo name="lift_left" port="2" />

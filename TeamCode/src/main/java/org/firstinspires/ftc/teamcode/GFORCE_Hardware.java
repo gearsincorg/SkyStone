@@ -85,6 +85,7 @@ public class GFORCE_Hardware {
 
     public static BNO055IMU imu = null;
 
+    public static final double MAX_VELOCITY = 2500;  // Counts per second
     public static final double YAW_GAIN = 0.010;  // Rate at which we respond to heading error 0.013
     public static final double LATERAL_GAIN = 0.0025; // Distance from x axis that we start to slow down. 0027
     public static final double AXIAL_GAIN = 0.0015; // Distance from target that we start to slow down. 0017
@@ -171,11 +172,13 @@ public class GFORCE_Hardware {
         leftBackDrive = myOpMode.hardwareMap.get(DcMotorEx.class, "left_back_drive");
         rightBackDrive = myOpMode.hardwareMap.get(DcMotorEx.class, "right_back_drive");
         //arm = myOpMode.hardwareMap.get(DcMotor.class,"arm");
+
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
         leftBackDrive.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);// Set to FORWARD if using AndyMark motors
         //arm.setDirection(DcMotorSimple.Direction.FORWARD);
+
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -234,6 +237,7 @@ public class GFORCE_Hardware {
     public boolean driveAxial(double inches, double heading, double vel, double timeOutSec) {
         double endingTime = runTime.seconds() + timeOutSec;
         double dTravelled;
+        double absInches = Math.abs(inches);
 
         //Reverse angles for red autonomous
         if (redSide) {
@@ -250,12 +254,12 @@ public class GFORCE_Hardware {
         // Loop until the robot has driven to where it needs to go
         // Remember to call updateMotion() once per loop cycle.
         while (myOpMode.opModeIsActive() && updateMotion() &&
-                (Math.abs(getAxialMotion()) < Math.abs(inches)) &&
+                (Math.abs(getAxialMotion()) < absInches) &&
                 (runTime.seconds() < endingTime)) {
-            setAxial(getProfileVelocity(vel, getAxialMotion(), inches));
-            setLateral(0);
+            setAxialVelocity(getProfileVelocity(vel, getAxialMotion(), absInches));
+            setLateralVelocity(0);
             setYawToHoldHeading(heading);
-            moveRobot();
+            moveRobotVelocity();
             showEncoders();
         }
         stopRobot();
@@ -310,7 +314,7 @@ public class GFORCE_Hardware {
 
     //
     public double getProfileVelocity(double topVel, double dTraveled, double dGoal) {
-        double profileSpeed = 0;
+        double profileVelocity = 0;
         double absTopVel = Math.abs(topVel);
         //Determine if it is a two (short) part profile or a three (long) part profile
         //How far we travel for a full acceleration and deceleration cycle to the full velocity
@@ -324,31 +328,31 @@ public class GFORCE_Hardware {
             //Do two part profile
             if (getMotionTime() < (profileTime / 2)) {
                 //Accelerating
-                profileSpeed = ACCELERATION_LIMIT * getMotionTime();
+                profileVelocity = ACCELERATION_LIMIT * getMotionTime();
             } else {
                 //Decelerating
-                profileSpeed = ACCELERATION_LIMIT * (profileTime - getMotionTime());
+                profileVelocity = ACCELERATION_LIMIT * (profileTime - getMotionTime());
             }
 
         } else {
             //Do three part profile
             if (getMotionTime() < (accDecTime / 2)) {
                 //Accelerating
-                profileSpeed = (getMotionTime() * ACCELERATION_LIMIT);
+                profileVelocity = (getMotionTime() * ACCELERATION_LIMIT);
             } else if (getMotionTime() < (totalTime - (accDecTime/ 2))) {
                 //Constant
-                profileSpeed = absTopVel;
+                profileVelocity = absTopVel;
             } else if (getMotionTime() < totalTime) {
                 //Decelerating
-                profileSpeed = ((totalTime - getMotionTime()) * ACCELERATION_LIMIT);
+                profileVelocity = ((totalTime - getMotionTime()) * ACCELERATION_LIMIT);
             } else {
                 //Stop
-                profileSpeed = 0;
+                profileVelocity = 0;
             }
         }
-        profileSpeed *= Math.signum(topVel);
-        Log.d("G-FORCE AUTO", String.format("D: %5.2f, S: %4.2f, T: %5.3f", dTraveled, profileSpeed, (totalTime - getMotionTime())));
-        return (profileSpeed);
+        profileVelocity *= Math.signum(topVel);
+        Log.d("G-FORCE AUTO", String.format("T:V:D:R %5.3f %4.2f %5.2f %5.3f", getMotionTime(), profileVelocity, dTraveled, totalTime - getMotionTime()));
+        return (profileVelocity);
     }
 
     //Get the current encoder counts of the drive motors
@@ -462,11 +466,6 @@ public class GFORCE_Hardware {
         rightBackDrive.setMode(mode);
     }
 
-    // The O' Great Button Click dilemma. Lest we forget this ever tricky conundrum. - Juan F. Aleman IV
-    public void updateClickState() {
-
-    }
-
     // --------------------------------------------------------------------
     // Heading/Gyro Control
     // --------------------------------------------------------------------
@@ -544,6 +543,7 @@ public class GFORCE_Hardware {
         return heading;
     }
 
+    // Robot movement using +/- 1.0 Range
     public void moveRobot(double axial, double yaw, double lateral) {
         setAxial(axial);
         setYaw(yaw);
@@ -581,12 +581,65 @@ public class GFORCE_Hardware {
             rightBackSpeed /= biggest;
         }
 
-        leftFrontDrive.setPower(leftFrontSpeed);
-        rightFrontDrive.setPower(rightFrontSpeed);
-        leftBackDrive.setPower(leftBackSpeed);
-        rightBackDrive.setPower(rightBackSpeed);
+        leftFrontDrive.setVelocity(leftFrontSpeed);
+        rightFrontDrive.setVelocity(rightFrontSpeed);
+        leftBackDrive.setVelocity(leftBackSpeed);
+        rightBackDrive.setVelocity(rightBackSpeed);
+
         //myOpMode.telemetry.addData("Arm position", arm.getCurrentPosition());
     }
+
+
+    // Robot movement using +/- MAX_VELOCITY
+
+    public void setAxialVelocity(double axialV) {
+        driveAxial = Range.clip(axialV, -MAX_VELOCITY, MAX_VELOCITY);
+    }
+
+    public void setYawVelocity(double yawV) {
+        driveYaw = Range.clip(yawV, -MAX_VELOCITY, MAX_VELOCITY);
+    }
+
+    public void setLateralVelocity(double lateralV) {
+        driveLateral = Range.clip(lateralV, -MAX_VELOCITY, MAX_VELOCITY);
+    }
+
+    public void moveRobotVelocity(double axialV, double yawV, double lateralV) {
+        setAxialVelocity(axialV);
+        setYawVelocity(yawV);
+        setLateralVelocity(lateralV);
+        moveRobotVelocity();
+    }
+
+    public void moveRobotVelocity() {
+        //calculate required motor speeds
+        double leftFrontVel = driveAxial - driveYaw + driveLateral;
+        double leftBackVel = driveAxial - driveYaw - driveLateral;
+        double rightFrontVel = driveAxial + driveYaw - driveLateral;
+        double rightBackVel = driveAxial + driveYaw + driveLateral;
+
+        double biggest = Math.max(Math.abs(leftFrontVel), Math.abs(rightFrontVel));
+        biggest = Math.max(biggest, Math.abs(leftBackVel));
+        biggest = Math.max(biggest, Math.abs(rightBackVel));
+
+        if (biggest > MAX_VELOCITY) {
+            double scale = MAX_VELOCITY / biggest;
+            leftFrontVel *= scale;
+            rightFrontVel *= scale;
+            leftBackVel *= scale;
+            rightBackVel *= scale;
+        }
+
+        leftFrontDrive.setVelocity(leftFrontVel);
+        rightFrontDrive.setVelocity(rightFrontVel);
+        leftBackDrive.setVelocity(leftBackVel);
+        rightBackDrive.setVelocity(rightBackVel);
+        //myOpMode.telemetry.addData("Arm position", arm.getCurrentPosition());
+
+        Log.d("G-FORCE AUTO", String.format("M %5.1f %5.1f %5.1f %5.1f ", leftFrontVel, rightFrontVel, leftBackVel, rightBackVel));
+
+    }
+
 
     public void stopRobot() {
         moveRobot(0, 0, 0);
