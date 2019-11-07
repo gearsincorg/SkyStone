@@ -97,7 +97,7 @@ public class GFORCE_Hardware {
     private final double STOP_TURNRATE = 20;
     private final double GYRO_360_READING = 360.0;
     private final double GYRO_SCALE_FACTOR = 360.0 / GYRO_360_READING;
-    private final double ACCELERATION_LIMIT = 50; //Inches per second per second
+    private final double ACCELERATION_LIMIT = 75; //Inches per second per second
     private final double NUDGE_FACTOR = 10; //Inches per second per second
 
 
@@ -209,7 +209,7 @@ public class GFORCE_Hardware {
 
     // Configure a motor
     public DcMotorEx configureMotor( String name, DcMotor.Direction direction) {
-        // PIDFCoefficients newPIDF = new PIDFCoefficients(4.0,  1.0,   0.0,  11.3);
+        PIDFCoefficients newPIDF = new PIDFCoefficients(3.0,  1,   0.0,  12);
         DcMotorEx motorObj = myOpMode.hardwareMap.get(DcMotorEx.class, name);
 
         motorObj.setDirection(direction);
@@ -231,7 +231,6 @@ public class GFORCE_Hardware {
      */
     public boolean driveAxial(double inches, double heading, double vel, double timeOutSec) {
         double endingTime = runTime.seconds() + timeOutSec;
-        double dTravelled;
         double absInches = Math.abs(inches);
 
         //Reverse angles for red autonomous
@@ -274,8 +273,8 @@ public class GFORCE_Hardware {
      */
     public boolean driveLateral(double inches, double heading, double vel, double timeOutSec) {
 
-        int desiredEncoderCounts = (int) (Math.abs(inches) * LATERAL_ENCODER_COUNTS_PER_INCH);
         double endingTime = runTime.seconds() + timeOutSec;
+        double absInches = Math.abs(inches);
 
         if ((inches < 0.0) || (vel < 0.0)) {
             vel = -Math.abs(vel);
@@ -293,12 +292,12 @@ public class GFORCE_Hardware {
         // Loop until the robot has driven to where it needs to go
         // Remember to call updateMotion() once per loop cycle.
         while (myOpMode.opModeIsActive() && updateMotion() &&
-                (Math.abs(getLateralMotion()) < desiredEncoderCounts) &&
+                (Math.abs(getLateralMotion()) < absInches) &&
                 (runTime.seconds() < endingTime)) {
-            setAxial(0);
-            setLateral(getProfileVelocity(vel, getAxialMotion(), inches));
-            setYawToHoldHeading(heading);
-            moveRobot();
+            setAxialVelocity(0);
+            setLateralVelocity(getProfileVelocity(vel, getLateralMotion(), absInches));
+            setYawVelocityToHoldHeading(heading);
+            moveRobotVelocity();
             showEncoders();
         }
         stopRobot();
@@ -312,8 +311,9 @@ public class GFORCE_Hardware {
         double profileVelocity = 0;
 
         // Make all distances positive
-        dTraveled = Math.abs(dTraveled);
-        dGoal     = Math.abs(dGoal);
+        double absdTraveled = Math.abs(dTraveled);
+        double absdGoal     = Math.abs(dGoal);
+        double absTopVel = Math.abs(topVel);
 
         // Treat the profile as an acceleration half and a deceleration half, based on distance traveled.
         // Determine the velocity, then just clip the requested velocity based on the requested top speed.
@@ -321,13 +321,13 @@ public class GFORCE_Hardware {
         // While Accelerating, V = Alimit * Time
         // While Decelerating, V = ALimit * SQRT(2 * dRemaining / ALimit )
 
-        if (dTraveled < (dGoal / 2.0)) {
+        if (absdTraveled < (absdGoal / 2.0)) {
             // We are accelerating, give a little boost
             profileVelocity = (ACCELERATION_LIMIT * getMotionTime()) + NUDGE_FACTOR ;
 
-        } else if (dTraveled < dGoal ) {
+        } else if (absdTraveled < absdGoal ) {
             // We are Decelerating
-            double dRemaining = Range.clip((dGoal - dTraveled), 0, dGoal); // Don't let this go negative.
+            double dRemaining = Range.clip((absdGoal - absdTraveled), 0, absdGoal); // Don't let this go negative.
             profileVelocity = ACCELERATION_LIMIT * Math.sqrt(2 * dRemaining / ACCELERATION_LIMIT);
         } else {
             // We Are Stopped
@@ -335,9 +335,9 @@ public class GFORCE_Hardware {
         }
 
         // Make sure the final velocity sign is correct.
-        profileVelocity = Range.clip(profileVelocity, 0, ACCELERATION_LIMIT) * Math.signum(topVel);
+        profileVelocity = Range.clip(profileVelocity, 0, absTopVel) * Math.signum(topVel);
 
-        Log.d("G-FORCE AUTO", String.format("T:V:D:A %5.3f %4.2f %5.2f %5.2f", getMotionTime(), profileVelocity, dTraveled, leftBackDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_INCH));
+        Log.d("G-FORCE AUTO", String.format("T:V:D:A %5.3f %4.2f %5.2f %5.2f", getMotionTime(), profileVelocity, absdTraveled, leftBackDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_INCH));
         return (profileVelocity);
     }
 
@@ -581,10 +581,10 @@ public class GFORCE_Hardware {
             rightBackSpeed /= biggest;
         }
 
-        leftFrontDrive.setVelocity(leftFrontSpeed);
-        rightFrontDrive.setVelocity(rightFrontSpeed);
-        leftBackDrive.setVelocity(leftBackSpeed);
-        rightBackDrive.setVelocity(rightBackSpeed);
+        leftFrontDrive.setPower(leftFrontSpeed);
+        rightFrontDrive.setPower(rightFrontSpeed);
+        leftBackDrive.setPower(leftBackSpeed);
+        rightBackDrive.setPower(rightBackSpeed);
 
         //myOpMode.telemetry.addData("Arm position", arm.getCurrentPosition());
     }

@@ -81,6 +81,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         robot.startMotion();
 
         // run until the end of the match (driver presses STOP)
+        robot.startMotion();
         while (opModeIsActive()) {
 
             // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
@@ -116,6 +117,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.moveRobot(axial, yaw, lateral);
 
             // Send telemetry message to signify robot running;
+            robot.updateMotion();
             robot.showEncoders();
 
             // Pace this loop so jaw action is reasonable speed.

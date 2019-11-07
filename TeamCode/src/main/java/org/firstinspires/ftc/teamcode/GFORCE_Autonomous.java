@@ -106,7 +106,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
         */
 
 
-        robot.driveAxial(100,0,50,20);
+        robot.driveLateral(50,0,50,20);
         robot.showEncoders();
 
         while(opModeIsActive()) {
