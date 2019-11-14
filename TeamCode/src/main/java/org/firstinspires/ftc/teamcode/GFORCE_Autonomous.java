@@ -54,92 +54,60 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class GFORCE_Autonomous extends LinearOpMode {
 
     /* Declare OpMode members. */
-    GFORCE_Hardware robot = new GFORCE_Hardware();
-    GFORCE_Navigation nav = new GFORCE_Navigation();
-    public AutoConfig autoConfig = new AutoConfig();
-    ElapsedTime autoTime = new ElapsedTime();
+    public AutoConfig   autoConfig    = new AutoConfig();
+    GFORCE_Hardware     robot         = new GFORCE_Hardware();
+    GFORCE_Navigation   nav           = new GFORCE_Navigation();
 
     @Override
     public void runOpMode() {
 
         boolean driveOK;
 
-        /* Initialize the hardware variables.
-         * The init() method of the hardware class does all the work here
-         */
-        robot.init(this, false);
-        // nav.init(this,robot);
+        // Initialize the hardware variables.
         autoConfig.init(hardwareMap.appContext,this);
-
-        //robot.homeArm();
+        robot.init(this);
+        // nav.init(this,robot);
 
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData(">", "Press Play to Start");
         telemetry.update();
-
         while (!opModeIsActive() && !isStopRequested()) {
-            // nav.showNavTelemetry(false);
             autoConfig.init_loop(); //Run menu system
         }
 
+        // Get alliance color from Menu
         if (autoConfig.autoOptions.redAlliance) {
             robot.allianceColor = GFORCE_Hardware.AllianceColor.RED;
         } else {
             robot.allianceColor = GFORCE_Hardware.AllianceColor.BLUE;
         }
+
         //Starting autonomous reset heading to zero
         robot.resetHeading();
 
-        /*
-        //nav.findTarget(0,0.2,0,0,10);
-        robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-        sleep(2000);
-        robot.setSkystoneGrabber(SkystoneGrabberPositions.READY);
-        sleep(2000);
-        robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
-        sleep(2000);
-        robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_UP);
-        sleep(2000);
-        robot.setSkystoneGrabber(SkystoneGrabberPositions.FOUNDATION_READY);
-        sleep(2000);
-        robot.setSkystoneGrabber(SkystoneGrabberPositions.FOUNDATION_RELEASE);
-        */
-
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
         robot.driveLateral(18,0,-50,20,true);
-        robot.driveLateral(12,0,-25,20,true);
+        robot.driveLateral(12,0,-15,20,true);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
-        sleep(1000);
-        robot.driveLateral(12,0,15,20,true);
-        robot.driveAxial(36,0,-50,20,true);
+        robot.sleepAndHoldHeading(0, 1);
+        robot.driveLateral(12,0,25,20,true);
+        robot.driveAxial(34,0,-50,20,true);  // 6" shorter than actual move ??
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-        sleep(1000);
-        robot.driveAxial(60,0,50,20,true);
-        sleep(2000);
-        robot.driveLateral(12,0,-25,20,true);
+        robot.sleepAndHoldHeading(0, 1);
+        robot.driveAxial(64,0,50,20,true);
+        robot.sleepAndHoldHeading(0, 1);
+        robot.driveLateral(12,0,-15,20,true);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
-        sleep(1000);
-        robot.driveLateral(12,0,15,20,true);
-        robot.driveAxial(60,0,-50,20,true);
+        robot.sleepAndHoldHeading(0, 1);
+        robot.driveLateral(12,0,25,20,true);
+        robot.driveAxial(64,0,-50,20,true);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-        robot.driveAxial(12,0,50,20,true);
-
+        robot.driveAxial(6,0,50,20,true);
+        robot.sleepAndHoldHeading(0, 1);
         robot.showEncoders();
 
         while(opModeIsActive()) {
 
-    }
-
-        /*
-        //Drive straight 24 inches
-        robot.driveAxial(67,0,-0.8,15);
-        robot.driveLateral(70,0,0.8,15);
-        robot.driveAxial(79,0,0.8,15);
-        robot.driveLateral(70,0,-0.8,15);
-        while(opModeIsActive()) {
-
         }
-        */
     }
-
 }

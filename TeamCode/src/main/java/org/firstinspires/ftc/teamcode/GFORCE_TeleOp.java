@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.RobotLog;
 
 
 /**
@@ -69,7 +68,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
          */
-        robot.init(this, true);
+        robot.init(this);
 
         //robot.homeArm();
 
@@ -96,8 +95,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             strafe = gamepad1.left_stick_x;
 
-            forwardBack *= robot.AXIAL_SCALE;
-            rotate *= robot.YAW_SCALE;
+            forwardBack *= robot.AXIAL_JS_SCALE;
+            rotate *= robot.YAW_JS_SCALE;
 
             if (gamepad1.y || gamepad1.dpad_up) {
                 forwardBack = 0.35;

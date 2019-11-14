@@ -86,37 +86,36 @@ public class GFORCE_Hardware {
 
     public static BNO055IMU imu = null;
 
-    public static final double MAX_VELOCITY = 2500;  // Counts per second
-    public static final double YAW_GAIN = 0.010;  // Rate at which we respond to heading error 0.013
-    public static final double LATERAL_GAIN = 0.0025; // Distance from x axis that we start to slow down. 0027
-    public static final double AXIAL_GAIN = 0.0015; // Distance from target that we start to slow down. 0017
+    public final double MAX_VELOCITY        = 2500;  // Counts per second
+    public final double MAX_VELOCITY_IPS    = 100;   // Inches Per Second
+    public final double ACCELERATION_LIMIT  = 60;    // Inches per second per second  was 75
+
+    public final double YAW_GAIN            = 0.010;  // Rate at which we respond to heading error 0.013
+    public final double LATERAL_GAIN        = 0.0025; // Distance from x axis that we start to slow down. 0027
+    public final double AXIAL_GAIN          = 0.0015; // Distance from target that we start to slow down. 0017
 
     // Driving constants Yaw heading
-    private final double HEADING_GAIN = 0.012;  // Was 0.02
-    private final double TURN_RATE_TC = 0.6;
-    private final double STOP_TURNRATE = 20;
-    private final double GYRO_360_READING = 360.0;
-    private final double GYRO_SCALE_FACTOR = 360.0 / GYRO_360_READING;
-    private final double ACCELERATION_LIMIT = 75; //Inches per second per second
-    private final double NUDGE_FACTOR = 20; //Inches per second per second
-    private final double BREAK_SPEED = -1;
+    final double HEADING_GAIN       = 0.012;  // Was 0.02
+    final double TURN_RATE_TC       = 0.6;
+    final double STOP_TURNRATE      = 20;
+    final double GYRO_360_READING   = 360.0;
+    final double GYRO_SCALE_FACTOR  = 360.0 / GYRO_360_READING;
 
     final double YAW_IS_CLOSE = 2.0;  // angle within which we are "close"
 
-    final double AXIAL_SCALE = 1;
-    final double YAW_SCALE = 0.5;
+    final double AXIAL_JS_SCALE = 1;
+    final double YAW_JS_SCALE = 0.5;
 
-    final double COUNTSPERDEGREE = 6.11;
     final double AXIAL_ENCODER_COUNTS_PER_INCH = 21.85; // Was 23.2
     final double LATERAL_ENCODER_COUNTS_PER_INCH = 23.2;
 
     private static LinearOpMode myOpMode = null;
-    private boolean runningAuto = false;
 
     private double driveAxial = 0;
     private double driveYaw = 0;
     private double driveLateral = 0;
 
+    private double startTime = 0;
     private double startLeftBack = 0;
     private double startLeftFront = 0;
     private double startRightBack = 0;
@@ -126,15 +125,8 @@ public class GFORCE_Hardware {
     private double deltaRightBack = 0;
     private double deltaRightFront = 0;
 
-    private double startTime = 0;
-    private double rampDistance = 0;
-    private double tGoal = 0;
     public double axialMotion = 0;
     public double lateralMotion = 0;
-
-
-    private static double targetArmAngle = 0;
-    private static double currentArmAngle = 85;
 
     // gyro
     private double lastHeading = 0;
@@ -150,7 +142,6 @@ public class GFORCE_Hardware {
 
 
     /* local OpMode members. */
-
     private ElapsedTime runTime = new ElapsedTime();
     private ElapsedTime gyroTime = new ElapsedTime();
     private ElapsedTime navTime = new ElapsedTime();
@@ -161,10 +152,9 @@ public class GFORCE_Hardware {
     }
 
     /* Initialize standard Hardware interfaces */
-    public void init(LinearOpMode opMode, boolean pleaseResetEncoders) {
+    public void init(LinearOpMode opMode) {
         // Save reference to Hardware map
         myOpMode = opMode;
-        runningAuto = pleaseResetEncoders;
 
         // Define and Initialize Motors
         leftFrontDrive = configureMotor("left_front_drive", DcMotor.Direction.REVERSE);
@@ -172,6 +162,8 @@ public class GFORCE_Hardware {
         leftBackDrive = configureMotor("left_back_drive", DcMotor.Direction.REVERSE);
         rightBackDrive = configureMotor("right_back_drive", DcMotor.Direction.FORWARD);
         //arm = myOpMode.hardwareMap.get(DcMotor.class,"arm");
+
+        resetEncoders();
 
         skystoneGrabLeft = myOpMode.hardwareMap.get(Servo.class, "grab_left");
         skystoneLiftLeft = myOpMode.hardwareMap.get(Servo.class, "lift_left");
@@ -193,11 +185,6 @@ public class GFORCE_Hardware {
             imu.initialize(parameters);
         }
 
-        // May want to use RUN_USING_ENCODERS if encoders are installed.
-        if (pleaseResetEncoders) {
-            resetEncoders();
-        }
-
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
         //arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -208,12 +195,12 @@ public class GFORCE_Hardware {
 
     // Configure a motor
     public DcMotorEx configureMotor( String name, DcMotor.Direction direction) {
-        PIDFCoefficients newPIDF = new PIDFCoefficients(3.0,  1,   0.0,  12);
+        PIDFCoefficients newPIDF = new PIDFCoefficients(10.0,  3,   0.0,  12);
         DcMotorEx motorObj = myOpMode.hardwareMap.get(DcMotorEx.class, name);
 
         motorObj.setDirection(direction);
         motorObj.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        // motorObj.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, newPIDF);
+        motorObj.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, newPIDF);
         return motorObj;
     }
 
@@ -337,7 +324,7 @@ public class GFORCE_Hardware {
 
         if (absdTraveled < (absdGoal / 2.0)) {
             // We are accelerating, give a little boost
-            profileVelocity = (ACCELERATION_LIMIT * getMotionTime()) + NUDGE_FACTOR ;
+            profileVelocity = (ACCELERATION_LIMIT * getMotionTime()) ;
 
         } else if (absdTraveled < absdGoal ) {
             // We are Decelerating
@@ -366,7 +353,6 @@ public class GFORCE_Hardware {
         deltaRightBack = 0;
         deltaRightFront = 0;
         startTime = runTime.time();
-        rampDistance = 0;
     }
 
     public boolean updateMotion() {
@@ -456,7 +442,7 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("motion","axial %6.1f, lateral %6.1f", getAxialMotion(), getLateralMotion());
         myOpMode.telemetry.addData("front", "%5.1f %5.1f ", deltaLeftFront, deltaRightFront);
         myOpMode.telemetry.addData("back",  "%5.1f %5.1f ", deltaLeftBack, deltaRightBack);
-        myOpMode.telemetry.addData("axis",  "a %5.1f l %5.1f y %5.1f", driveAxial, driveLateral,driveYaw);
+        myOpMode.telemetry.addData("axes",  "A:L:Y %6.0f %6.0f %6.0f", driveAxial, driveLateral,driveYaw);
         myOpMode.telemetry.update();
     }
 
