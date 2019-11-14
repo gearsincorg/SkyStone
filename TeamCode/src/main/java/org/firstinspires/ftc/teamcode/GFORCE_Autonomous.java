@@ -56,7 +56,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
     /* Declare OpMode members. */
     GFORCE_Hardware robot = new GFORCE_Hardware();
     GFORCE_Navigation nav = new GFORCE_Navigation();
-    private AutoConfig autoConfig = new AutoConfig();
+    public AutoConfig autoConfig = new AutoConfig();
     ElapsedTime autoTime = new ElapsedTime();
 
     @Override
@@ -105,13 +105,30 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.setSkystoneGrabber(SkystoneGrabberPositions.FOUNDATION_RELEASE);
         */
 
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
+        robot.driveLateral(18,0,-50,20,true);
+        robot.driveLateral(12,0,-25,20,true);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
+        sleep(1000);
+        robot.driveLateral(12,0,15,20,true);
+        robot.driveAxial(36,0,-50,20,true);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
+        sleep(1000);
+        robot.driveAxial(60,0,50,20,true);
+        sleep(2000);
+        robot.driveLateral(12,0,-25,20,true);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
+        sleep(1000);
+        robot.driveLateral(12,0,15,20,true);
+        robot.driveAxial(60,0,-50,20,true);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
+        robot.driveAxial(12,0,50,20,true);
 
-        robot.driveLateral(50,0,50,20);
         robot.showEncoders();
 
         while(opModeIsActive()) {
 
-        }
+    }
 
         /*
         //Drive straight 24 inches

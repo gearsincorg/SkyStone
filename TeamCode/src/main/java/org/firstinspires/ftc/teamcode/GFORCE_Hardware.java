@@ -98,8 +98,8 @@ public class GFORCE_Hardware {
     private final double GYRO_360_READING = 360.0;
     private final double GYRO_SCALE_FACTOR = 360.0 / GYRO_360_READING;
     private final double ACCELERATION_LIMIT = 75; //Inches per second per second
-    private final double NUDGE_FACTOR = 10; //Inches per second per second
-
+    private final double NUDGE_FACTOR = 20; //Inches per second per second
+    private final double BREAK_SPEED = -1;
 
     final double YAW_IS_CLOSE = 2.0;  // angle within which we are "close"
 
@@ -132,6 +132,7 @@ public class GFORCE_Hardware {
     public double axialMotion = 0;
     public double lateralMotion = 0;
 
+
     private static double targetArmAngle = 0;
     private static double currentArmAngle = 85;
 
@@ -145,8 +146,6 @@ public class GFORCE_Hardware {
     private double headingSetpoint = 0;
     public double robotPitch = 0;
     private int timeoutSoundID = 0;
-    public boolean redSide = false;
-    public boolean scoreBucket = false;
     public String autoPathName = "";
 
 
@@ -229,12 +228,12 @@ public class GFORCE_Hardware {
      * @param timeOutSec
      * @return
      */
-    public boolean driveAxial(double inches, double heading, double vel, double timeOutSec) {
+    public boolean driveAxial(double inches, double heading, double vel, double timeOutSec, boolean hardBreak) {
         double endingTime = runTime.seconds() + timeOutSec;
         double absInches = Math.abs(inches);
 
         //Reverse angles for red autonomous
-        if (redSide) {
+        if (allianceColor == AllianceColor.RED) {
             heading = -heading;
         }
 
@@ -258,6 +257,14 @@ public class GFORCE_Hardware {
         }
         stopRobot();
 
+        if (hardBreak) {
+            setAxialVelocity(-vel);
+            myOpMode.sleep(100);
+        }
+
+        stopRobot();
+
+
         // Return true if we have not timed out
         return (runTime.seconds() < endingTime);
     }
@@ -271,7 +278,7 @@ public class GFORCE_Hardware {
      * @param timeOutSec
      * @return
      */
-    public boolean driveLateral(double inches, double heading, double vel, double timeOutSec) {
+    public boolean driveLateral(double inches, double heading, double vel, double timeOutSec, boolean hardBreak) {
 
         double endingTime = runTime.seconds() + timeOutSec;
         double absInches = Math.abs(inches);
@@ -281,7 +288,7 @@ public class GFORCE_Hardware {
         }
 
         //Reverse angles for red autonomous
-        if (redSide) {
+        if (allianceColor == AllianceColor.RED) {
             heading = -heading;
             vel = -vel;
         }
@@ -300,6 +307,13 @@ public class GFORCE_Hardware {
             moveRobotVelocity();
             showEncoders();
         }
+        stopRobot();
+
+        if (hardBreak) {
+            setLateralVelocity(-vel);
+            myOpMode.sleep(100);
+        }
+
         stopRobot();
 
         // Return true if we have not timed out
@@ -386,7 +400,7 @@ public class GFORCE_Hardware {
     public boolean turnToHeading(double heading, double timeOutSEC) {
         // Flip translation and rotations if we are RED
         //Reverse angles for red autonomous
-        if (redSide) {
+        if (allianceColor == AllianceColor.RED) {
             heading = -heading;
         }
 
@@ -408,7 +422,7 @@ public class GFORCE_Hardware {
     public boolean sleepAndHoldHeading(double heading, double timeOutSEC) {
         // Flip translation and rotations if we are RED
         //Reverse angles for red autonomous
-        if (redSide) {
+        if (allianceColor == AllianceColor.RED) {
             heading = -heading;
         }
 
@@ -442,6 +456,7 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("motion","axial %6.1f, lateral %6.1f", getAxialMotion(), getLateralMotion());
         myOpMode.telemetry.addData("front", "%5.1f %5.1f ", deltaLeftFront, deltaRightFront);
         myOpMode.telemetry.addData("back",  "%5.1f %5.1f ", deltaLeftBack, deltaRightBack);
+        myOpMode.telemetry.addData("axis",  "a %5.1f l %5.1f y %5.1f", driveAxial, driveLateral,driveYaw);
         myOpMode.telemetry.update();
     }
 
