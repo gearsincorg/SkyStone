@@ -182,7 +182,7 @@ public class AutoConfig
 
   public void updateMenu ()
   {
-      opMode.telemetry.addData((currentMenuIndex == 0) ? "0 > Alliance"   : "0   Alliance", autoOptions.redAlliance ? "Blue" : "Red");
+      opMode.telemetry.addData((currentMenuIndex == 0) ? "0 > Alliance"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "Blue");
       opMode.telemetry.addData((currentMenuIndex == 1) ? "1 > Delay"   : "1   Delay", autoOptions.delayInSec);
       opMode.telemetry.addData((currentMenuIndex == 2) ? "2 > Run Auto"   : "2   Run Auto", autoOptions.disabled ? "no" : "YES");
       opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > Foundation"   : "3   Foundation", autoOptions.foundation ? "YES" : "no");
