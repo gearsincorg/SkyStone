@@ -31,6 +31,8 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 
 /**
@@ -47,10 +49,14 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-
-
 @TeleOp(name="G-FORCE Teleop", group="!Steve")
 public class GFORCE_TeleOp extends LinearOpMode {
+
+    public final double AXIAL_JS_SCALE      = 1;
+    public final double LATERAL_JS_SCALE    = 1;
+    public final double YAW_JS_SCALE        = 0.5;
+
+    private ElapsedTime neutralTime = new ElapsedTime();
 
     /* Declare OpMode members. */
     GFORCE_Hardware robot = new GFORCE_Hardware();   // Use steve hardware
@@ -59,11 +65,17 @@ public class GFORCE_TeleOp extends LinearOpMode {
     public void runOpMode() {
         double forwardBack;
         double rotate;
-        double strafe;
+        double rightLeft;
 
-        double axial;
-        double yaw;
-        double lateral;
+        double axialVel;
+        double yawVel;
+        double lateralVel;
+
+        double desiredHeading = 0;
+        double currentHeading = 0;
+
+        boolean neutralSticks = true;
+        boolean autoHeadingOn = false;
 
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
@@ -89,14 +101,15 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             forwardBack = -gamepad1.left_stick_y;
             forwardBack = forwardBack * forwardBack * Math.signum(forwardBack);
+            forwardBack *= AXIAL_JS_SCALE;
+
+            rightLeft = gamepad1.left_stick_x;
+            rightLeft = rightLeft * rightLeft * Math.signum(rightLeft);
+            rightLeft = gamepad1.left_stick_x * LATERAL_JS_SCALE;
 
             rotate = -gamepad1.right_stick_x;
             rotate = rotate * rotate * Math.signum(rotate);
-
-            strafe = gamepad1.left_stick_x;
-
-            forwardBack *= robot.AXIAL_JS_SCALE;
-            rotate *= robot.YAW_JS_SCALE;
+            rotate *= YAW_JS_SCALE;
 
             if (gamepad1.y || gamepad1.dpad_up) {
                 forwardBack = 0.35;
@@ -109,18 +122,53 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 rotate = -0.25;
             }
 
-            axial = forwardBack;
-            yaw = rotate;
-            lateral = strafe;
+            // Convert to axis velocities
+            axialVel   = forwardBack * robot.MAX_VELOCITY_IPS;
+            lateralVel = rightLeft * robot.MAX_VELOCITY_IPS;
+            yawVel     = rotate * robot.MAX_ROTATION_DPS;
 
-            robot.moveRobot(axial, yaw, lateral);
+            //-------------------------
+            // Determine Robot Centric motion (based on gyro heading)
+            // axial = (forwardBack * Math.cos(Math.toRadians(currentHeading))) -
+            //         (rightLeft * Math.sin(Math.toRadians(currentHeading)));
+            // lateral = (forwardBack * Math.sin(Math.toRadians(currentHeading))) +
+            //         (rightLeft * Math.cos(Math.toRadians(currentHeading)));
+
+            //determine desired Yaw rate
+            currentHeading = robot.getHeading();
+
+            neutralSticks = ((forwardBack == 0) &&
+                    (rightLeft == 0) &&
+                    (rotate == 0)
+            );
+
+            if (rotate != 0) {
+                // We are turning with joystick.
+                autoHeadingOn = false;
+            } else if (!autoHeadingOn && robot.notTurning()) {
+                // We have just stopped turning, so lock in current heading
+                desiredHeading = currentHeading;
+                autoHeadingOn = true;
+            }
+
+            // Control Yaw, using manual or auto correction
+            // disable correction if JS are neutral for more than 2 seconds
+            if (!neutralSticks)
+                neutralTime.reset();
+
+            robot.setAxialVelocity(axialVel);
+            robot.setLateralVelocity(lateralVel);
+
+            if (autoHeadingOn && (neutralTime.time() < 2.0)) {
+                robot.setYawVelocityToHoldHeading(desiredHeading);
+            } else {
+                robot.setYawVelocityToHoldHeading(yawVel);
+            }
+            robot.moveRobotVelocity();
 
             // Send telemetry message to signify robot running;
             robot.updateMotion();
             robot.showEncoders();
-
-            // Pace this loop so jaw action is reasonable speed.
-            sleep(50);
         }
     }
 

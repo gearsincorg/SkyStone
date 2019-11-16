@@ -41,6 +41,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
@@ -88,6 +89,8 @@ public class GFORCE_Hardware {
 
     public final double MAX_VELOCITY        = 2500;  // Counts per second
     public final double MAX_VELOCITY_IPS    = 100;   // Inches Per Second
+    public final double MAX_ROTATION_DPS    = 100;   // Degrees per second
+    public final double AUTO_ROTATION_DPS   = 100;   // Degrees per second
     public final double ACCELERATION_LIMIT  = 60;    // Inches per second per second  was 75
 
     public final double YAW_GAIN            = 0.010;  // Rate at which we respond to heading error 0.013
@@ -102,9 +105,6 @@ public class GFORCE_Hardware {
     final double GYRO_SCALE_FACTOR  = 360.0 / GYRO_360_READING;
 
     final double YAW_IS_CLOSE = 2.0;  // angle within which we are "close"
-
-    final double AXIAL_JS_SCALE = 1;
-    final double YAW_JS_SCALE = 0.5;
 
     final double AXIAL_ENCODER_COUNTS_PER_INCH = 21.85; // Was 23.2
     final double LATERAL_ENCODER_COUNTS_PER_INCH = 23.2;
@@ -172,7 +172,7 @@ public class GFORCE_Hardware {
         setLeftSkystoneGrabber(SkystoneGrabberPositions.START);
         setRightSkystoneGrabber(SkystoneGrabberPositions.START);
 
-        timeoutSoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("squeek", "raw", myOpMode.hardwareMap.appContext.getPackageName());
+        timeoutSoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("ss_siren", "raw", myOpMode.hardwareMap.appContext.getPackageName());
         if (timeoutSoundID != 0) {
             SoundPlayer.getInstance().preload(myOpMode.hardwareMap.appContext, timeoutSoundID);
         }
@@ -205,7 +205,6 @@ public class GFORCE_Hardware {
     }
 
     // Autonomous driving methods
-
     /**
      * Drive a set distance at a set heading at a set speed until the timeout occurs
      *
@@ -215,7 +214,7 @@ public class GFORCE_Hardware {
      * @param timeOutSec
      * @return
      */
-    public boolean driveAxial(double inches, double heading, double vel, double timeOutSec, boolean hardBreak) {
+    public boolean driveAxialVelocity(double inches, double heading, double vel, double timeOutSec, boolean hardBreak) {
         double endingTime = runTime.seconds() + timeOutSec;
         double absInches = Math.abs(inches);
 
@@ -265,7 +264,7 @@ public class GFORCE_Hardware {
      * @param timeOutSec
      * @return
      */
-    public boolean driveLateral(double inches, double heading, double vel, double timeOutSec, boolean hardBreak) {
+    public boolean driveLateralVelocity(double inches, double heading, double vel, double timeOutSec, boolean hardBreak) {
 
         double endingTime = runTime.seconds() + timeOutSec;
         double absInches = Math.abs(inches);
@@ -384,47 +383,43 @@ public class GFORCE_Hardware {
 
     // turn with both wheels
     public boolean turnToHeading(double heading, double timeOutSEC) {
-        // Flip translation and rotations if we are RED
-        //Reverse angles for red autonomous
-        if (allianceColor == AllianceColor.RED) {
-            heading = -heading;
-        }
-
-        setHeadingSetpoint(heading);
-        navTime.reset();
-        setAxial(0);
-        while (myOpMode.opModeIsActive() &&
-                (navTime.time() < timeOutSEC) &&
-                !setYawToHoldHeading()) {
-            moveRobot();
-        }
-        if (navTime.time() > timeOutSEC) {
-            playTimoutSound();
-        }
-        stopRobot();
-        return (navTime.time() < timeOutSEC);
+        return generalRotationControl(heading, timeOutSEC, false);
     }
 
     public boolean sleepAndHoldHeading(double heading, double timeOutSEC) {
-        // Flip translation and rotations if we are RED
+        return generalRotationControl(heading, timeOutSEC, true);
+    }
+
+
+    public boolean generalRotationControl(double heading, double timeOutSEC, boolean waitFullTimeout) {
+        boolean inPosition = false;  // needed to run at least one control cycle.
+        boolean timedOut = false;
+
+        // Flip rotations if we are RED
         //Reverse angles for red autonomous
         if (allianceColor == AllianceColor.RED) {
             heading = -heading;
         }
 
         setHeadingSetpoint(heading);
+        setAxialVelocity(0);
+        setLateralVelocity(0);
         navTime.reset();
-        setAxial(0);
+
         while (myOpMode.opModeIsActive() &&
-                (navTime.time() < timeOutSEC)) {
-            setYawToHoldHeading();
-            moveRobot();
-        }
-        if (navTime.time() > timeOutSEC) {
-            playTimoutSound();
+                (navTime.time() < timeOutSEC) &&
+                (!inPosition || waitFullTimeout)) {
+            inPosition = setYawVelocityToHoldHeading(heading);
+            moveRobotVelocity();
         }
         stopRobot();
-        return (navTime.time() < timeOutSEC);
+
+        if (!waitFullTimeout && (navTime.time() > timeOutSEC)) {
+            timedOut = true;
+            playTimoutSound();
+        }
+
+        return (!timedOut);
     }
 
     public void playTimoutSound() {
@@ -443,6 +438,7 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("front", "%5.1f %5.1f ", deltaLeftFront, deltaRightFront);
         myOpMode.telemetry.addData("back",  "%5.1f %5.1f ", deltaLeftBack, deltaRightBack);
         myOpMode.telemetry.addData("axes",  "A:L:Y %6.0f %6.0f %6.0f", driveAxial, driveLateral,driveYaw);
+        myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalGyroMs);
         myOpMode.telemetry.update();
     }
 
@@ -485,26 +481,11 @@ public class GFORCE_Hardware {
             lastGyroMs = timeMs;
         }
         adjustedIntegratedZAxis = integratedZAxis * GYRO_SCALE_FACTOR;
-        myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalGyroMs);
         return (adjustedIntegratedZAxis);
     }
 
     public void setHeadingSetpoint(double newSetpoint) {
         headingSetpoint = newSetpoint;
-    }
-
-    public boolean setYawToHoldHeading(double newSetpoint) {
-
-        setHeadingSetpoint(newSetpoint);
-        return (setYawToHoldHeading());
-    }
-
-    public boolean setYawToHoldHeading() {
-        double error = normalizeHeading(headingSetpoint - getHeading());
-        double yaw = Range.clip(error * HEADING_GAIN, -1.0, 1.0);
-
-        setYaw(yaw);
-        return (Math.abs(error) < YAW_IS_CLOSE);
     }
 
     public boolean setYawVelocityToHoldHeading(double newSetpoint) {
@@ -517,7 +498,7 @@ public class GFORCE_Hardware {
         double error = normalizeHeading(headingSetpoint - getHeading());
         double yaw = Range.clip(error * HEADING_GAIN, -1.0, 1.0);
 
-        setYawVelocity(yaw * 100);
+        setYawVelocity(yaw * AUTO_ROTATION_DPS);
         return (Math.abs(error) < YAW_IS_CLOSE);
     }
 
@@ -544,6 +525,20 @@ public class GFORCE_Hardware {
         return heading;
     }
 
+    public boolean notTurning() {
+
+        AngularVelocity velocities;
+        velocities = imu.getAngularVelocity();
+        double rate = velocities.xRotationRate;
+
+        filteredTurnRate += ((rate - filteredTurnRate) * TURN_RATE_TC);
+        return (Math.abs(filteredTurnRate) < STOP_TURNRATE);
+    }
+
+
+    /*
+     * Temporarity comment out non-velocity code.
+     * Eliminate this completely once not needed.
     // Robot movement using +/- 1.0 Range
     public void moveRobot(double axial, double yaw, double lateral) {
         setAxial(axial);
@@ -589,6 +584,23 @@ public class GFORCE_Hardware {
 
         //myOpMode.telemetry.addData("Arm position", arm.getCurrentPosition());
     }
+
+    public boolean setYawToHoldHeading(double newSetpoint) {
+
+        setHeadingSetpoint(newSetpoint);
+        return (setYawToHoldHeading());
+    }
+
+
+    public boolean setYawToHoldHeading() {
+        double error = normalizeHeading(headingSetpoint - getHeading());
+        double yaw = Range.clip(error * HEADING_GAIN, -1.0, 1.0);
+
+        setYaw(yaw);
+        return (Math.abs(error) < YAW_IS_CLOSE);
+    }
+
+     */
 
 
     // Robot movement using +/- MAX_VELOCITY
@@ -641,11 +653,9 @@ public class GFORCE_Hardware {
 
     }
 
-
     public void stopRobot() {
-        moveRobot(0, 0, 0);
+        moveRobotVelocity(0, 0, 0);
     }
-
 
     // Actuator Methods
     private final double GRAB_LEFT_SAFE = 0;

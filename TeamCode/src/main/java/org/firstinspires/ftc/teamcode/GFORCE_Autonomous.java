@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 /**
@@ -86,23 +85,23 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.resetHeading();
 
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-        robot.driveLateral(18,0,-50,20,true);
-        robot.driveLateral(12,0,-15,20,true);
+        robot.driveLateralVelocity(18,0,-50,20,true);
+        robot.driveLateralVelocity(12,0,-15,20,true);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
         robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateral(12,0,25,20,true);
-        robot.driveAxial(34,0,-50,20,true);  // 6" shorter than actual move ??
+        robot.driveLateralVelocity(12,0,25,20,true);
+        robot.driveAxialVelocity(34,0,-50,20,true);  // 6" shorter than actual move ??
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
         robot.sleepAndHoldHeading(0, 1);
-        robot.driveAxial(64,0,50,20,true);
+        robot.driveAxialVelocity(64,0,50,20,true);
         robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateral(12,0,-15,20,true);
+        robot.driveLateralVelocity(12,0,-15,20,true);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
         robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateral(12,0,25,20,true);
-        robot.driveAxial(64,0,-50,20,true);
+        robot.driveLateralVelocity(12,0,25,20,true);
+        robot.driveAxialVelocity(64,0,-50,20,true);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-        robot.driveAxial(6,0,50,20,true);
+        robot.driveAxialVelocity(6,0,50,20,true);
         robot.sleepAndHoldHeading(0, 1);
         robot.showEncoders();
 
