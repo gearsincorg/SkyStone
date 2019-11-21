@@ -65,12 +65,15 @@ public class GFORCE_Autonomous extends LinearOpMode {
         // Initialize the hardware variables.
         autoConfig.init(hardwareMap.appContext,this);
         robot.init(this);
-        // nav.init(this,robot);
+        nav.init(this,robot);
 
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData(">", "Press Play to Start");
         telemetry.update();
         while (!opModeIsActive() && !isStopRequested()) {
+            if(nav.targetIsVisible(0))   {
+                nav.addNavTelemetry();
+            }
             autoConfig.init_loop(); //Run menu system
         }
 
