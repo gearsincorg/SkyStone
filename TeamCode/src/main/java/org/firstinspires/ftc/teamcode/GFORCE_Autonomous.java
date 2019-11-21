@@ -85,20 +85,20 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.resetHeading();
 
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-        robot.driveLateralVelocity(18,0,-50,20,true);
-        robot.driveLateralVelocity(12,0,-15,20,true);
+        robot.driveLateralVelocity(18,0,50,20,true);
+        robot.driveLateralVelocity(12,0,15,20,true);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
         robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateralVelocity(12,0,25,20,true);
+        robot.driveLateralVelocity(12,0,-25,20,true);
         robot.driveAxialVelocity(34,0,-50,20,true);  // 6" shorter than actual move ??
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
         robot.sleepAndHoldHeading(0, 1);
         robot.driveAxialVelocity(64,0,50,20,true);
         robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateralVelocity(12,0,-15,20,true);
+        robot.driveLateralVelocity(12,0,15.5,20,true);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
         robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateralVelocity(12,0,25,20,true);
+        robot.driveLateralVelocity(12,0,-25,20,true);
         robot.driveAxialVelocity(64,0,-50,20,true);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
         robot.driveAxialVelocity(6,0,50,20,true);

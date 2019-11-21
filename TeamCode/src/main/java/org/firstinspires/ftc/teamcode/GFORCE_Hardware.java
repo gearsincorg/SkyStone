@@ -78,10 +78,10 @@ public class GFORCE_Hardware {
     public DcMotorEx rightBackDrive = null;
     public DcMotorEx arm = null;
 
-    public Servo skystoneGrabLeft = null;
-    public Servo skystoneLiftLeft = null;
-    public Servo skystoneGrabRight = null;
-    public Servo skystoneLiftRight = null;
+    public Servo skystoneGrabRed = null;
+    public Servo skystoneLiftRed = null;
+    public Servo skystoneGrabBlue = null;
+    public Servo skystoneLiftBlue = null;
     public Servo stoneGrab = null;
     public Servo stoneRotate = null;
 
@@ -165,12 +165,10 @@ public class GFORCE_Hardware {
 
         resetEncoders();
 
-        skystoneGrabLeft = myOpMode.hardwareMap.get(Servo.class, "grab_left");
-        skystoneLiftLeft = myOpMode.hardwareMap.get(Servo.class, "lift_left");
-        skystoneGrabRight = myOpMode.hardwareMap.get(Servo.class, "grab_right");
-        skystoneLiftRight = myOpMode.hardwareMap.get(Servo.class, "lift_right");
-        setLeftSkystoneGrabber(SkystoneGrabberPositions.START);
-        setRightSkystoneGrabber(SkystoneGrabberPositions.START);
+        skystoneLiftRed = myOpMode.hardwareMap.get(Servo.class, "lift_red");
+        skystoneLiftBlue = myOpMode.hardwareMap.get(Servo.class, "lift_blue");
+        setRedSkystoneGrabber(SkystoneGrabberPositions.START);
+        setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
 
         timeoutSoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("ss_siren", "raw", myOpMode.hardwareMap.appContext.getPackageName());
         if (timeoutSoundID != 0) {
@@ -219,7 +217,7 @@ public class GFORCE_Hardware {
         double absInches = Math.abs(inches);
 
         //Reverse angles for red autonomous
-        if (allianceColor == AllianceColor.RED) {
+        if (allianceColor == AllianceColor.BLUE) {
             heading = -heading;
         }
 
@@ -274,7 +272,7 @@ public class GFORCE_Hardware {
         }
 
         //Reverse angles for red autonomous
-        if (allianceColor == AllianceColor.RED) {
+        if (allianceColor == AllianceColor.BLUE) {
             heading = -heading;
             vel = -vel;
         }
@@ -397,7 +395,7 @@ public class GFORCE_Hardware {
 
         // Flip rotations if we are RED
         //Reverse angles for red autonomous
-        if (allianceColor == AllianceColor.RED) {
+        if (allianceColor == AllianceColor.BLUE) {
             heading = -heading;
         }
 
@@ -659,90 +657,45 @@ public class GFORCE_Hardware {
 
     // Actuator Methods
     private final double GRAB_LEFT_SAFE = 0;
-    private final double GRAB_LEFT_READY = 0.5;
     private final double GRAB_LEFT_CLOSE = 1;
 
-    private final double LIFT_LEFT_SAFE = 0;
-    private final double LIFT_LEFT_CARRY = 0.25;
-    private final double LIFT_LEFT_FOUNDATION = 0.5;
-    private final double LIFT_LEFT_READY = 1;
+    private final double LIFT_RED_SAFE = 0;
+    private final double LIFT_RED_READY = 0.58;
 
-    public void setLeftSkystoneGrabber(SkystoneGrabberPositions position) {
+    public void setRedSkystoneGrabber(SkystoneGrabberPositions position) {
 
         switch (position) {
             case START:
-                skystoneGrabLeft.setPosition(GRAB_LEFT_SAFE);
-                skystoneLiftLeft.setPosition(LIFT_LEFT_SAFE);
-                break;
-
-            case READY:
-                skystoneGrabLeft.setPosition(GRAB_LEFT_READY);
-                skystoneLiftLeft.setPosition(GRAB_LEFT_READY);
+                //skystoneGrabRed.setPosition(GRAB_LEFT_SAFE);
+                skystoneLiftRed.setPosition(LIFT_RED_SAFE);
                 break;
 
             case GRAB_DOWN:
-                skystoneGrabLeft.setPosition(GRAB_LEFT_CLOSE);
-                skystoneLiftLeft.setPosition(LIFT_LEFT_READY);
-                break;
-
-            case GRAB_UP:
-                skystoneGrabLeft.setPosition(GRAB_LEFT_CLOSE);
-                skystoneLiftLeft.setPosition(LIFT_LEFT_CARRY);
-                break;
-
-            case FOUNDATION_READY:
-                skystoneGrabLeft.setPosition(GRAB_LEFT_CLOSE);
-                skystoneLiftLeft.setPosition(LIFT_LEFT_FOUNDATION);
-                break;
-
-            case FOUNDATION_RELEASE:
-                skystoneGrabLeft.setPosition(GRAB_LEFT_SAFE);
-                skystoneLiftLeft.setPosition(LIFT_LEFT_FOUNDATION);
+                //skystoneGrabRed.setPosition(GRAB_LEFT_CLOSE);
+                skystoneLiftRed.setPosition(LIFT_RED_READY);
                 break;
         }
     }
 
     private final double GRAB_RIGHT_SAFE = 0.55;
-    private final double GRAB_RIGHT_READY = 0.55;
     private final double GRAB_RIGHT_CLOSE = 1;
 
-    private final double LIFT_RIGHT_SAFE = 0.0;
-    private final double LIFT_RIGHT_CARRY = 0.2;
-    private final double LIFT_RIGHT_FOUNDATION = 0.4;
-    private final double LIFT_RIGHT_READY = 0.5;
+    private final double LIFT_BLUE_SAFE = 1;
+    private final double LIFT_BLUE_READY = 0.41;
 
 
-    public void setRightSkystoneGrabber(SkystoneGrabberPositions position) {
+    public void setBlueSkystoneGrabber(SkystoneGrabberPositions position) {
 
         switch (position) {
             case START:
-                skystoneGrabRight.setPosition(GRAB_RIGHT_SAFE);
-                skystoneLiftRight.setPosition(LIFT_RIGHT_SAFE);
+                //skystoneGrabBlue.setPosition(GRAB_RIGHT_SAFE);
+                skystoneLiftBlue.setPosition(LIFT_BLUE_SAFE);
                 break;
 
-            case READY:
-                skystoneGrabRight.setPosition(GRAB_RIGHT_READY);
-                skystoneLiftRight.setPosition(LIFT_RIGHT_READY);
-                break;
 
             case GRAB_DOWN:
-                skystoneGrabRight.setPosition(GRAB_RIGHT_CLOSE);
-                skystoneLiftRight.setPosition(LIFT_RIGHT_READY);
-                break;
-
-            case GRAB_UP:
-                skystoneGrabRight.setPosition(GRAB_RIGHT_CLOSE);
-                skystoneLiftRight.setPosition(LIFT_RIGHT_CARRY);
-                break;
-
-            case FOUNDATION_READY:
-                skystoneGrabRight.setPosition(GRAB_RIGHT_CLOSE);
-                skystoneLiftRight.setPosition(LIFT_RIGHT_FOUNDATION);
-                break;
-
-            case FOUNDATION_RELEASE:
-                skystoneGrabRight.setPosition(GRAB_RIGHT_SAFE);
-                skystoneLiftRight.setPosition(LIFT_RIGHT_FOUNDATION);
+                //skystoneGrabBlue.setPosition(GRAB_RIGHT_CLOSE);
+                skystoneLiftBlue.setPosition(LIFT_BLUE_READY);
                 break;
         }
     }
@@ -752,12 +705,12 @@ public class GFORCE_Hardware {
             case UNKNOWN_COLOR:
                 break;
 
-            case RED:
-                setRightSkystoneGrabber(position);
+            case BLUE:
+                setBlueSkystoneGrabber(position);
                 break;
 
-            case BLUE:
-                setLeftSkystoneGrabber(position);
+            case RED:
+                setRedSkystoneGrabber(position);
                 break;
         }
 

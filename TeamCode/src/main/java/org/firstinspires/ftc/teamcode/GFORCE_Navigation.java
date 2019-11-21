@@ -175,11 +175,11 @@ public class GFORCE_Navigation
         else
         {
             // Drive slowly forward
-            myRobot.setAxial(axialDrift);
-            myRobot.setLateral(0);
-            myRobot.setYaw(0);
+            myRobot.setAxialVelocity(axialDrift);
+            myRobot.setLateralVelocity(0);
+            myRobot.setYawVelocity(0);
         }
-        myRobot.moveRobot();
+        myRobot.moveRobotVelocity();
         return closeEnough;
     }
 
@@ -203,10 +203,10 @@ public class GFORCE_Navigation
 
         navTime.reset();
         while (myOpMode.opModeIsActive() && !targetLock && (navTime.time() <  timeOutSEC)){
-            myRobot.setAxial(axial);
-            myRobot.setLateral(lateral);
-            myRobot.setYawToHoldHeading(heading);
-            myRobot.moveRobot();
+            myRobot.setAxialVelocity(axial);
+            myRobot.setLateralVelocity(lateral);
+            myRobot.setYawVelocityToHoldHeading();
+            myRobot.moveRobotVelocity();
 
             if (targetIsVisible(targetID)) {
                 targetLock = (Math.abs(robotY) < NEAR_CENTER);
@@ -411,10 +411,10 @@ public class GFORCE_Navigation
 
         navTime.reset();
         while (myOpMode.opModeIsActive() && (navTime.time() <  timeOutSEC)){
-            myRobot.setAxial(axial);
-            myRobot.setLateral(lateral);
-            myRobot.setYawToHoldHeading(heading);
-            myRobot.moveRobot();
+            myRobot.setAxialVelocity(axial);
+            myRobot.setLateralVelocity(lateral);
+            myRobot.setYawVelocityToHoldHeading(heading);
+            myRobot.moveRobotVelocity();
 
             myOpMode.telemetry.addData("Path", myRobot.autoPathName);
             myOpMode.telemetry.addData("Blind Move", "A:L:H %5.2f %5.2f %3.0f", axial, lateral, heading);
@@ -450,9 +450,9 @@ public class GFORCE_Navigation
         double A  = (-(robotX + standOffDistance) * myRobot.AXIAL_GAIN);
         double L  =(robotY * myRobot.LATERAL_GAIN);
 
-        myRobot.setYaw(Y);
-        myRobot.setAxial(A);
-        myRobot.setLateral(L);
+        myRobot.setYawVelocity(Y);
+        myRobot.setAxialVelocity(A);
+        myRobot.setLateralVelocity(L);
         closeEnough = ( (Math.abs(robotX + standOffDistance) < CLOSE_ENOUGH) &&
                 (Math.abs(robotY) < ON_AXIS));
 
