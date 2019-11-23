@@ -52,9 +52,9 @@ import com.qualcomm.robotcore.util.Range;
 @TeleOp(name="G-FORCE Teleop", group="!Steve")
 public class GFORCE_TeleOp extends LinearOpMode {
 
-    public final double AXIAL_JS_SCALE      = 1;
-    public final double LATERAL_JS_SCALE    = 1;
-    public final double YAW_JS_SCALE        = 0.5;
+    public final double AXIAL_JS_SCALE      = 0.5;
+    public final double LATERAL_JS_SCALE    = 0.5;
+    public final double YAW_JS_SCALE        = 0.25;
 
     private ElapsedTime neutralTime = new ElapsedTime();
 
@@ -100,26 +100,26 @@ public class GFORCE_TeleOp extends LinearOpMode {
             // This way it's also easy to just drive straight, or just turn.
 
             forwardBack = -gamepad1.left_stick_y;
-            forwardBack = forwardBack * forwardBack * Math.signum(forwardBack);
+            // forwardBack = forwardBack * forwardBack * Math.signum(forwardBack);
             forwardBack *= AXIAL_JS_SCALE;
 
             rightLeft = gamepad1.left_stick_x;
-            rightLeft = rightLeft * rightLeft * Math.signum(rightLeft);
-            rightLeft = gamepad1.left_stick_x * LATERAL_JS_SCALE;
+            // rightLeft = rightLeft * rightLeft * Math.signum(rightLeft);
+            rightLeft *= LATERAL_JS_SCALE;
 
             rotate = -gamepad1.right_stick_x;
-            rotate = rotate * rotate * Math.signum(rotate);
+            // rotate = rotate * rotate * Math.signum(rotate);
             rotate *= YAW_JS_SCALE;
 
             if (gamepad1.y || gamepad1.dpad_up) {
-                forwardBack = 0.35;
+                forwardBack = 0.1;
             } else if (gamepad1.a || gamepad1.dpad_down) {
-                forwardBack = -0.35;
+                forwardBack = -0.1;
             } else if (gamepad1.x || gamepad1.dpad_left) {
-                rotate = 0.25;
+                rightLeft = 0.1;
             } else if ( gamepad1.b || gamepad1.dpad_right
             ) {
-                rotate = -0.25;
+                rightLeft = -0.1;
             }
 
             // Convert to axis velocities
@@ -159,11 +159,12 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.setAxialVelocity(axialVel);
             robot.setLateralVelocity(lateralVel);
 
-            if (autoHeadingOn && (neutralTime.time() < 2.0)) {
+            if (autoHeadingOn) {
                 robot.setYawVelocityToHoldHeading(desiredHeading);
             } else {
-                robot.setYawVelocityToHoldHeading(yawVel);
+                robot.setYawVelocity(yawVel);
             }
+
             robot.moveRobotVelocity();
 
             // Send telemetry message to signify robot running;

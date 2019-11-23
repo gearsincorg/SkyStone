@@ -100,7 +100,7 @@ public class GFORCE_Hardware {
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.012;  // Was 0.02
     final double TURN_RATE_TC       = 0.6;
-    final double STOP_TURNRATE      = 20;
+    final double STOP_TURNRATE      = 0.020;
     final double GYRO_360_READING   = 360.0;
     final double GYRO_SCALE_FACTOR  = 360.0 / GYRO_360_READING;
 
@@ -181,6 +181,7 @@ public class GFORCE_Hardware {
             parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
             imu = myOpMode.hardwareMap.get(BNO055IMU.class, "imu");
             imu.initialize(parameters);
+            resetHeading();
         }
 
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -527,9 +528,11 @@ public class GFORCE_Hardware {
 
         AngularVelocity velocities;
         velocities = imu.getAngularVelocity();
-        double rate = velocities.xRotationRate;
+        double rate = velocities.zRotationRate;
 
         filteredTurnRate += ((rate - filteredTurnRate) * TURN_RATE_TC);
+        myOpMode.telemetry.addData("Turn Rate", "%6.3f", filteredTurnRate);
+
         return (Math.abs(filteredTurnRate) < STOP_TURNRATE);
     }
 
