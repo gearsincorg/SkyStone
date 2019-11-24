@@ -116,10 +116,10 @@ public class GFORCE_TeleOp extends LinearOpMode {
             } else if (gamepad1.a || gamepad1.dpad_down) {
                 forwardBack = -0.1;
             } else if (gamepad1.x || gamepad1.dpad_left) {
-                rightLeft = 0.1;
+                rightLeft = -0.1;
             } else if ( gamepad1.b || gamepad1.dpad_right
             ) {
-                rightLeft = -0.1;
+                rightLeft = 0.1;
             }
 
             // Convert to axis velocities

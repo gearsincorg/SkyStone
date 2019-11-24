@@ -57,21 +57,28 @@ public class GFORCE_Autonomous extends LinearOpMode {
     GFORCE_Hardware     robot         = new GFORCE_Hardware();
     GFORCE_Navigation   nav           = new GFORCE_Navigation();
 
+    final double STUD_RANGE = 0.5; //Plus or minus 15 millimeters
+    final double mm_2_in = 1/25.4;
+    final double BLOCK_PUSH_DISTANCE = 0.5;
+    final double BLOCK_CENTER_OFFSET = -55;
+
+    double error;
+
     @Override
     public void runOpMode() {
 
         boolean driveOK;
 
         // Initialize the hardware variables.
-        autoConfig.init(hardwareMap.appContext,this);
+        autoConfig.init(hardwareMap.appContext, this);
         robot.init(this);
-        nav.init(this,robot);
+        nav.init(this, robot);
 
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData(">", "Press Play to Start");
         telemetry.update();
         while (!opModeIsActive() && !isStopRequested()) {
-            if(nav.targetIsVisible(0))   {
+            if (nav.targetIsVisible(0)) {
                 nav.addNavTelemetry();
             }
             autoConfig.init_loop(); //Run menu system
@@ -88,28 +95,53 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.resetHeading();
 
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-        robot.driveLateralVelocity(18,0,50,20,true);
-        robot.driveLateralVelocity(12,0,15,20,true);
-        robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
-        robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateralVelocity(12,0,-25,20,true);
-        robot.driveAxialVelocity(34,0,-50,20,true);  // 6" shorter than actual move ??
-        robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-        robot.sleepAndHoldHeading(0, 1);
-        robot.driveAxialVelocity(64,0,50,20,true);
-        robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateralVelocity(12,0,15.5,20,true);
-        robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
-        robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateralVelocity(12,0,-25,20,true);
-        robot.driveAxialVelocity(64,0,-50,20,true);
-        robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-        robot.driveAxialVelocity(6,0,50,20,true);
-        robot.sleepAndHoldHeading(0, 1);
-        robot.showEncoders();
+        robot.driveLateralVelocity(24, 0, 40, 20, true);
+        robot.sleepAndHoldHeading(0, 0.5);
 
-        while(opModeIsActive()) {
+        if (nav.waitForTarget(5)) {
+
+
+
+            driveAndGrabBlock();
+            robot.driveAxialVelocity(34, 0, -50, 20, true);  // 6" shorter than actual move ??
+            robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
+            robot.sleepAndHoldHeading(0, 1);
+            robot.driveAxialVelocity(64, 0, 50, 20, true);
+            robot.sleepAndHoldHeading(0, 0.5);
+
+            if (nav.waitForTarget(5)) {
+
+
+                driveAndGrabBlock();
+                robot.driveAxialVelocity(64, 0, -50, 20, true);
+                robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
+                robot.driveAxialVelocity(6, 0, 50, 20, true);
+                robot.sleepAndHoldHeading(0, 1);
+            }
 
         }
+
+        while(opModeIsActive()) {
+            nav.waitForTarget(1);
+            nav.showNavTelemetry(true);
+        }
     }
+
+    public void driveAndGrabBlock() {
+        //Multiply the distance in mm from the target by the conversion factor for inches, flip the direction to correct for the error
+        error = (BLOCK_CENTER_OFFSET - nav.robotY) * mm_2_in;
+
+        if (Math.abs(error) > STUD_RANGE) {
+            robot.driveAxialVelocity(error, 0,15,5,true);
+
+        }
+
+        //Calculate new error
+        error = (-nav.robotX) * mm_2_in;
+        robot.driveLateralVelocity(error + BLOCK_PUSH_DISTANCE,0,15,5,true);
+        robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
+        robot.sleepAndHoldHeading(0, 1);
+        robot.driveLateralVelocity(16,0,-25,20,true);
+    }
+
 }

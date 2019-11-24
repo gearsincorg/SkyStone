@@ -432,9 +432,20 @@ public class GFORCE_Navigation
         int targetTestID = 0;
 
         // Check each target and stop looking when any target is found.
-        while ((targetTestID < MAX_TARGETS) && !targetIsVisible(targetTestID)) {
+        while (myOpMode.opModeIsActive() && (targetTestID < MAX_TARGETS) && !targetIsVisible(targetTestID)) {
             targetTestID++ ;
         }
+
+        return (targetFound);
+    }
+
+
+    public boolean waitForTarget(int timeout) {
+        navTime.reset();
+        while (myOpMode.opModeIsActive() && !targetIsVisible(0) && (navTime.time() < timeout)) {
+            showNavTelemetry(true);
+        }
+        showNavTelemetry(true);
 
         return (targetFound);
     }
