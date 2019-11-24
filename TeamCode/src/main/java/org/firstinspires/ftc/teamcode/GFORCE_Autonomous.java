@@ -57,17 +57,14 @@ public class GFORCE_Autonomous extends LinearOpMode {
     GFORCE_Hardware     robot         = new GFORCE_Hardware();
     GFORCE_Navigation   nav           = new GFORCE_Navigation();
 
-    final double STUD_RANGE = 0.5; //Plus or minus 15 millimeters
-    final double mm_2_in = 1/25.4;
-    final double BLOCK_PUSH_DISTANCE = 0.5;
-    final double BLOCK_CENTER_OFFSET = -55;
+    final double STUD_RANGE = 10;               // Plus or minus 10 millimeters
+    final double BLOCK_PUSH_DISTANCE = 10;      // Extra 10mm
+    final double BLOCK_CENTER_OFFSET = -55;     // Camera to grab offset
 
     double error;
 
     @Override
     public void runOpMode() {
-
-        boolean driveOK;
 
         // Initialize the hardware variables.
         autoConfig.init(hardwareMap.appContext, this);
@@ -95,30 +92,24 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.resetHeading();
 
         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-        robot.driveLateralVelocity(24, 0, 40, 20, true);
+        robot.driveLateralVelocity(600, 0, 1000, 20, true);
         robot.sleepAndHoldHeading(0, 0.5);
 
         if (nav.waitForTarget(5)) {
-
-
-
             driveAndGrabBlock();
-            robot.driveAxialVelocity(34, 0, -50, 20, true);  // 6" shorter than actual move ??
+            robot.driveAxialVelocity(900, 0, -1250, 20, true);
             robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
             robot.sleepAndHoldHeading(0, 1);
-            robot.driveAxialVelocity(64, 0, 50, 20, true);
+            robot.driveAxialVelocity(1100, 0, 1250, 20, true);
             robot.sleepAndHoldHeading(0, 0.5);
 
             if (nav.waitForTarget(5)) {
-
-
                 driveAndGrabBlock();
-                robot.driveAxialVelocity(64, 0, -50, 20, true);
+                robot.driveAxialVelocity(1100, 0, -1250, 20, true);
                 robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-                robot.driveAxialVelocity(6, 0, 50, 20, true);
+                robot.driveAxialVelocity(200, 0, 1250, 20, true);
                 robot.sleepAndHoldHeading(0, 1);
             }
-
         }
 
         while(opModeIsActive()) {
@@ -129,19 +120,18 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
     public void driveAndGrabBlock() {
         //Multiply the distance in mm from the target by the conversion factor for inches, flip the direction to correct for the error
-        error = (BLOCK_CENTER_OFFSET - nav.robotY) * mm_2_in;
+        error = (BLOCK_CENTER_OFFSET - nav.robotY);
 
         if (Math.abs(error) > STUD_RANGE) {
-            robot.driveAxialVelocity(error, 0,15,5,true);
-
+            robot.driveAxialVelocity(error, 0, 380,5,true);
         }
 
         //Calculate new error
-        error = (-nav.robotX) * mm_2_in;
-        robot.driveLateralVelocity(error + BLOCK_PUSH_DISTANCE,0,15,5,true);
+        error = (-nav.robotX);
+        robot.driveLateralVelocity(error + BLOCK_PUSH_DISTANCE, 0, 380, 5, true);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
         robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateralVelocity(16,0,-25,20,true);
+        robot.driveLateralVelocity(400, 0, -600, 20, true);
     }
 
 }

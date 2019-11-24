@@ -123,8 +123,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
             }
 
             // Convert to axis velocities
-            axialVel   = forwardBack * robot.MAX_VELOCITY_IPS;
-            lateralVel = rightLeft * robot.MAX_VELOCITY_IPS;
+            axialVel   = forwardBack * robot.MAX_VELOCITY_MMPS;
+            lateralVel = rightLeft * robot.MAX_VELOCITY_MMPS;
             yawVel     = rotate * robot.MAX_ROTATION_DPS;
 
             //-------------------------

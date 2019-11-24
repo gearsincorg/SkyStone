@@ -88,10 +88,10 @@ public class GFORCE_Hardware {
     public static BNO055IMU imu = null;
 
     public final double MAX_VELOCITY        = 2500;  // Counts per second
-    public final double MAX_VELOCITY_IPS    = 100;   // Inches Per Second
+    public final double MAX_VELOCITY_MMPS   = 2540;  // MM Per Second
     public final double MAX_ROTATION_DPS    = 100;   // Degrees per second
     public final double AUTO_ROTATION_DPS   = 100;   // Degrees per second
-    public final double ACCELERATION_LIMIT  = 60;    // Inches per second per second  was 75
+    public final double ACCELERATION_LIMIT  = 1524;  // MM per second per second
 
     public final double YAW_GAIN            = 0.010;  // Rate at which we respond to heading error 0.013
     public final double LATERAL_GAIN        = 0.0025; // Distance from x axis that we start to slow down. 0027
@@ -106,8 +106,8 @@ public class GFORCE_Hardware {
 
     final double YAW_IS_CLOSE = 2.0;  // angle within which we are "close"
 
-    final double AXIAL_ENCODER_COUNTS_PER_INCH = 21.85; // Was 23.2
-    final double LATERAL_ENCODER_COUNTS_PER_INCH = 23.2;
+    final double AXIAL_ENCODER_COUNTS_PER_MM   = 0.8602;
+    final double LATERAL_ENCODER_COUNTS_PER_MM = 0.9134;
 
     private static LinearOpMode myOpMode = null;
 
@@ -207,22 +207,22 @@ public class GFORCE_Hardware {
     /**
      * Drive a set distance at a set heading at a set speed until the timeout occurs
      *
-     * @param inches
+     * @param mm
      * @param heading
      * @param vel
      * @param timeOutSec
      * @return
      */
-    public boolean driveAxialVelocity(double inches, double heading, double vel, double timeOutSec, boolean hardBreak) {
+    public boolean driveAxialVelocity(double mm, double heading, double vel, double timeOutSec, boolean hardBreak) {
         double endingTime = runTime.seconds() + timeOutSec;
-        double absInches = Math.abs(inches);
+        double absMm = Math.abs(mm);
 
         //Reverse angles for red autonomous
         if (allianceColor == AllianceColor.BLUE) {
             heading = -heading;
         }
 
-        if ((inches < 0.0) || (vel < 0.0)) {
+        if ((mm < 0.0) || (vel < 0.0)) {
             vel = -Math.abs(vel);
         }
 
@@ -232,9 +232,9 @@ public class GFORCE_Hardware {
         // Loop until the robot has driven to where it needs to go
         // Remember to call updateMotion() once per loop cycle.
         while (myOpMode.opModeIsActive() && updateMotion() &&
-                (Math.abs(getAxialMotion()) < absInches) &&
+                (Math.abs(getAxialMotion()) < absMm) &&
                 (runTime.seconds() < endingTime)) {
-            setAxialVelocity(getProfileVelocity(vel, getAxialMotion(), absInches));
+            setAxialVelocity(getProfileVelocity(vel, getAxialMotion(), absMm));
             setLateralVelocity(0);
             setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
@@ -249,7 +249,6 @@ public class GFORCE_Hardware {
 
         stopRobot();
 
-
         // Return true if we have not timed out
         return (runTime.seconds() < endingTime);
     }
@@ -257,18 +256,18 @@ public class GFORCE_Hardware {
     /**
      * Drive a set distance at a set heading at a set speed until the timeout occurs
      *
-     * @param inches
+     * @param mm
      * @param heading
      * @param vel
      * @param timeOutSec
      * @return
      */
-    public boolean driveLateralVelocity(double inches, double heading, double vel, double timeOutSec, boolean hardBreak) {
+    public boolean driveLateralVelocity(double mm, double heading, double vel, double timeOutSec, boolean hardBreak) {
 
         double endingTime = runTime.seconds() + timeOutSec;
-        double absInches = Math.abs(inches);
+        double absMm = Math.abs(mm);
 
-        if ((inches < 0.0) || (vel < 0.0)) {
+        if ((mm < 0.0) || (vel < 0.0)) {
             vel = -Math.abs(vel);
         }
 
@@ -284,10 +283,10 @@ public class GFORCE_Hardware {
         // Loop until the robot has driven to where it needs to go
         // Remember to call updateMotion() once per loop cycle.
         while (myOpMode.opModeIsActive() && updateMotion() &&
-                (Math.abs(getLateralMotion()) < absInches) &&
+                (Math.abs(getLateralMotion()) < absMm) &&
                 (runTime.seconds() < endingTime)) {
             setAxialVelocity(0);
-            setLateralVelocity(getProfileVelocity(vel, getLateralMotion(), absInches));
+            setLateralVelocity(getProfileVelocity(vel, getLateralMotion(), absMm));
             setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
             showEncoders();
@@ -336,7 +335,9 @@ public class GFORCE_Hardware {
         // Make sure the final velocity sign is correct.
         profileVelocity = Range.clip(profileVelocity, 0, absTopVel) * Math.signum(topVel);
 
-        Log.d("G-FORCE AUTO", String.format("T:V:D:A %5.3f %4.2f %5.2f %5.2f", getMotionTime(), profileVelocity, absdTraveled, leftBackDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_INCH));
+        //Log.d("G-FORCE AUTO", String.format("T:V:D:A %5.3f %4.2f %5.2f %5.2f",
+        //         getMotionTime(), profileVelocity, absdTraveled, leftBackDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_MM));
+
         return (profileVelocity);
     }
 
@@ -359,9 +360,9 @@ public class GFORCE_Hardware {
         deltaRightBack = rightBackDrive.getCurrentPosition() - startRightBack;
         deltaRightFront = rightFrontDrive.getCurrentPosition() - startRightFront;
         axialMotion = ((deltaLeftBack + deltaLeftFront + deltaRightBack + deltaRightFront) / 4);
-        axialMotion /= AXIAL_ENCODER_COUNTS_PER_INCH;
+        axialMotion /= AXIAL_ENCODER_COUNTS_PER_MM;
         lateralMotion = ((-deltaLeftBack + deltaLeftFront + deltaRightBack - deltaRightFront) / 4);
-        lateralMotion /= LATERAL_ENCODER_COUNTS_PER_INCH;
+        lateralMotion /= LATERAL_ENCODER_COUNTS_PER_MM;
 
         return (true);
     }
@@ -410,6 +411,7 @@ public class GFORCE_Hardware {
                 (!inPosition || waitFullTimeout)) {
             inPosition = setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
+            myOpMode.sleep(10);
         }
         stopRobot();
 
@@ -607,15 +609,15 @@ public class GFORCE_Hardware {
     // Robot movement using +/- MAX_VELOCITY
 
     public void setAxialVelocity(double axialV) {
-        driveAxial = Range.clip(axialV * AXIAL_ENCODER_COUNTS_PER_INCH, -MAX_VELOCITY, MAX_VELOCITY);
+        driveAxial = Range.clip(axialV * AXIAL_ENCODER_COUNTS_PER_MM, -MAX_VELOCITY, MAX_VELOCITY);
     }
 
     public void setYawVelocity(double yawV) {
-        driveYaw = Range.clip(yawV * AXIAL_ENCODER_COUNTS_PER_INCH, -MAX_VELOCITY, MAX_VELOCITY);
+        driveYaw = Range.clip(yawV * AXIAL_ENCODER_COUNTS_PER_MM, -MAX_VELOCITY, MAX_VELOCITY);
     }
 
     public void setLateralVelocity(double lateralV) {
-        driveLateral = Range.clip(lateralV * AXIAL_ENCODER_COUNTS_PER_INCH, -MAX_VELOCITY, MAX_VELOCITY);
+        driveLateral = Range.clip(lateralV * LATERAL_ENCODER_COUNTS_PER_MM, -MAX_VELOCITY, MAX_VELOCITY);
     }
 
     public void moveRobotVelocity(double axialV, double yawV, double lateralV) {
