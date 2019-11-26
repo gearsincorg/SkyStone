@@ -49,7 +49,7 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="G-FORCE Teleop", group="!Steve")
+@TeleOp(name="G-FORCE Teleop", group="!Competition")
 public class GFORCE_TeleOp extends LinearOpMode {
 
     public final double AXIAL_JS_SCALE      = 0.5;

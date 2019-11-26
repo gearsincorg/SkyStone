@@ -47,9 +47,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-
-
-@Autonomous(name="G-FORCE Autonomous", group="!Steve")
+@Autonomous(name="G-FORCE Autonomous", group="!Competition")
 public class GFORCE_Autonomous extends LinearOpMode {
 
     /* Declare OpMode members. */
