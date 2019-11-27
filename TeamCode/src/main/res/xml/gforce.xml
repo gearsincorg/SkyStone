@@ -7,7 +7,9 @@
             <goBILDA5202SeriesMotor name="right_front_drive" port="2" />
             <goBILDA5202SeriesMotor name="left_front_drive" port="3" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
-            <Servo name="grab" port="0" />
+            <Servo name="stone_rotate" port="4" />
+            <Servo name="stone_grab" port="5" />
+
         </LynxModule>
         <LynxModule name="Expansion Hub 3" port="3">
             <goBILDA5202SeriesMotor name="collect" port="0" />

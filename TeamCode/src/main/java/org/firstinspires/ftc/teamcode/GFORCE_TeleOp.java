@@ -70,6 +70,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
     long    liftSetPoint = 0;
     double  liftPower    = 0.0;
     int targetLiftPosition = 0;
+    double holdPower = 0;
 
 
     @Override
@@ -85,6 +86,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
         double desiredHeading = 0;
         boolean neutralSticks = true;
         boolean autoHeadingOn = false;
+
+
 
 
         /* Initialize the hardware variables.
@@ -189,27 +192,31 @@ public class GFORCE_TeleOp extends LinearOpMode {
     private void controlBlockScoring() {
 
         if (gamepad2.y && (robot.armAngle < 230)) {
+            neutralTime.reset();
             robot.arm.setPower(0);
             robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.arm.setPower(0.2);
-            targetArmPosition = robot.encoderArm;
+            holdPower = -0.05;
+
         }
 
         else if (gamepad2.a && (robot.armAngle > -20)) {
+            neutralTime.reset();
             robot.arm.setPower(0);
             robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.arm.setPower(-0.2);
-            targetArmPosition = robot.encoderArm;
+            holdPower = 0.05;
+
         }
 
-        else {
-            robot.arm.setPower(0);
+        else if (neutralTime.time() < 0.15) {
+            robot.arm.setPower(holdPower);
+            targetArmPosition = robot.encoderArm;
+        } else {
             robot.arm.setTargetPosition(targetArmPosition);
             robot.arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.arm.setPower(0.2);
-
         }
-
 
         if (gamepad2.x && (robot.liftAngle < 50))
             robot.lift.setPower(0.2);
@@ -225,6 +232,12 @@ public class GFORCE_TeleOp extends LinearOpMode {
         else
             robot.collect.setPower(0);
 
+        if (gamepad2.right_trigger > 0.5) {
+            robot.stoneGrab.setPosition(robot.STONE_CLOSE);
+        } else if (gamepad2.left_trigger > 0.5) {
+            robot.stoneGrab.setPosition(robot.STONE_OPEN);
+        }
 
     }
+
 }
