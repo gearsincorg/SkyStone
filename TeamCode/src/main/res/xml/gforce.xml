@@ -7,11 +7,15 @@
             <goBILDA5202SeriesMotor name="right_front_drive" port="2" />
             <goBILDA5202SeriesMotor name="left_front_drive" port="3" />
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
+            <Servo name="grab" port="0" />
+            <Servo name="lift_blue" port="2" />
         </LynxModule>
         <LynxModule name="Expansion Hub 3" port="3">
-            <LynxEmbeddedIMU name="imu 1" port="0" bus="0"/>
+            <goBILDA5202SeriesMotor name="collect" port="0" />
+            <goBILDA5202SeriesMotor name="lift" port="1" />
+            <goBILDA5202SeriesMotor name="arm" port="2" />
             <Servo name="lift_red" port="0" />
-            <Servo name="lift_blue" port="2" />
+            <Servo name="lift_blue" port="3" />
         </LynxModule>
     </LynxUsbDevice>
 </Robot>

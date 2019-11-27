@@ -76,11 +76,12 @@ public class GFORCE_Hardware {
     public DcMotorEx rightFrontDrive = null;
     public DcMotorEx leftBackDrive = null;
     public DcMotorEx rightBackDrive = null;
+
+    public DcMotorEx collect = null;
+    public DcMotorEx lift = null;
     public DcMotorEx arm = null;
 
-    public Servo skystoneGrabRed = null;
     public Servo skystoneLiftRed = null;
-    public Servo skystoneGrabBlue = null;
     public Servo skystoneLiftBlue = null;
     public Servo stoneGrab = null;
     public Servo stoneRotate = null;
@@ -97,6 +98,13 @@ public class GFORCE_Hardware {
     public final double LATERAL_GAIN        = 0.0025; // Distance from x axis that we start to slow down. 0027
     public final double AXIAL_GAIN          = 0.0015; // Distance from target that we start to slow down. 0017
 
+    public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 10) / (6 * 260) ;  // 60-100 gear reduction
+    public final double ARM_COUNTS_PER_DEGREE    = 2786 / 360;   //
+
+    public final double LIFT_START_ANGLE         =  10;  // 60-100 gear reduction
+    public final double ARM_START_ANGLE          = -20;  //
+
+
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.012;  // Was 0.02
     final double TURN_RATE_TC       = 0.6;
@@ -109,7 +117,21 @@ public class GFORCE_Hardware {
     final double AXIAL_ENCODER_COUNTS_PER_MM   = 0.8602;
     final double LATERAL_ENCODER_COUNTS_PER_MM = 0.9134;
 
+    // Robot states that we share with others
+    public double axialMotion = 0;
+    public double lateralMotion = 0;
+    public double armAngle = 0;
+    public double liftAngle = 0;
+    public double currentHeading = 0;
+
     private static LinearOpMode myOpMode = null;
+
+    private long   encoderLB;
+    private long   encoderLF;
+    private long   encoderRB;
+    private long   encoderRF;
+    private long   encoderLift;
+    private long   encoderArm;
 
     private double driveAxial = 0;
     private double driveYaw = 0;
@@ -125,19 +147,18 @@ public class GFORCE_Hardware {
     private double deltaRightBack = 0;
     private double deltaRightFront = 0;
 
-    public double axialMotion = 0;
-    public double lateralMotion = 0;
 
     // gyro
     private double lastHeading = 0;
     private double lastGyroMs = 0;
-    public double intervalGyroMs = 0;
+    private double intervalGyroMs = 0;
     private double filteredTurnRate = 0;
     private double integratedZAxis = 0;
     private double adjustedIntegratedZAxis = 0;
     private double headingSetpoint = 0;
-    public double robotPitch = 0;
+
     private int timeoutSoundID = 0;
+
     public String autoPathName = "";
 
 
@@ -157,11 +178,15 @@ public class GFORCE_Hardware {
         myOpMode = opMode;
 
         // Define and Initialize Motors
-        leftFrontDrive = configureMotor("left_front_drive", DcMotor.Direction.REVERSE);
-        rightFrontDrive = configureMotor("right_front_drive", DcMotor.Direction.FORWARD);
         leftBackDrive = configureMotor("left_back_drive", DcMotor.Direction.REVERSE);
+        leftFrontDrive = configureMotor("left_front_drive", DcMotor.Direction.REVERSE);
         rightBackDrive = configureMotor("right_back_drive", DcMotor.Direction.FORWARD);
-        //arm = myOpMode.hardwareMap.get(DcMotor.class,"arm");
+        rightFrontDrive = configureMotor("right_front_drive", DcMotor.Direction.FORWARD);
+
+        lift = configureMotor("lift", DcMotor.Direction.FORWARD);
+        arm = configureMotor("arm", DcMotor.Direction.REVERSE);
+        collect = myOpMode.hardwareMap.get(DcMotorEx.class,"collect");
+        collect.setDirection(DcMotor.Direction.REVERSE);
 
         resetEncoders();
 
@@ -185,11 +210,11 @@ public class GFORCE_Hardware {
         }
 
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // Set all motors to zero power
         stopRobot();
-        //arm.setPower(0);
     }
 
     // Configure a motor
@@ -197,6 +222,7 @@ public class GFORCE_Hardware {
         PIDFCoefficients newPIDF = new PIDFCoefficients(10.0,  3,   0.0,  12);
         DcMotorEx motorObj = myOpMode.hardwareMap.get(DcMotorEx.class, name);
 
+        motorObj.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorObj.setDirection(direction);
         motorObj.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         motorObj.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, newPIDF);
@@ -341,12 +367,30 @@ public class GFORCE_Hardware {
         return (profileVelocity);
     }
 
+    // Common location to read all sensors
+    public void readSensors() {
+        encoderLF = leftFrontDrive.getCurrentPosition();
+        encoderRF = rightFrontDrive.getCurrentPosition();
+        encoderLB = leftBackDrive.getCurrentPosition();
+        encoderRB = rightBackDrive.getCurrentPosition();
+
+        encoderLift = lift.getCurrentPosition();
+        encoderArm  = arm.getCurrentPosition();
+
+        liftAngle = (encoderLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE ;
+        armAngle  = (encoderArm  / ARM_COUNTS_PER_DEGREE) + ARM_START_ANGLE ;
+
+        currentHeading = getHeading();
+
+    }
+
     //Get the current encoder counts of the drive motors
     public void startMotion() {
-        startLeftBack = leftBackDrive.getCurrentPosition();
-        startLeftFront = leftFrontDrive.getCurrentPosition();
-        startRightBack = rightBackDrive.getCurrentPosition();
-        startRightFront = rightFrontDrive.getCurrentPosition();
+        readSensors();
+        startLeftBack = encoderLB;
+        startLeftFront = encoderLF;
+        startRightBack = encoderRB;
+        startRightFront = encoderRF;
         deltaLeftBack = 0;
         deltaLeftFront = 0;
         deltaRightBack = 0;
@@ -355,10 +399,11 @@ public class GFORCE_Hardware {
     }
 
     public boolean updateMotion() {
-        deltaLeftBack = leftBackDrive.getCurrentPosition() - startLeftBack;
-        deltaLeftFront = leftFrontDrive.getCurrentPosition() - startLeftFront;
-        deltaRightBack = rightBackDrive.getCurrentPosition() - startRightBack;
-        deltaRightFront = rightFrontDrive.getCurrentPosition() - startRightFront;
+        readSensors();
+        deltaLeftBack = encoderLB - startLeftBack;
+        deltaLeftFront = encoderLF - startLeftFront;
+        deltaRightBack = encoderRB - startRightBack;
+        deltaRightFront = encoderRF - startRightFront;
         axialMotion = ((deltaLeftBack + deltaLeftFront + deltaRightBack + deltaRightFront) / 4);
         axialMotion /= AXIAL_ENCODER_COUNTS_PER_MM;
         lateralMotion = ((-deltaLeftBack + deltaLeftFront + deltaRightBack - deltaRightFront) / 4);
@@ -435,11 +480,12 @@ public class GFORCE_Hardware {
     }
 
     public void showEncoders() {
-        myOpMode.telemetry.addData("motion","axial %6.1f, lateral %6.1f", getAxialMotion(), getLateralMotion());
-        myOpMode.telemetry.addData("front", "%5.1f %5.1f ", deltaLeftFront, deltaRightFront);
-        myOpMode.telemetry.addData("back",  "%5.1f %5.1f ", deltaLeftBack, deltaRightBack);
-        myOpMode.telemetry.addData("axes",  "A:L:Y %6.0f %6.0f %6.0f", driveAxial, driveLateral,driveYaw);
         myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalGyroMs);
+        myOpMode.telemetry.addData("axes",  "A:L:Y %6.0f %6.0f %6.0f", driveAxial, driveLateral,driveYaw);
+        myOpMode.telemetry.addData("motion","axial %6.1f, lateral %6.1f", getAxialMotion(), getLateralMotion());
+        myOpMode.telemetry.addData("angles","lift: %6.1f, Arm %6.1f", liftAngle, armAngle);
+        //  myOpMode.telemetry.addData("front", "%5.1f %5.1f ", deltaLeftFront, deltaRightFront);
+        //  myOpMode.telemetry.addData("back",  "%5.1f %5.1f ", deltaLeftBack, deltaRightBack);
         myOpMode.telemetry.update();
     }
 
@@ -457,13 +503,12 @@ public class GFORCE_Hardware {
     public double getHeading() {
 
         Orientation angles;
-        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         double heading;
         double timeMs;
         double deltaH;
 
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
         heading = angles.firstAngle;
-        robotPitch = -angles.thirdAngle;
 
         if (heading != lastHeading) {
             // determine change in heading and apply to integrated Z
@@ -476,10 +521,6 @@ public class GFORCE_Hardware {
             integratedZAxis += deltaH;
             lastHeading = heading;
 
-            // determine update rate for gyro
-            timeMs = gyroTime.milliseconds();
-            intervalGyroMs = timeMs - lastGyroMs;
-            lastGyroMs = timeMs;
         }
         adjustedIntegratedZAxis = integratedZAxis * GYRO_SCALE_FACTOR;
         return (adjustedIntegratedZAxis);

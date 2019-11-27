@@ -121,7 +121,7 @@ public class GFORCE_Navigation
             myOpMode.telemetry.addData(targetName, "R B:<> [%+5.0f] (%+5.2f):(%+5.2f)",
                     targetRange, targetBearing, relativeBearing);
         }
-        myOpMode.telemetry.addData("Gyro", "%6.1f° (%4.0f mS)", myRobot.getHeading(), myRobot.intervalGyroMs  );
+        // myOpMode.telemetry.addData("Gyro", "%6.1f°", myRobot.getHeading()  );
     }
 
     /***

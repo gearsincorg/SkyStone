@@ -32,7 +32,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 
 /**
@@ -72,10 +71,16 @@ public class GFORCE_TeleOp extends LinearOpMode {
         double lateralVel;
 
         double desiredHeading = 0;
-        double currentHeading = 0;
-
         boolean neutralSticks = true;
         boolean autoHeadingOn = false;
+
+        boolean armMoving = false;
+        long    armSetPoint = 0;
+        double  armPower    = 0.0;
+
+        boolean liftMoving = false;
+        long    liftSetPoint = 0;
+        double  liftPower    = 0.0;
 
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
@@ -94,6 +99,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         robot.startMotion();
         while (opModeIsActive()) {
+
+            robot.readSensors();
 
             // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
             // In this mode the Left stick moves the robot fwd and back, the Right stick turns left and right.
@@ -125,7 +132,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             // Convert to axis velocities
             axialVel   = forwardBack * robot.MAX_VELOCITY_MMPS;
             lateralVel = rightLeft * robot.MAX_VELOCITY_MMPS;
-            yawVel     = rotate * robot.MAX_ROTATION_DPS;
+            yawVel     = rotate * robot.MAX_VELOCITY_MMPS;
 
             //-------------------------
             // Determine Robot Centric motion (based on gyro heading)
@@ -133,9 +140,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
             //         (rightLeft * Math.sin(Math.toRadians(currentHeading)));
             // lateral = (forwardBack * Math.sin(Math.toRadians(currentHeading))) +
             //         (rightLeft * Math.cos(Math.toRadians(currentHeading)));
-
-            //determine desired Yaw rate
-            currentHeading = robot.getHeading();
 
             neutralSticks = ((forwardBack == 0) &&
                     (rightLeft == 0) &&
@@ -147,7 +151,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 autoHeadingOn = false;
             } else if (!autoHeadingOn && robot.notTurning()) {
                 // We have just stopped turning, so lock in current heading
-                desiredHeading = currentHeading;
+                desiredHeading = robot.currentHeading;
                 autoHeadingOn = true;
             }
 
@@ -159,13 +163,14 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.setAxialVelocity(axialVel);
             robot.setLateralVelocity(lateralVel);
 
-            if (autoHeadingOn) {
+            if (autoHeadingOn && (neutralTime.time() < 2)) {
                 robot.setYawVelocityToHoldHeading(desiredHeading);
             } else {
                 robot.setYawVelocity(yawVel);
             }
 
             robot.moveRobotVelocity();
+            controlBlockScoring();
 
             // Send telemetry message to signify robot running;
             robot.updateMotion();
@@ -173,4 +178,29 @@ public class GFORCE_TeleOp extends LinearOpMode {
         }
     }
 
+    private void controlBlockScoring() {
+
+        if (gamepad2.y && (robot.armAngle < 230))
+            robot.arm.setPower(0.2);
+        else if (gamepad2.a && (robot.armAngle > -20))
+            robot.arm.setPower(-0.2);
+        else
+            robot.arm.setPower(0);
+
+        if (gamepad2.x && (robot.liftAngle < 50))
+            robot.lift.setPower(0.2);
+        else if (gamepad2.b && (robot.liftAngle > 10 ))
+            robot.lift.setPower(-0.1);
+        else
+            robot.lift.setPower(0);
+
+        if (gamepad2.right_bumper)
+            robot.collect.setPower(1);
+        else if (gamepad2.left_bumper)
+            robot.collect.setPower(-1);
+        else
+            robot.collect.setPower(0);
+
+
+    }
 }
