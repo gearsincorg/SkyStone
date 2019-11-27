@@ -123,15 +123,15 @@ public class GFORCE_Hardware {
     public double armAngle = 0;
     public double liftAngle = 0;
     public double currentHeading = 0;
+    public int   encoderLift;
+    public int   encoderArm;
 
     private static LinearOpMode myOpMode = null;
 
-    private long   encoderLB;
-    private long   encoderLF;
-    private long   encoderRB;
-    private long   encoderRF;
-    private long   encoderLift;
-    private long   encoderArm;
+    private int   encoderLB;
+    private int   encoderLF;
+    private int   encoderRB;
+    private int   encoderRF;
 
     private double driveAxial = 0;
     private double driveYaw = 0;
