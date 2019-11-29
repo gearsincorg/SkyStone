@@ -46,6 +46,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
+// Temporary
+import org.openftc.revextensions2.ExpansionHubEx;
+import org.openftc.revextensions2.ExpansionHubMotor;
+import org.openftc.revextensions2.RevBulkData;
+
+
 /**
  * This is NOT an opmode.
  *
@@ -125,6 +131,12 @@ public class GFORCE_Hardware {
     public double currentHeading = 0;
 
     private static LinearOpMode myOpMode = null;
+
+    // Sensor Read Info.
+    ExpansionHubEx masterHub = null;
+    ExpansionHubEx slaveHub = null;
+    RevBulkData    masterHubValues = null;
+    RevBulkData    slaveHubValues = null;
 
     private long   encoderLB;
     private long   encoderLF;
@@ -375,13 +387,12 @@ public class GFORCE_Hardware {
         encoderRB = rightBackDrive.getCurrentPosition();
 
         encoderLift = lift.getCurrentPosition();
-        encoderArm  = arm.getCurrentPosition();
+        encoderArm = arm.getCurrentPosition();
 
-        liftAngle = (encoderLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE ;
-        armAngle  = (encoderArm  / ARM_COUNTS_PER_DEGREE) + ARM_START_ANGLE ;
+        liftAngle = (encoderLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
+        armAngle = (encoderArm / ARM_COUNTS_PER_DEGREE) + ARM_START_ANGLE;
 
         currentHeading = getHeading();
-
     }
 
     //Get the current encoder counts of the drive motors

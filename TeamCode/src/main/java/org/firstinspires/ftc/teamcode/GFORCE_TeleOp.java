@@ -99,8 +99,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         robot.startMotion();
         while (opModeIsActive()) {
-
-            robot.readSensors();
+            robot.updateMotion();  // Read all sensors and calculate motions
 
             // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
             // In this mode the Left stick moves the robot fwd and back, the Right stick turns left and right.
@@ -173,7 +172,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
             controlBlockScoring();
 
             // Send telemetry message to signify robot running;
-            robot.updateMotion();
             robot.showEncoders();
         }
     }
