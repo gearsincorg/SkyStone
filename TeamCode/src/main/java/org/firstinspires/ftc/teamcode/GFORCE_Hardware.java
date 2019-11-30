@@ -28,8 +28,6 @@
  */
 package org.firstinspires.ftc.teamcode;
 
-import android.util.Log;
-
 import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -109,7 +107,9 @@ public class GFORCE_Hardware {
 
     public final double LIFT_START_ANGLE         =  10;  // 60-100 gear reduction
     public final double ARM_START_ANGLE          = -20;  //
-
+    public final double STONE_OPEN               = 0.5;
+    public final double STONE_CLOSE              = 0;
+    public final double STONE_AXIAL              = 0.5;
 
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.012;  // Was 0.02
@@ -129,9 +129,12 @@ public class GFORCE_Hardware {
     public double armAngle = 0;
     public double liftAngle = 0;
     public double currentHeading = 0;
+    public int   encoderLift;
+    public int   encoderArm;
 
     private static LinearOpMode myOpMode = null;
 
+<<<<<<< HEAD
     // Sensor Read Info.
     ExpansionHubEx masterHub = null;
     ExpansionHubEx slaveHub = null;
@@ -144,6 +147,12 @@ public class GFORCE_Hardware {
     private long   encoderRF;
     private long   encoderLift;
     private long   encoderArm;
+=======
+    private int   encoderLB;
+    private int   encoderLF;
+    private int   encoderRB;
+    private int   encoderRF;
+>>>>>>> G_FORCE
 
     private double driveAxial = 0;
     private double driveYaw = 0;
@@ -162,8 +171,8 @@ public class GFORCE_Hardware {
 
     // gyro
     private double lastHeading = 0;
-    private double lastGyroMs = 0;
-    private double intervalGyroMs = 0;
+    private double lastCycle = 0;
+    private double intervalCycle = 0;
     private double filteredTurnRate = 0;
     private double integratedZAxis = 0;
     private double adjustedIntegratedZAxis = 0;
@@ -176,7 +185,7 @@ public class GFORCE_Hardware {
 
     /* local OpMode members. */
     private ElapsedTime runTime = new ElapsedTime();
-    private ElapsedTime gyroTime = new ElapsedTime();
+    private ElapsedTime cycleTime = new ElapsedTime();
     private ElapsedTime navTime = new ElapsedTime();
 
     /* Constructor */
@@ -201,11 +210,14 @@ public class GFORCE_Hardware {
         collect.setDirection(DcMotor.Direction.REVERSE);
 
         resetEncoders();
-
+        stoneGrab = myOpMode.hardwareMap.get(Servo.class,"stone_grab");
+        stoneRotate = myOpMode.hardwareMap.get(Servo.class,"stone_rotate");
         skystoneLiftRed = myOpMode.hardwareMap.get(Servo.class, "lift_red");
         skystoneLiftBlue = myOpMode.hardwareMap.get(Servo.class, "lift_blue");
         setRedSkystoneGrabber(SkystoneGrabberPositions.START);
         setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
+        stoneGrab.setPosition(STONE_OPEN);
+        stoneRotate.setPosition(STONE_AXIAL);
 
         timeoutSoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("ss_siren", "raw", myOpMode.hardwareMap.appContext.getPackageName());
         if (timeoutSoundID != 0) {
@@ -393,6 +405,14 @@ public class GFORCE_Hardware {
         armAngle = (encoderArm / ARM_COUNTS_PER_DEGREE) + ARM_START_ANGLE;
 
         currentHeading = getHeading();
+<<<<<<< HEAD
+=======
+
+        intervalCycle = cycleTime.milliseconds() - lastCycle;
+        lastCycle = cycleTime.milliseconds();
+
+
+>>>>>>> G_FORCE
     }
 
     //Get the current encoder counts of the drive motors
@@ -491,7 +511,7 @@ public class GFORCE_Hardware {
     }
 
     public void showEncoders() {
-        myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalGyroMs);
+        myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
         myOpMode.telemetry.addData("axes",  "A:L:Y %6.0f %6.0f %6.0f", driveAxial, driveLateral,driveYaw);
         myOpMode.telemetry.addData("motion","axial %6.1f, lateral %6.1f", getAxialMotion(), getLateralMotion());
         myOpMode.telemetry.addData("angles","lift: %6.1f, Arm %6.1f", liftAngle, armAngle);

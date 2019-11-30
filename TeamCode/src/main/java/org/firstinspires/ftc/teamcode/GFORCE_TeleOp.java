@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
@@ -60,6 +61,18 @@ public class GFORCE_TeleOp extends LinearOpMode {
     /* Declare OpMode members. */
     GFORCE_Hardware robot = new GFORCE_Hardware();   // Use steve hardware
 
+    boolean armMoving = false;
+    long    armSetPoint = 0;
+    double  armPower    = 0.0;
+    int targetArmPosition = 0;
+
+    boolean liftMoving = false;
+    long    liftSetPoint = 0;
+    double  liftPower    = 0.0;
+    int targetLiftPosition = 0;
+    double holdPower = 0;
+
+
     @Override
     public void runOpMode() {
         double forwardBack;
@@ -74,13 +87,8 @@ public class GFORCE_TeleOp extends LinearOpMode {
         boolean neutralSticks = true;
         boolean autoHeadingOn = false;
 
-        boolean armMoving = false;
-        long    armSetPoint = 0;
-        double  armPower    = 0.0;
 
-        boolean liftMoving = false;
-        long    liftSetPoint = 0;
-        double  liftPower    = 0.0;
+
 
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
@@ -96,10 +104,19 @@ public class GFORCE_TeleOp extends LinearOpMode {
         waitForStart();
         robot.startMotion();
 
+        //Save the current arm and lift positions
+        targetArmPosition  = robot.encoderArm;
+        targetLiftPosition = robot.encoderLift;
+
         // run until the end of the match (driver presses STOP)
-        robot.startMotion();
         while (opModeIsActive()) {
+<<<<<<< HEAD
             robot.updateMotion();  // Read all sensors and calculate motions
+=======
+
+            robot.readSensors();
+            controlBlockScoring();
+>>>>>>> G_FORCE
 
             // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
             // In this mode the Left stick moves the robot fwd and back, the Right stick turns left and right.
@@ -169,7 +186,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
             }
 
             robot.moveRobotVelocity();
-            controlBlockScoring();
 
             // Send telemetry message to signify robot running;
             robot.showEncoders();
@@ -178,12 +194,32 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     private void controlBlockScoring() {
 
-        if (gamepad2.y && (robot.armAngle < 230))
-            robot.arm.setPower(0.2);
-        else if (gamepad2.a && (robot.armAngle > -20))
-            robot.arm.setPower(-0.2);
-        else
+        if (gamepad2.y && (robot.armAngle < 230)) {
+            neutralTime.reset();
             robot.arm.setPower(0);
+            robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.arm.setPower(0.2);
+            holdPower = -0.05;
+
+        }
+
+        else if (gamepad2.a && (robot.armAngle > -20)) {
+            neutralTime.reset();
+            robot.arm.setPower(0);
+            robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.arm.setPower(-0.2);
+            holdPower = 0.05;
+
+        }
+
+        else if (neutralTime.time() < 0.15) {
+            robot.arm.setPower(holdPower);
+            targetArmPosition = robot.encoderArm;
+        } else {
+            robot.arm.setTargetPosition(targetArmPosition);
+            robot.arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.arm.setPower(0.2);
+        }
 
         if (gamepad2.x && (robot.liftAngle < 50))
             robot.lift.setPower(0.2);
@@ -199,6 +235,12 @@ public class GFORCE_TeleOp extends LinearOpMode {
         else
             robot.collect.setPower(0);
 
+        if (gamepad2.right_trigger > 0.5) {
+            robot.stoneGrab.setPosition(robot.STONE_CLOSE);
+        } else if (gamepad2.left_trigger > 0.5) {
+            robot.stoneGrab.setPosition(robot.STONE_OPEN);
+        }
 
     }
+
 }
