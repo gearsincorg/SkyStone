@@ -61,18 +61,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
     /* Declare OpMode members. */
     GFORCE_Hardware robot = new GFORCE_Hardware();   // Use steve hardware
 
-    boolean armMoving = false;
-    long    armSetPoint = 0;
-    double  armPower    = 0.0;
-    int targetArmPosition = 0;
-
-    boolean liftMoving = false;
-    long    liftSetPoint = 0;
-    double  liftPower    = 0.0;
-    int targetLiftPosition = 0;
-    double holdPower = 0;
-
-
     @Override
     public void runOpMode() {
         double forwardBack;
@@ -86,9 +74,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
         double desiredHeading = 0;
         boolean neutralSticks = true;
         boolean autoHeadingOn = false;
-
-
-
 
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
@@ -104,19 +89,10 @@ public class GFORCE_TeleOp extends LinearOpMode {
         waitForStart();
         robot.startMotion();
 
-        //Save the current arm and lift positions
-        targetArmPosition  = robot.encoderArm;
-        targetLiftPosition = robot.encoderLift;
-
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-<<<<<<< HEAD
             robot.updateMotion();  // Read all sensors and calculate motions
-=======
-
-            robot.readSensors();
             controlBlockScoring();
->>>>>>> G_FORCE
 
             // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
             // In this mode the Left stick moves the robot fwd and back, the Right stick turns left and right.
@@ -179,10 +155,11 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.setAxialVelocity(axialVel);
             robot.setLateralVelocity(lateralVel);
 
-            if (autoHeadingOn && (neutralTime.time() < 2)) {
+            if (autoHeadingOn && (neutralTime.time() < 4)) {
                 robot.setYawVelocityToHoldHeading(desiredHeading);
             } else {
                 robot.setYawVelocity(yawVel);
+                desiredHeading = robot.currentHeading;
             }
 
             robot.moveRobotVelocity();
@@ -194,31 +171,26 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     private void controlBlockScoring() {
 
-        if (gamepad2.y && (robot.armAngle < 230)) {
-            neutralTime.reset();
-            robot.arm.setPower(0);
+        if (gamepad2.y && (robot.armAngle < 120)) {
             robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.arm.setPower(0.2);
-            holdPower = -0.05;
-
         }
 
-        else if (gamepad2.a && (robot.armAngle > -20)) {
-            neutralTime.reset();
-            robot.arm.setPower(0);
+        else if (gamepad2.a && (robot.armAngle > -110)) {
             robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.arm.setPower(-0.2);
-            holdPower = 0.05;
-
         }
-
-        else if (neutralTime.time() < 0.15) {
-            robot.arm.setPower(holdPower);
-            targetArmPosition = robot.encoderArm;
-        } else {
-            robot.arm.setTargetPosition(targetArmPosition);
-            robot.arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.arm.setPower(0.2);
+        else {
+            robot.arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            if (robot.armAngle < -100) {
+                robot.arm.setPower(0);
+            } else {
+                if (Math.abs(robot.armAngle) > 10) {
+                    robot.arm.setPower(Math.signum(robot.armAngle) * -0.10);
+                } else {
+                    robot.arm.setPower(0);
+                }
+            }
         }
 
         if (gamepad2.x && (robot.liftAngle < 50))

@@ -49,7 +49,6 @@ import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
 import org.openftc.revextensions2.RevBulkData;
 
-
 /**
  * This is NOT an opmode.
  *
@@ -85,6 +84,13 @@ public class GFORCE_Hardware {
     public DcMotorEx lift = null;
     public DcMotorEx arm = null;
 
+    private ExpansionHubMotor leftFrontDriveEH = null;
+    private ExpansionHubMotor rightFrontDriveEH = null;
+    private ExpansionHubMotor leftBackDriveEH = null;
+    private ExpansionHubMotor rightBackDriveEH = null;
+    private ExpansionHubMotor liftEH = null;
+    private ExpansionHubMotor armEH = null;
+
     public Servo skystoneLiftRed = null;
     public Servo skystoneLiftBlue = null;
     public Servo stoneGrab = null;
@@ -95,18 +101,18 @@ public class GFORCE_Hardware {
     public final double MAX_VELOCITY        = 2500;  // Counts per second
     public final double MAX_VELOCITY_MMPS   = 2540;  // MM Per Second
     public final double MAX_ROTATION_DPS    = 100;   // Degrees per second
-    public final double AUTO_ROTATION_DPS   = 100;   // Degrees per second
+    public final double AUTO_ROTATION_DPS   = 2540;   // Degrees per second
     public final double ACCELERATION_LIMIT  = 1524;  // MM per second per second
 
     public final double YAW_GAIN            = 0.010;  // Rate at which we respond to heading error 0.013
     public final double LATERAL_GAIN        = 0.0025; // Distance from x axis that we start to slow down. 0027
     public final double AXIAL_GAIN          = 0.0015; // Distance from target that we start to slow down. 0017
 
-    public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 10) / (6 * 260) ;  // 60-100 gear reduction
+    public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 10) / (6 * 360) ;  // 60-100 gear reduction
     public final double ARM_COUNTS_PER_DEGREE    = 2786 / 360;   //
 
     public final double LIFT_START_ANGLE         =  10;  // 60-100 gear reduction
-    public final double ARM_START_ANGLE          = -20;  //
+    public final double ARM_START_ANGLE          = -110;  //
     public final double STONE_OPEN               = 0.5;
     public final double STONE_CLOSE              = 0;
     public final double STONE_AXIAL              = 0.5;
@@ -134,25 +140,16 @@ public class GFORCE_Hardware {
 
     private static LinearOpMode myOpMode = null;
 
-<<<<<<< HEAD
     // Sensor Read Info.
     ExpansionHubEx masterHub = null;
     ExpansionHubEx slaveHub = null;
     RevBulkData    masterHubValues = null;
     RevBulkData    slaveHubValues = null;
 
-    private long   encoderLB;
-    private long   encoderLF;
-    private long   encoderRB;
-    private long   encoderRF;
-    private long   encoderLift;
-    private long   encoderArm;
-=======
     private int   encoderLB;
     private int   encoderLF;
     private int   encoderRB;
     private int   encoderRF;
->>>>>>> G_FORCE
 
     private double driveAxial = 0;
     private double driveYaw = 0;
@@ -208,6 +205,18 @@ public class GFORCE_Hardware {
         arm = configureMotor("arm", DcMotor.Direction.REVERSE);
         collect = myOpMode.hardwareMap.get(DcMotorEx.class,"collect");
         collect.setDirection(DcMotor.Direction.REVERSE);
+
+        // Temp Speed Up Code
+        masterHub = myOpMode.hardwareMap.get(ExpansionHubEx.class, "Parent");
+        slaveHub = myOpMode.hardwareMap.get(ExpansionHubEx.class, "Child");
+
+        leftFrontDriveEH  = (ExpansionHubMotor)leftFrontDrive;
+        rightFrontDriveEH  = (ExpansionHubMotor) rightFrontDrive;
+        leftBackDriveEH  = (ExpansionHubMotor) leftBackDrive;
+        rightBackDriveEH  = (ExpansionHubMotor) rightBackDrive;
+        liftEH = (ExpansionHubMotor)lift;
+        armEH = (ExpansionHubMotor)arm;
+
 
         resetEncoders();
         stoneGrab = myOpMode.hardwareMap.get(Servo.class,"stone_grab");
@@ -393,6 +402,7 @@ public class GFORCE_Hardware {
 
     // Common location to read all sensors
     public void readSensors() {
+        /*
         encoderLF = leftFrontDrive.getCurrentPosition();
         encoderRF = rightFrontDrive.getCurrentPosition();
         encoderLB = leftBackDrive.getCurrentPosition();
@@ -400,19 +410,33 @@ public class GFORCE_Hardware {
 
         encoderLift = lift.getCurrentPosition();
         encoderArm = arm.getCurrentPosition();
+        */
+
+        RevBulkData holding;
+        if ((masterHub != null) && (slaveHub != null)) {
+            // ensure that getBulkinputData returns valid data ( comms loss can reutrn null)
+            if ((holding = masterHub.getBulkInputData()) != null)
+                masterHubValues = holding;
+            if ((holding = slaveHub.getBulkInputData()) != null)
+                slaveHubValues = holding;
+
+            encoderLF = masterHubValues.getMotorCurrentPosition(leftFrontDriveEH);
+            encoderLB = masterHubValues.getMotorCurrentPosition(leftBackDriveEH);
+            encoderRF = masterHubValues.getMotorCurrentPosition(rightFrontDriveEH);
+            encoderLB = masterHubValues.getMotorCurrentPosition(rightBackDriveEH);
+
+            encoderLift = slaveHubValues.getMotorCurrentPosition(liftEH);
+            encoderArm = slaveHubValues.getMotorCurrentPosition(armEH);
+        }
+
 
         liftAngle = (encoderLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
         armAngle = (encoderArm / ARM_COUNTS_PER_DEGREE) + ARM_START_ANGLE;
 
         currentHeading = getHeading();
-<<<<<<< HEAD
-=======
 
         intervalCycle = cycleTime.milliseconds() - lastCycle;
         lastCycle = cycleTime.milliseconds();
-
-
->>>>>>> G_FORCE
     }
 
     //Get the current encoder counts of the drive motors
@@ -485,6 +509,7 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() &&
                 (navTime.time() < timeOutSEC) &&
                 (!inPosition || waitFullTimeout)) {
+            getHeading();
             inPosition = setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
             myOpMode.sleep(10);
@@ -515,8 +540,6 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("axes",  "A:L:Y %6.0f %6.0f %6.0f", driveAxial, driveLateral,driveYaw);
         myOpMode.telemetry.addData("motion","axial %6.1f, lateral %6.1f", getAxialMotion(), getLateralMotion());
         myOpMode.telemetry.addData("angles","lift: %6.1f, Arm %6.1f", liftAngle, armAngle);
-        //  myOpMode.telemetry.addData("front", "%5.1f %5.1f ", deltaLeftFront, deltaRightFront);
-        //  myOpMode.telemetry.addData("back",  "%5.1f %5.1f ", deltaLeftBack, deltaRightBack);
         myOpMode.telemetry.update();
     }
 
@@ -568,7 +591,8 @@ public class GFORCE_Hardware {
     }
 
     public boolean setYawVelocityToHoldHeading() {
-        double error = normalizeHeading(headingSetpoint - getHeading());
+        // double error = normalizeHeading(headingSetpoint - getHeading());
+        double error = normalizeHeading(headingSetpoint - currentHeading);
         double yaw = Range.clip(error * HEADING_GAIN, -1.0, 1.0);
 
         setYawVelocity(yaw * AUTO_ROTATION_DPS);

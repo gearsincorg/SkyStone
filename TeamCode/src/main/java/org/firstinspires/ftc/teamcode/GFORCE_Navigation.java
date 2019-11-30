@@ -206,6 +206,7 @@ public class GFORCE_Navigation
         while (myOpMode.opModeIsActive() && !targetLock && (navTime.time() <  timeOutSEC)){
             myRobot.setAxialVelocity(axial);
             myRobot.setLateralVelocity(lateral);
+            myRobot.getHeading();
             myRobot.setYawVelocityToHoldHeading();
             myRobot.moveRobotVelocity();
 
@@ -416,6 +417,7 @@ public class GFORCE_Navigation
         while (myOpMode.opModeIsActive() && (navTime.time() <  timeOutSEC)){
             myRobot.setAxialVelocity(axial);
             myRobot.setLateralVelocity(lateral);
+            myRobot.getHeading();
             myRobot.setYawVelocityToHoldHeading(heading);
             myRobot.moveRobotVelocity();
 
