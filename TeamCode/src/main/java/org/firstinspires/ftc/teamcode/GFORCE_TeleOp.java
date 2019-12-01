@@ -174,22 +174,36 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     private void controlBlockScoring() {
 
-        if (gamepad2.dpad_up && (robot.armAngle < 120)) {
-            robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            robot.arm.setPower(0.2);
+        // Check for arm up
+        if (robot.armAngle < 120) {
+            if (gamepad2.dpad_up) {
+                robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                robot.arm.setPower(0.2);
+            } else if (gamepad2.right_stick_y < -0.1) {
+                robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                robot.arm.setPower(Math.abs(gamepad2.right_stick_y) * 0.3);
+            }
         }
 
-        else if (gamepad2.dpad_down && (robot.armAngle > -110)) {
-            robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            robot.arm.setPower(-0.2);
+        // Check for Arm Down
+        else if (robot.armAngle > -110) {
+            if (gamepad2.dpad_down) {
+                robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                robot.arm.setPower(-0.2);
+            } else if (gamepad2.right_stick_y > 0.1) {
+                robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                robot.arm.setPower(Math.abs(gamepad2.right_stick_y) * -0.3);
+            }
         }
+
+        // Hold the current position
         else {
             robot.arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             if (robot.armAngle < -100) {
                 robot.arm.setPower(0);
             } else {
                 if (Math.abs(robot.armAngle) > 10) {
-                    robot.arm.setPower(Math.signum(robot.armAngle) * -0.10);
+                    robot.arm.setPower(Math.signum(robot.armAngle) * -0.12);
                 } else {
                     robot.arm.setPower(0);
                 }
