@@ -9,6 +9,7 @@
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
             <Servo name="stone_rotate" port="4" />
             <Servo name="stone_grab" port="5" />
+            <Servo name="foundation_grabber" port="3" />
 
         </LynxModule>
         <LynxModule name="Child" port="3">

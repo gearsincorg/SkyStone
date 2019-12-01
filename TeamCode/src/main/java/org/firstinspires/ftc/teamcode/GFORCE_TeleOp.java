@@ -114,10 +114,13 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 forwardBack = 0.1;
             } else if (gamepad1.a || gamepad1.dpad_down) {
                 forwardBack = -0.1;
-            } else if (gamepad1.x || gamepad1.dpad_left) {
+            } else if (gamepad1.x) {
+                rotate = 0.1;
+            } else if (gamepad1.b) {
+                rotate = -0.1;
+            } else if (gamepad1.dpad_left) {
                 rightLeft = -0.1;
-            } else if ( gamepad1.b || gamepad1.dpad_right
-            ) {
+            } else if (gamepad1.dpad_right) {
                 rightLeft = 0.1;
             }
 
@@ -171,12 +174,12 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     private void controlBlockScoring() {
 
-        if (gamepad2.y && (robot.armAngle < 120)) {
+        if (gamepad2.dpad_up && (robot.armAngle < 120)) {
             robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.arm.setPower(0.2);
         }
 
-        else if (gamepad2.a && (robot.armAngle > -110)) {
+        else if (gamepad2.dpad_down && (robot.armAngle > -110)) {
             robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.arm.setPower(-0.2);
         }
@@ -193,24 +196,33 @@ public class GFORCE_TeleOp extends LinearOpMode {
             }
         }
 
-        if (gamepad2.x && (robot.liftAngle < 50))
-            robot.lift.setPower(0.2);
-        else if (gamepad2.b && (robot.liftAngle > 10 ))
-            robot.lift.setPower(-0.1);
+        if (gamepad2.y && (robot.liftAngle < 55))
+            robot.lift.setPower(0.3);
+        else if (gamepad2.a && (robot.liftAngle > 10 ))
+            robot.lift.setPower(-0.2);
         else
             robot.lift.setPower(0);
 
+        if(gamepad2.x) {
+            robot.foundationGrabber.setPosition(robot.FOUNDATION_UP);
+        }
+        else if (gamepad2.b) {
+            robot.foundationGrabber.setPosition(robot.FOUNDATION_DOWN);
+        }
+
         if (gamepad2.right_bumper)
-            robot.collect.setPower(1);
+            robot.stoneGrab.setPosition(robot.STONE_CLOSE);
         else if (gamepad2.left_bumper)
-            robot.collect.setPower(-1);
+            robot.stoneGrab.setPosition(robot.STONE_OPEN);
         else
             robot.collect.setPower(0);
 
         if (gamepad2.right_trigger > 0.5) {
-            robot.stoneGrab.setPosition(robot.STONE_CLOSE);
+            robot.collect.setPower(1);
+
         } else if (gamepad2.left_trigger > 0.5) {
-            robot.stoneGrab.setPosition(robot.STONE_OPEN);
+            robot.collect.setPower(-1);
+
         }
 
     }

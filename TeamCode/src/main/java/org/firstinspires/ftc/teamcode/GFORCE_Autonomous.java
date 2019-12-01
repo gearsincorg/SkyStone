@@ -31,6 +31,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.RobotLog;
 
 
 /**
@@ -57,9 +58,11 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
     final double STUD_RANGE = 10;               // Plus or minus 10 millimeters
     final double BLOCK_PUSH_DISTANCE = 10;      // Extra 10mm
-    final double BLOCK_CENTER_OFFSET = -55;     // Camera to grab offset
+    final double BLOCK_CENTER_OFFSET = -45;     // Camera to grab offset
+    public static final String TAG = "G-FORCE";
 
     double error;
+    int skyStonePosition = 0;
 
     @Override
     public void runOpMode() {
@@ -94,18 +97,35 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.sleepAndHoldHeading(0, 0.5);
 
         if (nav.waitForTarget(5)) {
+            skyStonePosition = 1;
+        } else {
+            robot.driveAxialVelocity(200,0,380,5,true);
+            if (nav.waitForTarget(5)) {
+                skyStonePosition = 2;
+            }
+            else {
+                robot.driveAxialVelocity(200,0,380,5,true);
+                if (nav.waitForTarget(5)) {
+                    skyStonePosition = 3;
+                }
+            }
+        }
+
+
+        if (skyStonePosition > 0) {
             driveAndGrabBlock();
-            robot.driveAxialVelocity(900, 0, -1250, 20, true);
+            robot.driveAxialVelocity(700 + (skyStonePosition * 200), 0, -1250, 20, true); //Should be 700mm
             robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
             robot.sleepAndHoldHeading(0, 1);
-            robot.driveAxialVelocity(1100, 0, 1250, 20, true);
+            robot.driveAxialVelocity( 1500 + (skyStonePosition * 200), 0, 1250, 20, true);
             robot.sleepAndHoldHeading(0, 0.5);
+            robot.driveLateralVelocity(300,0,600,2,true);
 
             if (nav.waitForTarget(5)) {
                 driveAndGrabBlock();
-                robot.driveAxialVelocity(1100, 0, -1250, 20, true);
+                robot.driveAxialVelocity(1500 + (skyStonePosition * 200), 0, -1250, 20, true);
                 robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-                robot.driveAxialVelocity(200, 0, 1250, 20, true);
+                robot.driveAxialVelocity(600, 0, 1250, 20, true);
                 robot.sleepAndHoldHeading(0, 1);
             }
         }
@@ -120,9 +140,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
         //Multiply the distance in mm from the target by the conversion factor for inches, flip the direction to correct for the error
         error = (BLOCK_CENTER_OFFSET - nav.robotY);
 
-        if (Math.abs(error) > STUD_RANGE) {
-            robot.driveAxialVelocity(error, 0, 380,5,true);
-        }
+        RobotLog.ii(TAG, String.format("Error=%5.0f robotY=%5.0f ", error, nav.robotY));
+        robot.driveAxialVelocity(error, 0, 380,5,true);
 
         //Calculate new error
         error = (-nav.robotX);

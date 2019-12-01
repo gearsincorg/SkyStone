@@ -37,6 +37,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
@@ -73,6 +74,8 @@ public class GFORCE_Hardware {
         BLUE
     }
 
+    public static final String TAG = "G-FORCE";
+
     /* Public OpMode members. */
     public AllianceColor allianceColor = AllianceColor.UNKNOWN_COLOR;
     public DcMotorEx leftFrontDrive = null;
@@ -95,6 +98,7 @@ public class GFORCE_Hardware {
     public Servo skystoneLiftBlue = null;
     public Servo stoneGrab = null;
     public Servo stoneRotate = null;
+    public Servo foundationGrabber = null;
 
     public static BNO055IMU imu = null;
 
@@ -108,14 +112,16 @@ public class GFORCE_Hardware {
     public final double LATERAL_GAIN        = 0.0025; // Distance from x axis that we start to slow down. 0027
     public final double AXIAL_GAIN          = 0.0015; // Distance from target that we start to slow down. 0017
 
-    public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 10) / (6 * 360) ;  // 60-100 gear reduction
+    public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 100) / (20 * 360) ;  // 60-100 gear reduction
     public final double ARM_COUNTS_PER_DEGREE    = 2786 / 360;   //
 
     public final double LIFT_START_ANGLE         =  10;  // 60-100 gear reduction
     public final double ARM_START_ANGLE          = -110;  //
     public final double STONE_OPEN               = 0.5;
     public final double STONE_CLOSE              = 0;
-    public final double STONE_AXIAL              = 0.5;
+    public final double STONE_AXIAL              = 0.51;
+    public final double FOUNDATION_UP = 0.5;
+    public final double FOUNDATION_DOWN = 1;
 
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.012;  // Was 0.02
@@ -223,10 +229,13 @@ public class GFORCE_Hardware {
         stoneRotate = myOpMode.hardwareMap.get(Servo.class,"stone_rotate");
         skystoneLiftRed = myOpMode.hardwareMap.get(Servo.class, "lift_red");
         skystoneLiftBlue = myOpMode.hardwareMap.get(Servo.class, "lift_blue");
+        foundationGrabber = myOpMode.hardwareMap.get(Servo.class,"foundation_grabber" +
+                "");
         setRedSkystoneGrabber(SkystoneGrabberPositions.START);
         setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
         stoneGrab.setPosition(STONE_OPEN);
         stoneRotate.setPosition(STONE_AXIAL);
+        foundationGrabber.setPosition(FOUNDATION_UP);
 
         timeoutSoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("ss_siren", "raw", myOpMode.hardwareMap.appContext.getPackageName());
         if (timeoutSoundID != 0) {
@@ -279,6 +288,7 @@ public class GFORCE_Hardware {
         //Reverse angles for red autonomous
         if (allianceColor == AllianceColor.BLUE) {
             heading = -heading;
+            vel = -vel;
         }
 
         if ((mm < 0.0) || (vel < 0.0)) {
@@ -333,7 +343,6 @@ public class GFORCE_Hardware {
         //Reverse angles for red autonomous
         if (allianceColor == AllianceColor.BLUE) {
             heading = -heading;
-            vel = -vel;
         }
 
         //Save the current position
@@ -423,7 +432,7 @@ public class GFORCE_Hardware {
             encoderLF = masterHubValues.getMotorCurrentPosition(leftFrontDriveEH);
             encoderLB = masterHubValues.getMotorCurrentPosition(leftBackDriveEH);
             encoderRF = masterHubValues.getMotorCurrentPosition(rightFrontDriveEH);
-            encoderLB = masterHubValues.getMotorCurrentPosition(rightBackDriveEH);
+            encoderRB = masterHubValues.getMotorCurrentPosition(rightBackDriveEH);
 
             encoderLift = slaveHubValues.getMotorCurrentPosition(liftEH);
             encoderArm = slaveHubValues.getMotorCurrentPosition(armEH);
@@ -463,6 +472,7 @@ public class GFORCE_Hardware {
         axialMotion /= AXIAL_ENCODER_COUNTS_PER_MM;
         lateralMotion = ((-deltaLeftBack + deltaLeftFront + deltaRightBack - deltaRightFront) / 4);
         lateralMotion /= LATERAL_ENCODER_COUNTS_PER_MM;
+        RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
         return (true);
     }
@@ -781,7 +791,7 @@ public class GFORCE_Hardware {
     private final double GRAB_RIGHT_SAFE = 0.55;
     private final double GRAB_RIGHT_CLOSE = 1;
 
-    private final double LIFT_BLUE_SAFE = 1;
+    private final double LIFT_BLUE_SAFE = 0.9;
     private final double LIFT_BLUE_READY = 0.41;
 
 
