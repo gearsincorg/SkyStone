@@ -98,7 +98,8 @@ public class GFORCE_Hardware {
     public Servo skystoneLiftBlue = null;
     public Servo stoneGrab = null;
     public Servo stoneRotate = null;
-    public Servo foundationGrabber = null;
+    public Servo foundationGrabberLeft = null;
+    public Servo foundationGrabberRight = null;
 
     public static BNO055IMU imu = null;
 
@@ -120,8 +121,10 @@ public class GFORCE_Hardware {
     public final double STONE_OPEN               = 0.5;
     public final double STONE_CLOSE              = 0;
     public final double STONE_AXIAL              = 0.51;
-    public final double FOUNDATION_UP = 0.5;
-    public final double FOUNDATION_DOWN = 1;
+    public final double FOUNDATION_SAFE_R = 0.5;
+    public final double FOUNDATION_SAFE_L = 0.5;
+    public final double FOUNDATION_DOWN_R = 0.18;
+    public final double FOUNDATION_DOWN_L = 0.89;
 
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.012;  // Was 0.02
@@ -229,13 +232,16 @@ public class GFORCE_Hardware {
         stoneRotate = myOpMode.hardwareMap.get(Servo.class,"stone_rotate");
         skystoneLiftRed = myOpMode.hardwareMap.get(Servo.class, "lift_red");
         skystoneLiftBlue = myOpMode.hardwareMap.get(Servo.class, "lift_blue");
-        foundationGrabber = myOpMode.hardwareMap.get(Servo.class,"foundation_grabber" +
+        foundationGrabberRight = myOpMode.hardwareMap.get(Servo.class,"foundation_GR" +
+                "");
+        foundationGrabberLeft = myOpMode.hardwareMap.get(Servo.class,"foundation_GL" +
                 "");
         setRedSkystoneGrabber(SkystoneGrabberPositions.START);
         setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
         stoneGrab.setPosition(STONE_OPEN);
         stoneRotate.setPosition(STONE_AXIAL);
-        foundationGrabber.setPosition(FOUNDATION_UP);
+        foundationGrabberRight.setPosition(FOUNDATION_SAFE_R);
+        foundationGrabberLeft.setPosition(FOUNDATION_SAFE_L);
 
         timeoutSoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("ss_siren", "raw", myOpMode.hardwareMap.appContext.getPackageName());
         if (timeoutSoundID != 0) {
@@ -770,8 +776,8 @@ public class GFORCE_Hardware {
     private final double GRAB_LEFT_SAFE = 0;
     private final double GRAB_LEFT_CLOSE = 1;
 
-    private final double LIFT_RED_SAFE = 0;
-    private final double LIFT_RED_READY = 0.58;
+    private final double LIFT_RED_SAFE = 0.07;
+    private final double LIFT_RED_READY = 0.55;
 
     public void setRedSkystoneGrabber(SkystoneGrabberPositions position) {
 
@@ -791,8 +797,8 @@ public class GFORCE_Hardware {
     private final double GRAB_RIGHT_SAFE = 0.55;
     private final double GRAB_RIGHT_CLOSE = 1;
 
-    private final double LIFT_BLUE_SAFE = 0.9;
-    private final double LIFT_BLUE_READY = 0.41;
+    private final double LIFT_BLUE_SAFE = 0.96;
+    private final double LIFT_BLUE_READY = 0.52;
 
 
     public void setBlueSkystoneGrabber(SkystoneGrabberPositions position) {

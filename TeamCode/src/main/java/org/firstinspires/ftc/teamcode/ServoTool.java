@@ -67,8 +67,8 @@ public class ServoTool extends LinearOpMode {
 
         // Connect to servo (Assume PushBot Left Hand)
         // Change the text in quotes to match any servo name on your robot.
-        servo1 = hardwareMap.get(Servo.class, "lift_red");
-        servo2 = hardwareMap.get(Servo.class, "lift_blue");
+        servo1 = hardwareMap.get(Servo.class, "foundation_GR");
+        servo2 = hardwareMap.get(Servo.class, "foundation_GL");
 
         // Scan servo till stop pressed.
         while(!isStopRequested() ){
@@ -92,8 +92,8 @@ public class ServoTool extends LinearOpMode {
 
             // Display the current values
             telemetry.addData(">", "Y-A Servo 1, X-B Servo 2" );
-            telemetry.addData("Servo1", "%5.2f", pos1);
-            telemetry.addData("Servo2", "%5.2f", pos2);
+            telemetry.addData("Right", "%5.2f", pos1);
+            telemetry.addData("Left", "%5.2f", pos2);
             telemetry.update();
 
             sleep(CYCLE_MS);

@@ -83,7 +83,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         //robot.homeArm();
 
         // Wait for the game to start (driver presses PLAY)
-        telemetry.addData(">", "Press Play to Home the Bucket");
+        telemetry.addData(">", "Press Play to Start");
         telemetry.update();
 
         waitForStart();
@@ -119,9 +119,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
             } else if (gamepad1.b) {
                 rotate = -0.1;
             } else if (gamepad1.dpad_left) {
-                rightLeft = -0.1;
+                rightLeft = -0.2;
             } else if (gamepad1.dpad_right) {
-                rightLeft = 0.1;
+                rightLeft = 0.2;
             }
 
             // Convert to axis velocities
@@ -175,22 +175,22 @@ public class GFORCE_TeleOp extends LinearOpMode {
     private void controlBlockScoring() {
 
         // Check for arm up
-        if (robot.armAngle < 120) {
+        if (robot.armAngle < 120 && (gamepad2.dpad_up || (gamepad2.right_stick_y < -0.1))) {
             if (gamepad2.dpad_up) {
                 robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 robot.arm.setPower(0.2);
-            } else if (gamepad2.right_stick_y < -0.1) {
+            } else {
                 robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 robot.arm.setPower(Math.abs(gamepad2.right_stick_y) * 0.3);
             }
         }
 
         // Check for Arm Down
-        else if (robot.armAngle > -110) {
+        else if (robot.armAngle > -110 && (gamepad2.dpad_down || (gamepad2.right_stick_y > 0.1))) {
             if (gamepad2.dpad_down) {
                 robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 robot.arm.setPower(-0.2);
-            } else if (gamepad2.right_stick_y > 0.1) {
+            } else {
                 robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                 robot.arm.setPower(Math.abs(gamepad2.right_stick_y) * -0.3);
             }
@@ -203,7 +203,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 robot.arm.setPower(0);
             } else {
                 if (Math.abs(robot.armAngle) > 10) {
-                    robot.arm.setPower(Math.signum(robot.armAngle) * -0.12);
+                    robot.arm.setPower(Math.signum(robot.armAngle) * -0.1);
                 } else {
                     robot.arm.setPower(0);
                 }
@@ -218,10 +218,12 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.lift.setPower(0);
 
         if(gamepad2.x) {
-            robot.foundationGrabber.setPosition(robot.FOUNDATION_UP);
+            robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_DOWN_L);
+            robot.foundationGrabberRight.setPosition(robot.FOUNDATION_DOWN_R);
         }
         else if (gamepad2.b) {
-            robot.foundationGrabber.setPosition(robot.FOUNDATION_DOWN);
+            robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_SAFE_L);
+            robot.foundationGrabberRight.setPosition(robot.FOUNDATION_SAFE_R);
         }
 
         if (gamepad2.right_bumper)

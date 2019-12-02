@@ -57,7 +57,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
     GFORCE_Navigation   nav           = new GFORCE_Navigation();
 
     final double STUD_RANGE = 10;               // Plus or minus 10 millimeters
-    final double BLOCK_PUSH_DISTANCE = 10;      // Extra 10mm
+    final double BLOCK_PUSH_DISTANCE = 30;      // Was an extra 10mm, changed to 30 mm for new phone mount because it is further back
     final double BLOCK_CENTER_OFFSET = -45;     // Camera to grab offset
     public static final String TAG = "G-FORCE";
 
@@ -96,16 +96,16 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.driveLateralVelocity(600, 0, 1000, 20, true);
         robot.sleepAndHoldHeading(0, 0.5);
 
-        if (nav.waitForTarget(5)) {
+        if (nav.waitForTarget(2)) {
             skyStonePosition = 1;
         } else {
             robot.driveAxialVelocity(200,0,380,5,true);
-            if (nav.waitForTarget(5)) {
+            if (nav.waitForTarget(2)) {
                 skyStonePosition = 2;
             }
             else {
                 robot.driveAxialVelocity(200,0,380,5,true);
-                if (nav.waitForTarget(5)) {
+                if (nav.waitForTarget(2)) {
                     skyStonePosition = 3;
                 }
             }
@@ -119,13 +119,15 @@ public class GFORCE_Autonomous extends LinearOpMode {
             robot.sleepAndHoldHeading(0, 1);
             robot.driveAxialVelocity( 1500 + (skyStonePosition * 200), 0, 1250, 20, true);
             robot.sleepAndHoldHeading(0, 0.5);
-            robot.driveLateralVelocity(300,0,600,2,true);
+            if (!nav.waitForTarget(2)) {
+                robot.driveLateralVelocity(300, 0, 600, 2, true);
+            }
 
-            if (nav.waitForTarget(5)) {
+            if (nav.waitForTarget(2)) {
                 driveAndGrabBlock();
                 robot.driveAxialVelocity(1500 + (skyStonePosition * 200), 0, -1250, 20, true);
                 robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-                robot.driveAxialVelocity(600, 0, 1250, 20, true);
+                robot.driveAxialVelocity(400, 0, 1250, 20, true); //Was 600mm but was barely on the line
                 robot.sleepAndHoldHeading(0, 1);
             }
         }
