@@ -442,7 +442,7 @@ public class GFORCE_Navigation
     }
 
 
-    public boolean waitForTarget(int timeout) {
+    public boolean waitForTarget(double timeout) {
         navTime.reset();
         while (myOpMode.opModeIsActive() && !targetIsVisible(0) && (navTime.time() < timeout)) {
             showNavTelemetry(true);
