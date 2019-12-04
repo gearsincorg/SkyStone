@@ -182,8 +182,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.sleepAndHoldHeading(90, 1);
         robot.turnToHeading(0,4);
         robot.sleepAndHoldHeading(0, 1);
+        robot.driveLateralVelocity(450,0,-1000,3, true);
         robot.driveAxialVelocity(150,0,-1000,1,true);
-        robot.driveLateralVelocity(450,0,-1500,2, true);
         robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_SAFE_L);
         robot.foundationGrabberRight.setPosition(robot.FOUNDATION_SAFE_R);
 

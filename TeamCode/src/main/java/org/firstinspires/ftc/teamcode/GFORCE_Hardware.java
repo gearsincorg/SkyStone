@@ -50,23 +50,6 @@ import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
 import org.openftc.revextensions2.RevBulkData;
 
-/**
- * This is NOT an opmode.
- *
- * This class can be used to define all the specific hardware for a single robot.
- * In this case that robot is a Pushbot.
- * See PushbotTeleopTank_Iterative and others classes starting with "Pushbot" for usage examples.
- *
- * This hardware class assumes the following device names have been configured on the robot:
- * Note:  All names are lower case and some have single spaces between words.
- *
- * Motor channel:  Left  drive motor:        "left_drive"
- * Motor channel:  Right drive motor:        "right_drive"
- * Motor channel:  Manipulator drive motor:  "left_arm"
- * Servo channel:  Servo to open left claw:  "left_hand"
- * Servo channel:  Servo to open right claw: "right_hand"
- */
-
 public class GFORCE_Hardware {
     public static enum AllianceColor {
         UNKNOWN_COLOR,
@@ -105,7 +88,6 @@ public class GFORCE_Hardware {
 
     public final double MAX_VELOCITY        = 2500;  // Counts per second
     public final double MAX_VELOCITY_MMPS   = 2540;  // MM Per Second
-    public final double MAX_ROTATION_DPS    = 100;   // Degrees per second
     public final double AUTO_ROTATION_DPS   = 2540;   // Degrees per second
     public final double ACCELERATION_LIMIT  = 1524;  // MM per second per second
 
@@ -113,18 +95,18 @@ public class GFORCE_Hardware {
     public final double LATERAL_GAIN        = 0.0025; // Distance from x axis that we start to slow down. 0027
     public final double AXIAL_GAIN          = 0.0015; // Distance from target that we start to slow down. 0017
 
-    public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 100) / (20 * 360) ;  // 60-100 gear reduction
+    public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 100) / (20 * 360) ;  // 20-100 gear reduction
     public final double ARM_COUNTS_PER_DEGREE    = 2786 / 360;   //
 
-    public final double LIFT_START_ANGLE         =  10;  // 60-100 gear reduction
-    public final double ARM_START_ANGLE          = -110;  //
+    public final double LIFT_START_ANGLE         =  10;  //
+    public final double ARM_START_ANGLE          = -110; //
     public final double STONE_OPEN               = 0.5;
     public final double STONE_CLOSE              = 0;
     public final double STONE_AXIAL              = 0.51;
-    public final double FOUNDATION_SAFE_R = 0.5;
-    public final double FOUNDATION_SAFE_L = 0.5;
-    public final double FOUNDATION_DOWN_R = 0.18;
-    public final double FOUNDATION_DOWN_L = 0.89;
+    public final double FOUNDATION_SAFE_R = 0.49;
+    public final double FOUNDATION_SAFE_L = 0.55;
+    public final double FOUNDATION_DOWN_R = 0.18;   // 0.35
+    public final double FOUNDATION_DOWN_L = 0.89;   // 0.71
 
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.012;  // Was 0.02
@@ -174,7 +156,6 @@ public class GFORCE_Hardware {
     private double deltaRightBack = 0;
     private double deltaRightFront = 0;
 
-
     // gyro
     private double lastHeading = 0;
     private double lastCycle = 0;
@@ -185,9 +166,7 @@ public class GFORCE_Hardware {
     private double headingSetpoint = 0;
 
     private int timeoutSoundID = 0;
-
     public String autoPathName = "";
-
 
     /* local OpMode members. */
     private ElapsedTime runTime = new ElapsedTime();
@@ -226,16 +205,13 @@ public class GFORCE_Hardware {
         liftEH = (ExpansionHubMotor)lift;
         armEH = (ExpansionHubMotor)arm;
 
-
         resetEncoders();
         stoneGrab = myOpMode.hardwareMap.get(Servo.class,"stone_grab");
         stoneRotate = myOpMode.hardwareMap.get(Servo.class,"stone_rotate");
         skystoneLiftRed = myOpMode.hardwareMap.get(Servo.class, "lift_red");
         skystoneLiftBlue = myOpMode.hardwareMap.get(Servo.class, "lift_blue");
-        foundationGrabberRight = myOpMode.hardwareMap.get(Servo.class,"foundation_GR" +
-                "");
-        foundationGrabberLeft = myOpMode.hardwareMap.get(Servo.class,"foundation_GL" +
-                "");
+        foundationGrabberRight = myOpMode.hardwareMap.get(Servo.class,"foundation_GR" );
+        foundationGrabberLeft = myOpMode.hardwareMap.get(Servo.class,"foundation_GL" );
         setRedSkystoneGrabber(SkystoneGrabberPositions.START);
         setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
         stoneGrab.setPosition(STONE_OPEN);
@@ -793,9 +769,6 @@ public class GFORCE_Hardware {
     }
 
     // Actuator Methods
-    private final double GRAB_LEFT_SAFE = 0;
-    private final double GRAB_LEFT_CLOSE = 1;
-
     private final double LIFT_RED_SAFE = 0.07;
     private final double LIFT_RED_READY = 0.55;
 
@@ -803,35 +776,26 @@ public class GFORCE_Hardware {
 
         switch (position) {
             case START:
-                //skystoneGrabRed.setPosition(GRAB_LEFT_SAFE);
                 skystoneLiftRed.setPosition(LIFT_RED_SAFE);
                 break;
 
             case GRAB_DOWN:
-                //skystoneGrabRed.setPosition(GRAB_LEFT_CLOSE);
                 skystoneLiftRed.setPosition(LIFT_RED_READY);
                 break;
         }
     }
 
-    private final double GRAB_RIGHT_SAFE = 0.55;
-    private final double GRAB_RIGHT_CLOSE = 1;
-
     private final double LIFT_BLUE_SAFE = 0.96;
     private final double LIFT_BLUE_READY = 0.52;
-
 
     public void setBlueSkystoneGrabber(SkystoneGrabberPositions position) {
 
         switch (position) {
             case START:
-                //skystoneGrabBlue.setPosition(GRAB_RIGHT_SAFE);
                 skystoneLiftBlue.setPosition(LIFT_BLUE_SAFE);
                 break;
 
-
             case GRAB_DOWN:
-                //skystoneGrabBlue.setPosition(GRAB_RIGHT_CLOSE);
                 skystoneLiftBlue.setPosition(LIFT_BLUE_READY);
                 break;
         }
@@ -852,54 +816,4 @@ public class GFORCE_Hardware {
         }
 
     }
-
-/*
-// Arm methods
-
-    public void homeArm () {
-        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        arm.setPower(0.2);
-        myOpMode.sleep(1000);
-        arm.setPower(0);
-        myOpMode.sleep(1000);
-        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-
-    // Move the arm until it reaches the dump limit
-    public void dumpRings (double timeOutSec) {
-        arm.setPower(ARM_DUMP);
-        navTime.reset();
-
-        while (myOpMode.opModeIsActive() &&
-                (arm.getCurrentPosition() > DUMP_LIMIT) && (navTime.time() < timeOutSec)) {
-
-        }
-        arm.setPower(0);
-    }
-
-    // Move the arm to prepare to dump the rings in the bucket
-    public void prepareRings (double timeOutSec) {
-        arm.setPower(ARM_DUMP);
-        navTime.reset();
-
-        while (myOpMode.opModeIsActive() &&
-                (arm.getCurrentPosition() > AUTO_SCORE) && (navTime.time() < timeOutSec)) {
-
-        }
-        arm.setPower(0);
-    }
-
-    // Move the arm up after dumping the rings in the bucket
-    public void releaseRings (double timeOutSec) {
-        arm.setPower(-ARM_DUMP);
-        navTime.reset();
-
-        while (myOpMode.opModeIsActive() &&
-                (arm.getCurrentPosition() < AUTO_SCORE) && (navTime.time() < timeOutSec)) {
-
-        }
-        arm.setPower(0);
-    }
-*/
 }
