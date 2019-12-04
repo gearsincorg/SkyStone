@@ -105,8 +105,8 @@ public class GFORCE_Hardware {
     public final double STONE_AXIAL              = 0.51;
     public final double FOUNDATION_SAFE_R = 0.49;
     public final double FOUNDATION_SAFE_L = 0.55;
-    public final double FOUNDATION_DOWN_R = 0.18;   // 0.35
-    public final double FOUNDATION_DOWN_L = 0.89;   // 0.71
+    public final double FOUNDATION_DOWN_R = 0.28;   // 0.35
+    public final double FOUNDATION_DOWN_L = 0.77;   // 0.71
 
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.012;  // Was 0.02
