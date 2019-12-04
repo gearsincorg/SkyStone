@@ -291,15 +291,24 @@ public class GFORCE_Hardware {
         double endingTime = runTime.seconds() + timeOutSec;
         double absMm = Math.abs(mm);
 
+        // Log what we are doing
+        RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
+
         //Reverse angles for red autonomous
         if (allianceColor == AllianceColor.BLUE) {
             heading = -heading;
             vel = -vel;
         }
 
-        if ((mm < 0.0) || (vel < 0.0)) {
+        // If we are moving backwars, set vel negative
+        if ((mm * vel) < 0.0) {
             vel = -Math.abs(vel);
+        } else {
+            vel = Math.abs(vel);
         }
+
+        RobotLog.ii(TAG, String.format("Drive-Axial adjusted mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
+
 
         //Save the current position
         startMotion();
@@ -309,8 +318,9 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() && updateMotion() &&
                 (Math.abs(getAxialMotion()) < absMm) &&
                 (runTime.seconds() < endingTime)) {
+            RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
             setAxialVelocity(getProfileVelocity(vel, getAxialMotion(), absMm));
-            setLateralVelocity(0);
+            setLateralVelocity(-lateralMotion);  // Reverse any drift
             setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
             showEncoders();
@@ -323,6 +333,7 @@ public class GFORCE_Hardware {
         }
 
         stopRobot();
+        RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
         // Return true if we have not timed out
         return (runTime.seconds() < endingTime);
@@ -342,14 +353,21 @@ public class GFORCE_Hardware {
         double endingTime = runTime.seconds() + timeOutSec;
         double absMm = Math.abs(mm);
 
-        if ((mm < 0.0) || (vel < 0.0)) {
-            vel = -Math.abs(vel);
-        }
+        RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
 
         //Reverse angles for red autonomous
         if (allianceColor == AllianceColor.BLUE) {
             heading = -heading;
         }
+
+        // If we are moving backwards, set vel negative
+         if ((mm * vel) < 0.0) {
+            vel = -Math.abs(vel);
+        } else {
+            vel = Math.abs(vel);
+        }
+
+        RobotLog.ii(TAG, String.format("Drive-Axial adjusted mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
 
         //Save the current position
         startMotion();
@@ -359,7 +377,8 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() && updateMotion() &&
                 (Math.abs(getLateralMotion()) < absMm) &&
                 (runTime.seconds() < endingTime)) {
-            setAxialVelocity(0);
+            RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+            setAxialVelocity(-axialMotion);  //  Reverse any drift
             setLateralVelocity(getProfileVelocity(vel, getLateralMotion(), absMm));
             setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
@@ -373,6 +392,7 @@ public class GFORCE_Hardware {
         }
 
         stopRobot();
+        RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
         // Return true if we have not timed out
         return (runTime.seconds() < endingTime);
@@ -478,7 +498,6 @@ public class GFORCE_Hardware {
         axialMotion /= AXIAL_ENCODER_COUNTS_PER_MM;
         lateralMotion = ((-deltaLeftBack + deltaLeftFront + deltaRightBack - deltaRightFront) / 4);
         lateralMotion /= LATERAL_ENCODER_COUNTS_PER_MM;
-        RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
         return (true);
     }
@@ -525,9 +544,10 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() &&
                 (navTime.time() < timeOutSEC) &&
                 (!inPosition || waitFullTimeout)) {
-            getHeading();
+            currentHeading = getHeading();
             inPosition = setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
+            showEncoders();
             myOpMode.sleep(10);
         }
         stopRobot();
@@ -609,7 +629,7 @@ public class GFORCE_Hardware {
     public boolean setYawVelocityToHoldHeading() {
         // double error = normalizeHeading(headingSetpoint - getHeading());
         double error = normalizeHeading(headingSetpoint - currentHeading);
-        double yaw = Range.clip(error * HEADING_GAIN, -1.0, 1.0);
+        double yaw = Range.clip(error * HEADING_GAIN, -0.25, 0.25);
 
         setYawVelocity(yaw * AUTO_ROTATION_DPS);
         return (Math.abs(error) < YAW_IS_CLOSE);
