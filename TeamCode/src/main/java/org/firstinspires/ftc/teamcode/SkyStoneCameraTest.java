@@ -81,7 +81,7 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
  * is explained below.
  */
 
-
+@Disabled
 @TeleOp(name="Camera Test", group ="Concept")
 public class SkyStoneCameraTest extends LinearOpMode {
 
