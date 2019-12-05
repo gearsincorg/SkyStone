@@ -41,8 +41,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
          */
         robot.init(this);
 
-        //robot.homeArm();
-
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData(">", "Press Play to Start");
         telemetry.update();
@@ -119,7 +117,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.setAxialVelocity(axialVel);
             robot.setLateralVelocity(lateralVel);
 
-            if (autoHeadingOn && (neutralTime.time() < 4)) {
+            if (autoHeadingOn && (neutralTime.time() < 2)) {
                 robot.setYawVelocityToHoldHeading(desiredHeading);
             } else {
                 robot.setYawVelocity(yawVel);
