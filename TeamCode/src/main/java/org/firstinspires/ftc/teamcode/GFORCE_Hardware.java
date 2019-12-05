@@ -248,9 +248,9 @@ public class GFORCE_Hardware {
         RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
 
         // Reverse axial directions for blue autonomous when not pointing to sides
-        if ((allianceColor == AllianceColor.BLUE) && (Math.abs(heading) != 90)) {
-            vel = -vel;
-        }
+        //if ((allianceColor == AllianceColor.BLUE) && (Math.abs(heading) != 90)) {
+        //    vel = -vel;
+        //}
 
         // If we are moving backwars, set vel negative
         if ((mm * vel) < 0.0) {
@@ -308,9 +308,9 @@ public class GFORCE_Hardware {
         RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
 
         // Reverse Lateral directions for blue autonomous when pointing to sides
-        if ((allianceColor == AllianceColor.BLUE) && (Math.abs(heading) == 90)) {
-            vel = -vel;
-        }
+        //if ((allianceColor == AllianceColor.BLUE) && (Math.abs(heading) == 90)) {
+        //    vel = -vel;
+        //}
 
         // If we are moving backwards, set vel negative
          if ((mm * vel) < 0.0) {
@@ -667,7 +667,6 @@ public class GFORCE_Hardware {
         rightFrontDrive.setVelocity(rightFrontVel);
         leftBackDrive.setVelocity(leftBackVel);
         rightBackDrive.setVelocity(rightBackVel);
-        //myOpMode.telemetry.addData("Arm position", arm.getCurrentPosition());
 
         // Log.d("G-FORCE AUTO", String.format("M %5.1f %5.1f %5.1f %5.1f ", leftFrontVel, rightFrontVel, leftBackVel, rightBackVel));
 
