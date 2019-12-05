@@ -105,8 +105,8 @@ public class GFORCE_Hardware {
     public final double STONE_AXIAL              = 0.51;
     public final double FOUNDATION_SAFE_R = 0.49;
     public final double FOUNDATION_SAFE_L = 0.55;
-    public final double FOUNDATION_DOWN_R = 0.28;   // 0.35
-    public final double FOUNDATION_DOWN_L = 0.77;   // 0.71
+    public final double FOUNDATION_DOWN_R = 0.18;   // 0.28 for spike
+    public final double FOUNDATION_DOWN_L = 0.89;   // 0.77 for spike
 
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.012;  // Was 0.02
@@ -270,9 +270,8 @@ public class GFORCE_Hardware {
         // Log what we are doing
         RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
 
-        //Reverse angles for red autonomous
-        if (allianceColor == AllianceColor.BLUE) {
-            heading = -heading;
+        // Reverse axial directions for blue autonomous when not pointing to sides
+        if ((allianceColor == AllianceColor.BLUE) && (Math.abs(heading) != 90)) {
             vel = -vel;
         }
 
@@ -331,9 +330,9 @@ public class GFORCE_Hardware {
 
         RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
 
-        //Reverse angles for red autonomous
-        if (allianceColor == AllianceColor.BLUE) {
-            heading = -heading;
+        // Reverse Lateral directions for blue autonomous when pointing to sides
+        if ((allianceColor == AllianceColor.BLUE) && (Math.abs(heading) == 90)) {
+            vel = -vel;
         }
 
         // If we are moving backwards, set vel negative
@@ -506,11 +505,11 @@ public class GFORCE_Hardware {
         boolean inPosition = false;  // needed to run at least one control cycle.
         boolean timedOut = false;
 
-        // Flip rotations if we are RED
-        //Reverse angles for red autonomous
-        if (allianceColor == AllianceColor.BLUE) {
-            heading = -heading;
-        }
+
+        // Verify this, but heading is not revered because robot orientation is flipped 180
+        //if (allianceColor == AllianceColor.BLUE) {
+        //    heading = -heading;
+        //}
 
         setHeadingSetpoint(heading);
         setAxialVelocity(0);
@@ -645,73 +644,6 @@ public class GFORCE_Hardware {
 
         return (Math.abs(filteredTurnRate) < STOP_TURNRATE);
     }
-
-
-    /*
-     * Temporarity comment out non-velocity code.
-     * Eliminate this completely once not needed.
-    // Robot movement using +/- 1.0 Range
-    public void moveRobot(double axial, double yaw, double lateral) {
-        setAxial(axial);
-        setYaw(yaw);
-        setLateral(lateral);
-        moveRobot();
-    }
-
-    public void setAxial(double axial) {
-        driveAxial = Range.clip(axial, -1, 1);
-    }
-
-    public void setYaw(double yaw) {
-        driveYaw = Range.clip(yaw, -1, 1);
-    }
-
-    public void setLateral(double lateral) {
-        driveLateral = Range.clip(lateral, -1, 1);
-    }
-
-    public void moveRobot() {
-        //calculate required motor speeds
-        double leftFrontSpeed = driveAxial - driveYaw + driveLateral;
-        double leftBackSpeed = driveAxial - driveYaw - driveLateral;
-        double rightFrontSpeed = driveAxial + driveYaw - driveLateral;
-        double rightBackSpeed = driveAxial + driveYaw + driveLateral;
-
-        double biggest = Math.max(Math.abs(leftFrontSpeed), Math.abs(rightFrontSpeed));
-        biggest = Math.max(biggest, Math.abs(leftBackSpeed));
-        biggest = Math.max(biggest, Math.abs(rightBackSpeed));
-
-        if (biggest > 1.0) {
-            leftFrontSpeed /= biggest;
-            rightFrontSpeed /= biggest;
-            leftBackSpeed /= biggest;
-            rightBackSpeed /= biggest;
-        }
-
-        leftFrontDrive.setPower(leftFrontSpeed);
-        rightFrontDrive.setPower(rightFrontSpeed);
-        leftBackDrive.setPower(leftBackSpeed);
-        rightBackDrive.setPower(rightBackSpeed);
-
-        //myOpMode.telemetry.addData("Arm position", arm.getCurrentPosition());
-    }
-
-    public boolean setYawToHoldHeading(double newSetpoint) {
-
-        setHeadingSetpoint(newSetpoint);
-        return (setYawToHoldHeading());
-    }
-
-
-    public boolean setYawToHoldHeading() {
-        double error = normalizeHeading(headingSetpoint - getHeading());
-        double yaw = Range.clip(error * HEADING_GAIN, -1.0, 1.0);
-
-        setYaw(yaw);
-        return (Math.abs(error) < YAW_IS_CLOSE);
-    }
-
-     */
 
 
     // Robot movement using +/- MAX_VELOCITY
