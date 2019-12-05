@@ -1,3 +1,7 @@
+/**
+ * This class is used to define all the specific navigation tasks for the G-FORCE robot
+ */
+
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -25,12 +29,6 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.FRONT;
 
-
-/**
- * This is NOT an opmode.
- *
- * This class is used to define all the specific navigation tasks for the G-FORCE robot
- */
 
 public class GFORCE_Navigation
 {

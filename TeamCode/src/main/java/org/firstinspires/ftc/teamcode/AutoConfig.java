@@ -1,3 +1,10 @@
+/* Copyright (c) 2019 G-FORCE.
+ *
+ * This Class is used for the Path Planning Menu system
+ * It manages the on-screen menu system.
+ *
+ */
+
 package org.firstinspires.ftc.teamcode;
 
 import android.content.Context;
@@ -13,7 +20,6 @@ public class AutoConfig
 {
   Context context;
   OpMode opMode;
-
 
   public static int MENU_ITEMS = 7;
 
@@ -46,7 +52,6 @@ public class AutoConfig
 
   public AutoConfig() {
     autoOptions = new Param();
-
   }
 
   public void init(Context context, OpMode opMode) {
@@ -65,8 +70,6 @@ public class AutoConfig
     lastNext =false;
   }
 
-
-
   public void init_loop() {
 
     // read the gamepad state
@@ -74,11 +77,6 @@ public class AutoConfig
     x1 = opMode.gamepad1.dpad_left;
     b1 = opMode.gamepad1.dpad_right;
     next = opMode.gamepad1.dpad_down;
-
-    // Remember that there are two MORE menu items than there are FieldLocation items.
-    //  FULL Menu Items go from 0 to N
-    //  FieldLocation Menu Items go from 2 to N
-    //  Locations ListArray Index goes from 0 to N-2
 
     // checking to see if we are switching to the next menu item.
     if (next && !lastNext) {
@@ -132,7 +130,6 @@ public class AutoConfig
 
 
   }
-
 
   public void saveConfig() {
     try {
