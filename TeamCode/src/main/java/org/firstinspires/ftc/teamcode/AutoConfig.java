@@ -21,16 +21,17 @@ public class AutoConfig
   Context context;
   OpMode opMode;
 
-  public static int MENU_ITEMS = 7;
+  public static int MENU_ITEMS = 8;
 
   public class Param {
       public boolean redAlliance = false;
       public int delayInSec = 0;
       public boolean disabled = false;
-      public boolean foundation = false;
-      public boolean frontSkystone = false;
-      public boolean backSkystone = false;
-      public boolean pushPartner = false;
+      public boolean startBuilding = false;
+      public boolean scoreFirstSkyStone = false;
+      public boolean scoreBothSkyStones = false;
+      public boolean parkUnderBridge = false;
+      public boolean moveFoundation = false;
 
       //public List<AutoMenuItem> menuItems = new ArrayList<>(LOCATION_ITEMS);
   }
@@ -106,16 +107,19 @@ public class AutoConfig
               autoOptions.disabled = !autoOptions.disabled;
               break;
           case 3:
-              autoOptions.foundation = !autoOptions.foundation;
+              autoOptions.startBuilding = !autoOptions.startBuilding;
               break;
           case 4:
-              autoOptions.frontSkystone = !autoOptions.frontSkystone;
+              autoOptions.scoreFirstSkyStone = !autoOptions.scoreFirstSkyStone;
               break;
           case 5:
-              autoOptions.backSkystone = !autoOptions.backSkystone;
+              autoOptions.scoreBothSkyStones = !autoOptions.scoreBothSkyStones;
               break;
           case 6:
-              autoOptions.pushPartner = !autoOptions.pushPartner;
+              autoOptions.parkUnderBridge = !autoOptions.parkUnderBridge;
+              break;
+          case 7:
+              autoOptions.moveFoundation = !autoOptions.moveFoundation;
               break;
       }
       saveConfig();
@@ -139,10 +143,11 @@ public class AutoConfig
         outputStreamWriter.write(Boolean.toString(autoOptions.redAlliance)   + "\n");
         outputStreamWriter.write(Integer.toString(autoOptions.delayInSec)   + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.disabled)  + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.foundation)  + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.frontSkystone)  + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.backSkystone)  + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.pushPartner)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.startBuilding)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.scoreFirstSkyStone)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.scoreBothSkyStones)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.parkUnderBridge)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.moveFoundation)  + "\n");
 
       outputStreamWriter.close();
     }
@@ -165,10 +170,11 @@ public class AutoConfig
         autoOptions.redAlliance = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.delayInSec  = Integer.valueOf(bufferedReader.readLine());
         autoOptions.disabled = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.foundation = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.frontSkystone = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.backSkystone = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.pushPartner = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.startBuilding = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.scoreFirstSkyStone = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.scoreBothSkyStones = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.parkUnderBridge = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.moveFoundation = Boolean.valueOf(bufferedReader.readLine());
         inputStream.close();
       }
     } catch (Exception e)
@@ -182,10 +188,11 @@ public class AutoConfig
       opMode.telemetry.addData((currentMenuIndex == 0) ? "0 > Alliance"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "Blue");
       opMode.telemetry.addData((currentMenuIndex == 1) ? "1 > Delay"   : "1   Delay", autoOptions.delayInSec);
       opMode.telemetry.addData((currentMenuIndex == 2) ? "2 > Run Auto"   : "2   Run Auto", autoOptions.disabled ? "no" : "YES");
-      opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > Foundation"   : "3   Foundation", autoOptions.foundation ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 4) ? "4 > Front Skystone"   : "4   Front Skystone", autoOptions.frontSkystone ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > Back Skystone"   : "5  Back Skystone", autoOptions.backSkystone ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 6) ? "6 > Push Partner"   : "6  Push Partner", autoOptions.pushPartner ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > Starting Position"   : "3   Starting Position", autoOptions.startBuilding ? "Building Zone" : "Quarry");
+      opMode.telemetry.addData((currentMenuIndex == 4) ? "4 > First SkyStone"   : "4   First SkyStone", autoOptions.scoreFirstSkyStone ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > Both SkyStones"   : "5   Both SkyStones", autoOptions.scoreBothSkyStones ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 6) ? "6 > Park"   : "6  Park", autoOptions.parkUnderBridge ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 7) ? "7 > Move Foundation"   : "7  Move Foundation", autoOptions.moveFoundation ? "YES" : "no");
       opMode.telemetry.update();
   }
 }

@@ -240,19 +240,19 @@ public class GFORCE_Hardware {
      * @param timeOutSec
      * @return
      */
-    public boolean driveAxialVelocity(double mm, double heading, double vel, double timeOutSec, boolean hardBreak) {
+    public boolean driveAxialVelocity(double mm, double heading, double vel, double timeOutSec, boolean hardBreak, boolean flipOnBlue) {
         double endingTime = runTime.seconds() + timeOutSec;
         double absMm = Math.abs(mm);
 
         // Log what we are doing
         RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
 
-        // Reverse axial directions for blue autonomous when not pointing to sides
-        //if ((allianceColor == AllianceColor.BLUE) && (Math.abs(heading) != 90)) {
-        //    vel = -vel;
-        //}
+        // Reverse axial directions for blue autonomous if flipOnBlue is true
+        if ((allianceColor == AllianceColor.BLUE) && flipOnBlue) {
+            vel = -vel;
+        }
 
-        // If we are moving backwars, set vel negative
+        // If we are moving backwards, set vel negative
         if ((mm * vel) < 0.0) {
             vel = -Math.abs(vel);
         } else {
@@ -300,17 +300,17 @@ public class GFORCE_Hardware {
      * @param timeOutSec
      * @return
      */
-    public boolean driveLateralVelocity(double mm, double heading, double vel, double timeOutSec, boolean hardBreak) {
+    public boolean driveLateralVelocity(double mm, double heading, double vel, double timeOutSec, boolean hardBreak, boolean flipOnBlue) {
 
         double endingTime = runTime.seconds() + timeOutSec;
         double absMm = Math.abs(mm);
 
         RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
 
-        // Reverse Lateral directions for blue autonomous when pointing to sides
-        //if ((allianceColor == AllianceColor.BLUE) && (Math.abs(heading) == 90)) {
-        //    vel = -vel;
-        //}
+        // Reverse Lateral directions for blue autonomous and when flipOnBlue is true
+        if ((allianceColor == AllianceColor.BLUE) && flipOnBlue) {
+          vel = -vel;
+        }
 
         // If we are moving backwards, set vel negative
          if ((mm * vel) < 0.0) {
@@ -483,10 +483,13 @@ public class GFORCE_Hardware {
         boolean timedOut = false;
 
 
-        // Verify this, but heading is not revered because robot orientation is flipped 180
-        //if (allianceColor == AllianceColor.BLUE) {
-        //    heading = -heading;
-        //}
+        /*
+        Verify this, but heading is not reversed because robot orientation is flipped 180
+        Reverse heading if alliance color is blue and flipOnBlue is true
+        if ((allianceColor == AllianceColor.BLUE) && flipOnBlue) {
+            heading = -heading;
+            }
+        */
 
         setHeadingSetpoint(heading);
         setAxialVelocity(0);
