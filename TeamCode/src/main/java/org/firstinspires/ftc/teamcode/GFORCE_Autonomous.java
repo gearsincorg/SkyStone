@@ -62,7 +62,6 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         }
 
-
         while(opModeIsActive()) {
             nav.waitForTarget(1);
             nav.showNavTelemetry(true);
@@ -77,11 +76,10 @@ public class GFORCE_Autonomous extends LinearOpMode {
             error = (BLOCK_CENTER_OFFSET + nav.robotY);
         }
 
-
         RobotLog.ii(TAG, String.format("Error=%5.0f robotY=%5.0f ", error, nav.robotY));
         robot.driveAxialVelocity(error, 0, 80,2,true,true);
 
-        //Calculate new error
+        //Calculate new range error, and approach block
         error = (-nav.robotX);
         robot.driveLateralVelocity(error + BLOCK_PUSH_DISTANCE, 0, 380, 2, true,false);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
@@ -181,21 +179,28 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
     private void startBuildingZone() {
         if (autoConfig.autoOptions.moveFoundation) {
+
+            // Approch the foundation and moanouver to the center of closest side
             robot.driveLateralVelocity(300, 0, 300, 4, true, false);
             robot.driveAxialVelocity(200, 0, -250, 4, true, true);
             robot.turnToHeading(90, 4);
             robot.sleepAndHoldHeading(90, 1);
             robot.driveAxialVelocity(500, 90, -400, 4, true, false);
+
+            // Grab the foundation and pull towards the driver station wall.
             robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_DOWN_L);
             robot.foundationGrabberRight.setPosition(robot.FOUNDATION_DOWN_R);
             robot.sleepAndHoldHeading(90,1);
             robot.driveAxialVelocity(150, 90, 600, 4, true, false);
 
+            // Rotate the foundation and push to wall.  Action depends on Alliance color.
             if (robot.allianceColor == GFORCE_Hardware.AllianceColor.RED) {
                 robot.turnToHeading(0, 4);
                 robot.driveAxialVelocity(200, 0, -1000, 1, true, false);
                 robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_SAFE_L);
                 robot.foundationGrabberRight.setPosition(robot.FOUNDATION_SAFE_R);
+
+                // Park under bridge, by side wall.
                 if (autoConfig.autoOptions.parkUnderBridge) {
                     robot.driveLateralVelocity(600,0,-600,2,true,false);
                     robot.driveAxialVelocity(1100, 0, 800, 4, true, false);
@@ -205,6 +210,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 robot.driveAxialVelocity(200, 180, -1000, 1, true, false);
                 robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_SAFE_L);
                 robot.foundationGrabberRight.setPosition(robot.FOUNDATION_SAFE_R);
+
+                // Park under bridge, by side wall.
                 if (autoConfig.autoOptions.parkUnderBridge) {
                     robot.driveLateralVelocity(600,180,600,2,true,false);
                     robot.driveAxialVelocity(1100, 180, 800, 4, true, false);

@@ -9,6 +9,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -96,6 +97,9 @@ public class GFORCE_Hardware {
 
     final double AXIAL_ENCODER_COUNTS_PER_MM   = 0.8602;
     final double LATERAL_ENCODER_COUNTS_PER_MM = 0.9134;
+
+    private PIDCoefficients oldVPID = new PIDCoefficients(10.0,  3,   0.0);
+    private PIDCoefficients oldPPID = new PIDCoefficients(10.0,  0.05,   0.0);
 
     // Robot states that we share with others
     public double axialMotion = 0;
@@ -220,13 +224,13 @@ public class GFORCE_Hardware {
 
     // Configure a motor
     public DcMotorEx configureMotor( String name, DcMotor.Direction direction) {
-        PIDFCoefficients newPIDF = new PIDFCoefficients(10.0,  3,   0.0,  12);
         DcMotorEx motorObj = myOpMode.hardwareMap.get(DcMotorEx.class, name);
 
         motorObj.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorObj.setDirection(direction);
         motorObj.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motorObj.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, newPIDF);
+        motorObj.setPIDCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, oldVPID);
+        motorObj.setPIDCoefficients(DcMotor.RunMode.RUN_TO_POSITION,   oldPPID);
         return motorObj;
     }
 
