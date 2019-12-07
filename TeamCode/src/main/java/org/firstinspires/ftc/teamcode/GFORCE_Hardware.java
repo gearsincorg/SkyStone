@@ -401,7 +401,7 @@ public class GFORCE_Hardware {
 
         RevBulkData holding;
         if ((masterHub != null) && (slaveHub != null)) {
-            // ensure that getBulkinputData returns valid data ( comms loss can reutrn null)
+            // ensure that getBulkinputData returns valid data ( comms loss can return null)
             if ((holding = masterHub.getBulkInputData()) != null)
                 masterHubValues = holding;
             if ((holding = slaveHub.getBulkInputData()) != null)

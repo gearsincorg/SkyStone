@@ -120,22 +120,22 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 driveAndGrabBlock();
                 robot.driveAxialVelocity(900 + (skyStonePosition * 200), 0, -800, 20, true, true);
                 robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-                robot.sleepAndHoldHeading(0, 1);
+                robot.sleepAndHoldHeading(0, 0.5);
 
                 // Getting and placing second SkyStone if requested
                 if (autoConfig.autoOptions.scoreBothSkyStones) {
-                    robot.driveAxialVelocity(1600 + (skyStonePosition * 200), 0, 1000, 20, true, true);
-                    robot.sleepAndHoldHeading(0, 0.5);
+                    robot.driveAxialVelocity(1625 + (skyStonePosition * 175), 0, 1100, 20, true, true);
+//                    robot.sleepAndHoldHeading(0, 0.5);
 
                     //If we can't see the target drive closer
-                    if (!nav.waitForTarget(1)) {
+//                    if (!nav.waitForTarget(1)) {
                         robot.driveLateralVelocity(150, 0, 600, 2, true, false);
-                    }
+//                    }
 
                     //Get the second SkyStone if we found it
                     if (nav.waitForTarget(1)) {
                         driveAndGrabBlock();
-                        robot.driveAxialVelocity(1400 + (skyStonePosition * 200), 0, -800, 20, true, true);
+                        robot.driveAxialVelocity(1400 + (skyStonePosition * 200), 0, -1000, 20, true, true);
                         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
 
                         //Parking under the bridge if requested regardless of if we did both SkyStones
@@ -172,8 +172,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
             //Parking under bridge if we choose not to score any SkyStones
             if (autoConfig.autoOptions.parkUnderBridge) {
-                robot.driveAxialVelocity(300, 0, 300, 4, true, true);
-
+                robot.driveLateralVelocity(50,0,400,3,true,true);
+                robot.driveAxialVelocity(400, 0, -400, 4, true, true);
             }
         }
 
