@@ -125,12 +125,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 // Getting and placing second SkyStone if requested
                 if (autoConfig.autoOptions.scoreBothSkyStones) {
                     robot.driveAxialVelocity(1625 + (skyStonePosition * 175), 0, 1100, 20, true, true);
-//                    robot.sleepAndHoldHeading(0, 0.5);
 
-                    //If we can't see the target drive closer
-//                    if (!nav.waitForTarget(1)) {
-                        robot.driveLateralVelocity(150, 0, 600, 2, true, false);
-//                    }
+                    //Drive closer to see the target
+                    robot.driveLateralVelocity(150, 0, 600, 2, true, false);
 
                     //Get the second SkyStone if we found it
                     if (nav.waitForTarget(1)) {

@@ -52,6 +52,9 @@ public class GFORCE_TeleOp extends LinearOpMode {
         while (opModeIsActive()) {
             robot.updateMotion();  // Read all sensors and calculate motions
             controlBlockScoring();
+            axialVel = 0;
+            lateralVel= 0;
+            yawVel = 0;
 
             // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
             // In this mode the Left stick moves the robot fwd and back, the Right stick turns left and right.
@@ -69,6 +72,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             // rotate = rotate * rotate * Math.signum(rotate);
             rotate *= YAW_JS_SCALE;
 
+            /*
             if (gamepad1.y || gamepad1.dpad_up) {
                 forwardBack = 0.1;
             } else if (gamepad1.a || gamepad1.dpad_down) {
@@ -82,23 +86,48 @@ public class GFORCE_TeleOp extends LinearOpMode {
             } else if (gamepad1.dpad_right) {
                 rightLeft = 0.2;
             }
+            */
 
-            // Convert to axis velocities
-            axialVel   = forwardBack * robot.MAX_VELOCITY_MMPS;
-            lateralVel = rightLeft * robot.MAX_VELOCITY_MMPS;
-            yawVel     = rotate * robot.MAX_VELOCITY_MMPS;
+            // Convert to axis velocities for non-field-centric driving
+            //axialVel   = forwardBack;
+            //lateralVel = rightLeft;
+            //yawVel     = rotate;
 
             //-------------------------
             // Determine Robot Centric motion (based on gyro heading)
-            // axial = (forwardBack * Math.cos(Math.toRadians(currentHeading))) -
-            //         (rightLeft * Math.sin(Math.toRadians(currentHeading)));
-            // lateral = (forwardBack * Math.sin(Math.toRadians(currentHeading))) +
-            //         (rightLeft * Math.cos(Math.toRadians(currentHeading)));
+            if (gamepad1.a || gamepad1.b || gamepad1.x || gamepad1.y) {
+                if (gamepad1.y || gamepad1.dpad_up) {
+                    axialVel = 0.1;
+                } else if (gamepad1.a || gamepad1.dpad_down) {
+                    axialVel = -0.1;
+                } else if (gamepad1.x) {
+                    rotate = 0.1;
+                } else if (gamepad1.b) {
+                    rotate = -0.1;
+                } else if (gamepad1.dpad_left) {
+                    lateralVel = -0.2;
+                } else if (gamepad1.dpad_right) {
+                    lateralVel = 0.2;
+                }
 
+            } else {
+                lateralVel = (forwardBack * Math.cos(Math.toRadians(robot.currentHeading))) -
+                        (rightLeft * Math.sin(Math.toRadians(robot.currentHeading)));
+
+                axialVel = -((forwardBack * Math.sin(Math.toRadians(robot.currentHeading))) +
+                        (rightLeft * Math.cos(Math.toRadians(robot.currentHeading))));
+
+            }
+
+            //Scale velocities to mm per second
+            axialVel *= robot.MAX_VELOCITY_MMPS;
+            lateralVel *= robot.MAX_VELOCITY_MMPS;
+            yawVel = rotate * robot.MAX_VELOCITY_MMPS;
+
+            //Turning code
             neutralSticks = ((forwardBack == 0) &&
                     (rightLeft == 0) &&
-                    (rotate == 0)
-            );
+                    (rotate == 0));
 
             if (rotate != 0) {
                 // We are turning with joystick.
