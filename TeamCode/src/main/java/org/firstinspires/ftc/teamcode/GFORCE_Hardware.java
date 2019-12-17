@@ -4,11 +4,14 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import android.util.Log;
+
 import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -66,7 +69,8 @@ public class GFORCE_Hardware {
     public final double MAX_VELOCITY        = 2500;  // Counts per second
     public final double MAX_VELOCITY_MMPS   = 2540;  // MM Per Second
     public final double AUTO_ROTATION_DPS   = 2540;   // Degrees per second
-    public final double ACCELERATION_LIMIT  = 1524;  // MM per second per second
+
+    public final double ACCELERATION_LIMIT  = 1000;  // MM per second per second  was 1524
 
     public final double YAW_GAIN            = 0.010;  // Rate at which we respond to heading error 0.013
     public final double LATERAL_GAIN        = 0.0025; // Distance from x axis that we start to slow down. 0027
@@ -119,19 +123,19 @@ public class GFORCE_Hardware {
     private int   encoderRB;
     private int   encoderRF;
 
+    private int startLeftBack = 0;
+    private int startLeftFront = 0;
+    private int startRightBack = 0;
+    private int startRightFront = 0;
+    private int deltaLeftBack = 0;
+    private int deltaLeftFront = 0;
+    private int deltaRightBack = 0;
+    private int deltaRightFront = 0;
+
     private double driveAxial = 0;
     private double driveYaw = 0;
     private double driveLateral = 0;
-
     private double startTime = 0;
-    private double startLeftBack = 0;
-    private double startLeftFront = 0;
-    private double startRightBack = 0;
-    private double startRightFront = 0;
-    private double deltaLeftBack = 0;
-    private double deltaLeftFront = 0;
-    private double deltaRightBack = 0;
-    private double deltaRightFront = 0;
 
     // gyro
     private double lastHeading = 0;
@@ -202,13 +206,13 @@ public class GFORCE_Hardware {
         }
 
         // setting up Gyro
-        if (imu == null) {
+        // if (imu == null) {
             BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
             parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
             imu = myOpMode.hardwareMap.get(BNO055IMU.class, "imu");
             imu.initialize(parameters);
             resetHeading();
-        }
+        // }
 
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
         arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -220,13 +224,15 @@ public class GFORCE_Hardware {
 
     // Configure a motor
     public DcMotorEx configureMotor( String name, DcMotor.Direction direction) {
-        PIDFCoefficients newPIDF = new PIDFCoefficients(10.0,  3,   0.0,  12);
+        PIDCoefficients newVPID = new PIDCoefficients(10.0,  3,   0.0);
+        PIDCoefficients newPPID = new PIDCoefficients(10.0,  0.05,0.0);
         DcMotorEx motorObj = myOpMode.hardwareMap.get(DcMotorEx.class, name);
 
         motorObj.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorObj.setDirection(direction);
         motorObj.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motorObj.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, newPIDF);
+        motorObj.setPIDCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, newVPID);
+        motorObj.setPIDCoefficients(DcMotor.RunMode.RUN_TO_POSITION, newPPID);
         return motorObj;
     }
 
@@ -244,9 +250,6 @@ public class GFORCE_Hardware {
         double endingTime = runTime.seconds() + timeOutSec;
         double absMm = Math.abs(mm);
 
-        // Log what we are doing
-        RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
-
         // Reverse axial directions for blue autonomous if flipOnBlue is true
         if ((allianceColor == AllianceColor.BLUE) && flipOnBlue) {
             vel = -vel;
@@ -260,7 +263,6 @@ public class GFORCE_Hardware {
         }
 
         RobotLog.ii(TAG, String.format("Drive-Axial adjusted mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
-
 
         //Save the current position
         startMotion();
@@ -277,15 +279,21 @@ public class GFORCE_Hardware {
             moveRobotVelocity();
             showEncoders();
         }
-        stopRobot();
+
+        RobotLog.ii(TAG, String.format("Breaking A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
         if (hardBreak) {
-            setAxialVelocity(-vel);
-            myOpMode.sleep(100);
+            setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            setAxialPower(-2 * vel / MAX_VELOCITY_MMPS);
+            myOpMode.sleep( 20 + (int)(Math.abs(vel) / 100))
+            ;
+            setAxialPower(0);
+            setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
+        
+        updateMotion();
+        RobotLog.ii(TAG, String.format("Last A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
-        stopRobot();
-        RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
         // Return true if we have not timed out
         return (runTime.seconds() < endingTime);
@@ -362,12 +370,12 @@ public class GFORCE_Hardware {
         // Treat the profile as an acceleration half and a deceleration half, based on distance traveled.
         // Determine the velocity, then just clip the requested velocity based on the requested top speed.
 
-        // While Accelerating, V = Alimit * Time
+        // While Accelerating, V = Alimit * Time * 2
         // While Decelerating, V = ALimit * SQRT(2 * dRemaining / ALimit )
 
         if (absdTraveled < (absdGoal / 2.0)) {
             // We are accelerating, give a little boost
-            profileVelocity = (ACCELERATION_LIMIT * getMotionTime()) ;
+            profileVelocity = (ACCELERATION_LIMIT * getMotionTime() * 2) ;
 
         } else if (absdTraveled < absdGoal ) {
             // We are Decelerating
@@ -381,8 +389,8 @@ public class GFORCE_Hardware {
         // Make sure the final velocity sign is correct.
         profileVelocity = Range.clip(profileVelocity, 0, absTopVel) * Math.signum(topVel);
 
-        //Log.d("G-FORCE AUTO", String.format("T:V:D:A %5.3f %4.2f %5.2f %5.2f",
-        //         getMotionTime(), profileVelocity, absdTraveled, leftBackDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_MM));
+        Log.d("G-FORCE AUTO", String.format("T:V:D:A %5.3f %4.2f %5.2f %5.2f",
+                 getMotionTime(), profileVelocity, absdTraveled, leftBackDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_MM));
 
         return (profileVelocity);
     }
@@ -499,7 +507,12 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() &&
                 (navTime.time() < timeOutSEC) &&
                 (!inPosition || waitFullTimeout)) {
-            currentHeading = getHeading();
+
+            // currentHeading = getHeading();
+
+            updateMotion();
+            RobotLog.ii(TAG, String.format("sleep A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+
             inPosition = setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
             showEncoders();
@@ -673,6 +686,13 @@ public class GFORCE_Hardware {
 
         // Log.d("G-FORCE AUTO", String.format("M %5.1f %5.1f %5.1f %5.1f ", leftFrontVel, rightFrontVel, leftBackVel, rightBackVel));
 
+    }
+
+    public void setAxialPower (double power) {
+        leftFrontDrive.setPower(power);
+        rightFrontDrive.setPower(power);
+        leftBackDrive.setPower(power);
+        rightBackDrive.setPower(power);
     }
 
     public void stopRobot() {
