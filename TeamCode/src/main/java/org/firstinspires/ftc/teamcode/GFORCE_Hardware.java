@@ -282,6 +282,7 @@ public class GFORCE_Hardware {
 
         RobotLog.ii(TAG, String.format("Breaking A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
+        /*
         if (hardBreak) {
             setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             setAxialPower(-0.5 * vel / MAX_VELOCITY_MMPS);
@@ -290,6 +291,8 @@ public class GFORCE_Hardware {
             setAxialPower(0);
             setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
+        */
+
         
         updateMotion();
         RobotLog.ii(TAG, String.format("Last A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
@@ -366,6 +369,7 @@ public class GFORCE_Hardware {
         double absdTraveled = Math.abs(dTraveled);
         double absdGoal     = Math.abs(dGoal);
         double absTopVel = Math.abs(topVel);
+        double currentVel = leftBackDrive.getVelocity();
 
         // Treat the profile as an acceleration half and a deceleration half, based on distance traveled.
         // Determine the velocity, then just clip the requested velocity based on the requested top speed.
@@ -386,11 +390,16 @@ public class GFORCE_Hardware {
             profileVelocity = 0.0;
         }
 
+            //Brake if velocity is too high
+        if (Math.abs(currentVel) > profileVelocity) {
+            profileVelocity = 0;
+        }
+
         // Make sure the final velocity sign is correct.
         profileVelocity = Range.clip(profileVelocity, 0, absTopVel) * Math.signum(topVel);
 
         Log.d("G-FORCE AUTO", String.format("T:V:D:A %5.3f %4.2f %5.2f %5.2f",
-                 getMotionTime(), profileVelocity, absdTraveled, leftBackDrive.getVelocity() / AXIAL_ENCODER_COUNTS_PER_MM));
+                 getMotionTime(), profileVelocity, absdTraveled, currentVel / AXIAL_ENCODER_COUNTS_PER_MM));
 
         return (profileVelocity);
     }

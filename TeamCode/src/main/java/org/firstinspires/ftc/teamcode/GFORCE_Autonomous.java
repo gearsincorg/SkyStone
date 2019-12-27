@@ -62,24 +62,29 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         } else {
             // Testing code
-            robot.driveAxialVelocity(200, 0, 100,10,true,false);
+            robot.driveAxialVelocity(600, 0, 100,10,true,false);
             robot.sleepAndHoldHeading(0, 0.5);
-            robot.driveAxialVelocity(200, 0, -100,10,true,false);
+            robot.driveAxialVelocity(600, 0, -100,10,true,false);
             robot.sleepAndHoldHeading(0, 1);
 
-            robot.driveAxialVelocity(200, 0, 250,10,true,false);
+            robot.driveAxialVelocity(600, 0, 250,10,true,false);
             robot.sleepAndHoldHeading(0, 0.5);
-            robot.driveAxialVelocity(200, 0, -250,10,true,false);
+            robot.driveAxialVelocity(600, 0, -250,10,true,false);
             robot.sleepAndHoldHeading(0, 1);
 
-            robot.driveAxialVelocity(200, 0, 1000,10,true,false);
+            robot.driveAxialVelocity(600, 0, 1000,10,true,false);
             robot.sleepAndHoldHeading(0, 0.5);
-            robot.driveAxialVelocity(200, 0, -1000,10,true,false);
+            robot.driveAxialVelocity(600, 0, -1000,10,true,false);
             robot.sleepAndHoldHeading(0, 1);
 
-            robot.driveAxialVelocity(200, 0, 1500,10,true,false);
+            robot.driveAxialVelocity(600, 0, 1500,10,true,false);
             robot.sleepAndHoldHeading(0, 0.5);
-            robot.driveAxialVelocity(200, 0, -1500,10,true,false);
+            robot.driveAxialVelocity(600, 0, -1500,10,true,false);
+            robot.sleepAndHoldHeading(0, 1);
+
+            robot.driveAxialVelocity(600, 0, 2000,10,true,false);
+            robot.sleepAndHoldHeading(0, 0.5);
+            robot.driveAxialVelocity(600, 0, -2000,10,true,false);
             robot.sleepAndHoldHeading(0, 1);
         }
 
