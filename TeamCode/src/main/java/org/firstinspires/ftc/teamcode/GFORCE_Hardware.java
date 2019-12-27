@@ -284,8 +284,8 @@ public class GFORCE_Hardware {
 
         if (hardBreak) {
             setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            setAxialPower(-2 * vel / MAX_VELOCITY_MMPS);
-            myOpMode.sleep( 20 + (int)(Math.abs(vel) / 100))
+            setAxialPower(-0.5 * vel / MAX_VELOCITY_MMPS);
+            myOpMode.sleep( 20 + (int)(Math.abs(vel) / 20))
             ;
             setAxialPower(0);
             setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);

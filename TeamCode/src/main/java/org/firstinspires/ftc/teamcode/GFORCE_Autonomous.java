@@ -125,12 +125,12 @@ public class GFORCE_Autonomous extends LinearOpMode {
             if (nav.waitForTarget(1.5)) {
                 skyStonePosition = 1;
             } else {
-                robot.driveAxialVelocity(200, 0, 150, 2, true, true);
-                if (nav.waitForTarget(1)) {
+                robot.driveAxialVelocity(200, 0, 250, 2, true, true);
+                if (nav.waitForTarget(1.5)) {
                     skyStonePosition = 2;
                 } else {
-                    robot.driveAxialVelocity(200, 0, 150, 2, true, true);
-                    if (nav.waitForTarget(1)) {
+                    robot.driveAxialVelocity(200, 0, 250, 2, true, true);
+                    if (nav.waitForTarget(2)) {
                         skyStonePosition = 3;
                     }
                 }
