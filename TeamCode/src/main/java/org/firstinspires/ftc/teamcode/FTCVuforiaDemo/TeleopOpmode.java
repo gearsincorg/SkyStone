@@ -40,7 +40,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * and execute an approach path to the target.
  *
  * This OpMode uses two "utility" classes to abstract (hide) the hardware and navigation GUTs.
- * These are:  Robot_OmniDrive and Robot_Navigation.
+ * These are:  Robot_Navigation.
  *
  * This LinearOpMode uses basic hardware and nav calls to drive the robot in either manual or auto mode.
  * AutoMode is engaged by pressing and holding the Left Bumper.  Release the Bumper to return to Manual Mode.
@@ -65,15 +65,13 @@ public class TeleopOpmode extends LinearOpMode {
     final double BEACON_DISTANCE =  250.0;    // Hold robot's center 250 mm from target
 
     /* Declare OpMode members. */
-    Robot_OmniDrive     robot    = new Robot_OmniDrive();   // Use Omni-Directional drive system
     Robot_Navigation    nav      = new Robot_Navigation();  // Use Image Tracking library
 
     @Override
     public void runOpMode() {
 
         // Initialize the robot and navigation
-        robot.initDrive(this);
-        nav.initVuforia(this, robot);
+        nav.initVuforia(this);
 
         // Activate Vuforia (this takes a few seconds)
         nav.activateTracking();
@@ -81,48 +79,11 @@ public class TeleopOpmode extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         while (!isStarted()) {
             // Prompt User
-            telemetry.addData(">", "Press start");
 
             // Display any Nav Targets while we wait for the match to start
             nav.targetsAreVisible();
             nav.addNavTelemetry();
             telemetry.update();
         }
-
-        // run until the end of the match (driver presses STOP)
-        while (opModeIsActive()) {
-
-            telemetry.addData(">", "Press Left Bumper to track target");
-
-            // auto drive or manual drive?
-            // In auto drive, the robot will approach any target it can see and then press against it
-            // In manual drive the robot responds to the Joystick.
-            if (nav.targetsAreVisible()) {
-                if (gamepad1.left_bumper) {
-                    // Calculate automatic target approach
-                    nav.cruiseControl(TARGET_DISTANCE);
-                }
-                else if (gamepad1.right_bumper) {
-                    // Calculate automatic beacon approach
-                    nav.cruiseControl(BEACON_DISTANCE);
-                } else {
-                    // Drive the robot using the joysticks
-                    robot.manualDrive();
-                }
-            } else {
-                // Drive the robot using the joysticks
-                robot.manualDrive();
-            }
-
-            // Build telemetry messages with Navigation Information;
-            nav.addNavTelemetry();
-
-            //  Move the robot according to the pre-determined axis motions
-            robot.moveRobot();
-            telemetry.update();
-        }
-
-        telemetry.addData(">", "Shutting Down. Bye!");
-        telemetry.update();
     }
 }
