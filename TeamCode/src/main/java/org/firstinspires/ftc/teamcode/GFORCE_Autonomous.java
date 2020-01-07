@@ -17,7 +17,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
     GFORCE_Hardware     robot         = new GFORCE_Hardware();
     GFORCE_Navigation   nav           = new GFORCE_Navigation();
 
-    final double STUD_RANGE = 10;               // Plus or minus 10 millimeters
+    final double STUD_RANGE = 20;               // Plus or minus 10 millimeters
     final double BLOCK_PUSH_DISTANCE = 30;      // Was an extra 10mm, changed to 30 mm for new phone mount because it is further back
     final double BLOCK_CENTER_OFFSET = -45;     // Camera to grab offset
     public static final String TAG = "G-FORCE";
