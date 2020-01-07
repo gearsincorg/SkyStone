@@ -75,6 +75,7 @@ public class ServoTool extends LinearOpMode {
         // Scan servo till stop pressed.
         while(!isStopRequested() ){
 
+            /*
             if (gamepad1.y && (pos1 < MAX_POS))    {
                 pos1 += 0.01;
             }
@@ -88,10 +89,10 @@ public class ServoTool extends LinearOpMode {
             else if (gamepad1.b && (pos2 > MIN_POS)) {
                 pos2 -= 0.01;
             }
+            */
 
-            servo1.setPosition(pos1);
-            servo2.setPosition(pos2);
 
+           
             // Display the current values
             telemetry.addData(">", "Y-A Servo 1, X-B Servo 2" );
             telemetry.addData("Right", "%5.2f", pos1);
