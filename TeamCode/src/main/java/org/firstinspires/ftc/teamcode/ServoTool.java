@@ -89,8 +89,7 @@ public class ServoTool extends LinearOpMode {
                 pos2 -= 0.01;
             }
 
-            servo1.setPosition(pos1 * 3 );
-            servo1.setPosition(pos1 * 2);
+            servo1.setPosition(pos1);
             servo2.setPosition(pos2);
 
             // Display the current values
