@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.qualcomm.ftccommon.SoundPlayer;
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -28,6 +29,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.openftc.revextensions2.ExpansionHubEx;
 import org.openftc.revextensions2.ExpansionHubMotor;
 import org.openftc.revextensions2.RevBulkData;
+
+import java.util.List;
 
 
 public class GFORCE_Hardware {
@@ -50,12 +53,7 @@ public class GFORCE_Hardware {
     public DcMotorEx lift = null;
     public DcMotorEx arm = null;
 
-    private ExpansionHubMotor leftFrontDriveEH = null;
-    private ExpansionHubMotor rightFrontDriveEH = null;
-    private ExpansionHubMotor leftBackDriveEH = null;
-    private ExpansionHubMotor rightBackDriveEH = null;
-    private ExpansionHubMotor liftEH = null;
-    private ExpansionHubMotor armEH = null;
+    List<LynxModule> allHubs = null;
 
     public Servo skystoneLiftRed = null;
     public Servo skystoneLiftBlue = null;
@@ -113,11 +111,6 @@ public class GFORCE_Hardware {
     private static LinearOpMode myOpMode = null;
 
     // Sensor Read Info.
-    ExpansionHubEx masterHub = null;
-    ExpansionHubEx slaveHub = null;
-    RevBulkData    masterHubValues = null;
-    RevBulkData    slaveHubValues = null;
-
     private int   encoderLB;
     private int   encoderLF;
     private int   encoderRB;
@@ -175,16 +168,11 @@ public class GFORCE_Hardware {
         collect = myOpMode.hardwareMap.get(DcMotorEx.class,"collect");
         collect.setDirection(DcMotor.Direction.REVERSE);
 
-        // Temp Speed Up Code
-        masterHub = myOpMode.hardwareMap.get(ExpansionHubEx.class, "Parent");
-        slaveHub = myOpMode.hardwareMap.get(ExpansionHubEx.class, "Child");
-
-        leftFrontDriveEH  = (ExpansionHubMotor)leftFrontDrive;
-        rightFrontDriveEH  = (ExpansionHubMotor) rightFrontDrive;
-        leftBackDriveEH  = (ExpansionHubMotor) leftBackDrive;
-        rightBackDriveEH  = (ExpansionHubMotor) rightBackDrive;
-        liftEH = (ExpansionHubMotor)lift;
-        armEH = (ExpansionHubMotor)arm;
+        // Set all Expansion hubs to use the MANUAL Bulk Caching mode
+        allHubs = myOpMode.hardwareMap.getAll(LynxModule.class);
+        for (LynxModule module : allHubs) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
 
         resetEncoders();
         stoneGrab = myOpMode.hardwareMap.get(Servo.class,"stone_grab");
@@ -193,8 +181,10 @@ public class GFORCE_Hardware {
         skystoneLiftBlue = myOpMode.hardwareMap.get(Servo.class, "lift_blue");
         foundationGrabberRight = myOpMode.hardwareMap.get(Servo.class,"foundation_GR" );
         foundationGrabberLeft = myOpMode.hardwareMap.get(Servo.class,"foundation_GL" );
+
         setRedSkystoneGrabber(SkystoneGrabberPositions.START);
         setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
+
         stoneGrab.setPosition(STONE_OPEN);
         stoneRotate.setPosition(STONE_AXIAL);
         foundationGrabberRight.setPosition(FOUNDATION_SAFE_R);
@@ -205,14 +195,11 @@ public class GFORCE_Hardware {
             SoundPlayer.getInstance().preload(myOpMode.hardwareMap.appContext, timeoutSoundID);
         }
 
-        // setting up Gyro
-        // if (imu == null) {
-            BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-            parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
-            imu = myOpMode.hardwareMap.get(BNO055IMU.class, "imu");
-            imu.initialize(parameters);
-            resetHeading();
-        // }
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
+        imu = myOpMode.hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+        resetHeading();
 
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
         arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -224,15 +211,10 @@ public class GFORCE_Hardware {
 
     // Configure a motor
     public DcMotorEx configureMotor( String name, DcMotor.Direction direction) {
-        PIDCoefficients newVPID = new PIDCoefficients(10.0,  3,   0.0);
-        PIDCoefficients newPPID = new PIDCoefficients(10.0,  0.05,0.0);
         DcMotorEx motorObj = myOpMode.hardwareMap.get(DcMotorEx.class, name);
-
         motorObj.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorObj.setDirection(direction);
         motorObj.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        motorObj.setPIDCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, newVPID);
-        motorObj.setPIDCoefficients(DcMotor.RunMode.RUN_TO_POSITION, newPPID);
         return motorObj;
     }
 
@@ -281,19 +263,6 @@ public class GFORCE_Hardware {
         }
 
         RobotLog.ii(TAG, String.format("Breaking A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
-
-        /*
-        if (hardBreak) {
-            setDriveMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            setAxialPower(-0.5 * vel / MAX_VELOCITY_MMPS);
-            myOpMode.sleep( 20 + (int)(Math.abs(vel) / 20))
-            ;
-            setAxialPower(0);
-            setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        }
-        */
-
-        
         updateMotion();
         RobotLog.ii(TAG, String.format("Last A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
@@ -329,8 +298,6 @@ public class GFORCE_Hardware {
         } else {
             vel = Math.abs(vel);
         }
-
-        RobotLog.ii(TAG, String.format("Drive-Axial adjusted mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
 
         //Save the current position
         startMotion();
@@ -373,7 +340,6 @@ public class GFORCE_Hardware {
 
         // Treat the profile as an acceleration half and a deceleration half, based on distance traveled.
         // Determine the velocity, then just clip the requested velocity based on the requested top speed.
-
         // While Accelerating, V = Alimit * Time * 2
         // While Decelerating, V = ALimit * SQRT(2 * dRemaining / ALimit )
 
@@ -406,7 +372,12 @@ public class GFORCE_Hardware {
 
     // Common location to read all sensors
     public void readSensors() {
-        /*
+
+        // Clear the BulkCache once per control cycle
+        for (LynxModule module : allHubs) {
+            module.clearBulkCache();
+        }
+
         encoderLF = leftFrontDrive.getCurrentPosition();
         encoderRF = rightFrontDrive.getCurrentPosition();
         encoderLB = leftBackDrive.getCurrentPosition();
@@ -414,25 +385,6 @@ public class GFORCE_Hardware {
 
         encoderLift = lift.getCurrentPosition();
         encoderArm = arm.getCurrentPosition();
-        */
-
-        RevBulkData holding;
-        if ((masterHub != null) && (slaveHub != null)) {
-            // ensure that getBulkinputData returns valid data ( comms loss can return null)
-            if ((holding = masterHub.getBulkInputData()) != null)
-                masterHubValues = holding;
-            if ((holding = slaveHub.getBulkInputData()) != null)
-                slaveHubValues = holding;
-
-            encoderLF = masterHubValues.getMotorCurrentPosition(leftFrontDriveEH);
-            encoderLB = masterHubValues.getMotorCurrentPosition(leftBackDriveEH);
-            encoderRF = masterHubValues.getMotorCurrentPosition(rightFrontDriveEH);
-            encoderRB = masterHubValues.getMotorCurrentPosition(rightBackDriveEH);
-
-            encoderLift = slaveHubValues.getMotorCurrentPosition(liftEH);
-            encoderArm = slaveHubValues.getMotorCurrentPosition(armEH);
-        }
-
 
         liftAngle = (encoderLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
         armAngle = (encoderArm / ARM_COUNTS_PER_DEGREE) + ARM_START_ANGLE;
