@@ -12,8 +12,6 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -26,9 +24,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 // Temporary
-import org.openftc.revextensions2.ExpansionHubEx;
-import org.openftc.revextensions2.ExpansionHubMotor;
-import org.openftc.revextensions2.RevBulkData;
 
 import java.util.List;
 
@@ -49,16 +44,19 @@ public class GFORCE_Hardware {
     public DcMotorEx leftBackDrive = null;
     public DcMotorEx rightBackDrive = null;
 
-    public DcMotorEx collect = null;
-    public DcMotorEx lift = null;
-    public DcMotorEx arm = null;
+    public DcMotorEx leftCollect = null;
+    public DcMotorEx rightCollect = null;
+    public DcMotorEx leftLift = null;
+    public DcMotorEx rightLift = null;
 
     List<LynxModule> allHubs = null;
 
     public Servo skystoneLiftRed = null;
     public Servo skystoneLiftBlue = null;
     public Servo stoneGrab = null;
-    public Servo stoneRotate = null;
+    public Servo capstoneHold = null;
+    public Servo stoneExtend = null;
+
     public Servo foundationGrabberLeft = null;
     public Servo foundationGrabberRight = null;
 
@@ -74,14 +72,13 @@ public class GFORCE_Hardware {
     public final double LATERAL_GAIN        = 0.0025; // Distance from x axis that we start to slow down. 0027
     public final double AXIAL_GAIN          = 0.0015; // Distance from target that we start to slow down. 0017
 
-    public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 100) / (20 * 360) ;  // 20-100 gear reduction
-    public final double ARM_COUNTS_PER_DEGREE    = 2786 / 360;   //
+    public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 100) / (10 * 360) ;  // 10-100 gear reduction
 
     public final double LIFT_START_ANGLE         =  10;  //
-    public final double ARM_START_ANGLE          = -110; //
     public final double STONE_OPEN               = 0.5;
     public final double STONE_CLOSE              = 0;
-    public final double STONE_AXIAL              = 0.51;
+    public final double STONE_HOLD              = 0.51;
+    public final double STONE_RETRACT           = 0.50;
     public final double FOUNDATION_SAFE_R = 0.49;
     public final double FOUNDATION_SAFE_L = 0.55;
     public final double FOUNDATION_DOWN_R = 0.18;   // 0.28 for spike
@@ -102,11 +99,11 @@ public class GFORCE_Hardware {
     // Robot states that we share with others
     public double axialMotion = 0;
     public double lateralMotion = 0;
-    public double armAngle = 0;
-    public double liftAngle = 0;
+    public double leftLiftAngle = 0;
+    public double rightLiftAngle = 0;
     public double currentHeading = 0;
-    public int   encoderLift;
-    public int   encoderArm;
+    public int   encoderLLift;
+    public int   encoderRLift;
 
     private static LinearOpMode myOpMode = null;
 
@@ -163,10 +160,11 @@ public class GFORCE_Hardware {
         rightBackDrive = configureMotor("right_back_drive", DcMotor.Direction.FORWARD);
         rightFrontDrive = configureMotor("right_front_drive", DcMotor.Direction.FORWARD);
 
-        lift = configureMotor("lift", DcMotor.Direction.FORWARD);
-        arm = configureMotor("arm", DcMotor.Direction.REVERSE);
-        collect = myOpMode.hardwareMap.get(DcMotorEx.class,"collect");
-        collect.setDirection(DcMotor.Direction.REVERSE);
+        leftCollect = configureMotor("left_collect", DcMotor.Direction.FORWARD);
+        rightCollect = configureMotor("right_collect", DcMotor.Direction.REVERSE);
+
+        leftLift = configureMotor("left_lift", DcMotor.Direction.FORWARD);
+        rightLift = configureMotor("right_lift", DcMotor.Direction.FORWARD);
 
         // Set all Expansion hubs to use the MANUAL Bulk Caching mode
         allHubs = myOpMode.hardwareMap.getAll(LynxModule.class);
@@ -176,17 +174,20 @@ public class GFORCE_Hardware {
 
         resetEncoders();
         stoneGrab = myOpMode.hardwareMap.get(Servo.class,"stone_grab");
-        stoneRotate = myOpMode.hardwareMap.get(Servo.class,"stone_rotate");
-        skystoneLiftRed = myOpMode.hardwareMap.get(Servo.class, "lift_red");
-        skystoneLiftBlue = myOpMode.hardwareMap.get(Servo.class, "lift_blue");
+        capstoneHold = myOpMode.hardwareMap.get(Servo.class,"capstone_holder");
+        stoneExtend = myOpMode.hardwareMap.get(Servo.class,"stone_extend");
         foundationGrabberRight = myOpMode.hardwareMap.get(Servo.class,"foundation_GR" );
         foundationGrabberLeft = myOpMode.hardwareMap.get(Servo.class,"foundation_GL" );
+
+        skystoneLiftRed = myOpMode.hardwareMap.get(Servo.class, "lift_red");
+        skystoneLiftBlue = myOpMode.hardwareMap.get(Servo.class, "lift_blue");
 
         setRedSkystoneGrabber(SkystoneGrabberPositions.START);
         setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
 
         stoneGrab.setPosition(STONE_OPEN);
-        stoneRotate.setPosition(STONE_AXIAL);
+        stoneExtend.setPosition(STONE_RETRACT);
+        capstoneHold.setPosition(STONE_HOLD);
         foundationGrabberRight.setPosition(FOUNDATION_SAFE_R);
         foundationGrabberLeft.setPosition(FOUNDATION_SAFE_L);
 
@@ -202,8 +203,10 @@ public class GFORCE_Hardware {
         resetHeading();
 
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftCollect.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightCollect.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Set all motors to zero power
         stopRobot();
@@ -383,11 +386,11 @@ public class GFORCE_Hardware {
         encoderLB = leftBackDrive.getCurrentPosition();
         encoderRB = rightBackDrive.getCurrentPosition();
 
-        encoderLift = lift.getCurrentPosition();
-        encoderArm = arm.getCurrentPosition();
+        encoderLLift = leftLift.getCurrentPosition();
+        encoderRLift = rightLift.getCurrentPosition();
 
-        liftAngle = (encoderLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
-        armAngle = (encoderArm / ARM_COUNTS_PER_DEGREE) + ARM_START_ANGLE;
+        leftLiftAngle = (encoderLLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
+        rightLiftAngle = (encoderRLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
 
         currentHeading = getHeading();
 
@@ -504,7 +507,7 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("Heading", "%+3.1f (%.0fmS)", adjustedIntegratedZAxis, intervalCycle);
         myOpMode.telemetry.addData("axes",  "A:L:Y %6.0f %6.0f %6.0f", driveAxial, driveLateral,driveYaw);
         myOpMode.telemetry.addData("motion","axial %6.1f, lateral %6.1f", getAxialMotion(), getLateralMotion());
-        myOpMode.telemetry.addData("angles","lift: %6.1f, Arm %6.1f", liftAngle, armAngle);
+        myOpMode.telemetry.addData("Lift angle","L:R %6.1f, %6.1f", leftLiftAngle, rightLiftAngle);
         myOpMode.telemetry.update();
     }
 
@@ -523,7 +526,6 @@ public class GFORCE_Hardware {
 
         Orientation angles;
         double heading;
-        double timeMs;
         double deltaH;
 
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);

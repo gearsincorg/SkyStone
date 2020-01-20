@@ -162,49 +162,39 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     private void controlBlockScoring() {
 
-        // Check for arm up
-        if (robot.armAngle < 120 && (gamepad2.dpad_up || (gamepad2.right_stick_y < -0.1))) {
-            if (gamepad2.dpad_up) {
-                robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                robot.arm.setPower(0.2);
-            } else {
-                robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                robot.arm.setPower(Math.abs(gamepad2.right_stick_y) * 0.3);
+
+        if(gamepad2.x) {
+            robot.leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            robot.rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+            robot.leftLift.setPower(-.10);
+            robot.rightLift.setPower(-.10);
+        }
+        else if (gamepad2.y && (robot.leftLiftAngle < 40)) {
+            robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.leftLift.setPower(1);
+            robot.rightLift.setPower(1);
+        }
+        else if (gamepad2.a && (robot.leftLiftAngle > 10 )) {
+            robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            if (robot.leftLiftAngle > 15) {
+                robot.leftLift.setPower(-0.9);
+                robot.rightLift.setPower(-0.9);
+            }
+            else {
+                robot.leftLift.setPower(-0.3);
+                robot.rightLift.setPower(-0.3);
             }
         }
-
-        // Check for Arm Down
-        else if (robot.armAngle > -110 && (gamepad2.dpad_down || (gamepad2.right_stick_y > 0.1))) {
-            if (gamepad2.dpad_down) {
-                robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                robot.arm.setPower(-0.2);
-            } else {
-                robot.arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                robot.arm.setPower(Math.abs(gamepad2.right_stick_y) * -0.3);
-            }
-        }
-
-        // Hold the current position
         else {
-            robot.arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            if (robot.armAngle < -100) {
-                robot.arm.setPower(0);
-            } else {
-                if (Math.abs(robot.armAngle) > 10) {
-                    robot.arm.setPower(Math.signum(robot.armAngle) * -0.1);
-                } else {
-                    robot.arm.setPower(0);
-                }
-            }
+            robot.leftLift.setPower(0.0);
+            robot.rightLift.setPower(0.0);
         }
 
-        if (gamepad2.y && (robot.liftAngle < 55))
-            robot.lift.setPower(0.3);
-        else if (gamepad2.a && (robot.liftAngle > 10 ))
-            robot.lift.setPower(-0.2);
-        else
-            robot.lift.setPower(0);
 
+/*
         if(gamepad2.x) {
             robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_DOWN_L);
             robot.foundationGrabberRight.setPosition(robot.FOUNDATION_DOWN_R);
@@ -213,20 +203,23 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_SAFE_L);
             robot.foundationGrabberRight.setPosition(robot.FOUNDATION_SAFE_R);
         }
-
-        if (gamepad2.right_bumper)
+*/
+        if (gamepad2.right_bumper) {
             robot.stoneGrab.setPosition(robot.STONE_CLOSE);
-        else if (gamepad2.left_bumper)
+        }
+        else if (gamepad2.left_bumper) {
             robot.stoneGrab.setPosition(robot.STONE_OPEN);
-        else
-            robot.collect.setPower(0);
+        }
 
         if (gamepad2.right_trigger > 0.5) {
-            robot.collect.setPower(1);
-
+            robot.leftCollect.setPower(1);
+            robot.rightCollect.setPower(1);
         } else if (gamepad2.left_trigger > 0.5) {
-            robot.collect.setPower(-1);
-
+            robot.leftCollect.setPower(-0.5);
+            robot.rightCollect.setPower(-0.5);
+        } else {
+            robot.leftCollect.setPower(0);
+            robot.rightCollect.setPower(0);
         }
 
     }
