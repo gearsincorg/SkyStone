@@ -34,6 +34,7 @@ package org.firstinspires.ftc.teamcode.FTCVuforiaDemo;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.vuforia.CameraDevice;
 
 /**
  * This example is designed to show how to identify a target, get the robot's position, and then plan
@@ -75,6 +76,8 @@ public class TeleopOpmode extends LinearOpMode {
 
         // Activate Vuforia (this takes a few seconds)
         nav.activateTracking();
+
+        CameraDevice.getInstance().setFlashTorchMode( true );
 
         // Wait for the game to start (driver presses PLAY)
         while (!isStarted()) {
