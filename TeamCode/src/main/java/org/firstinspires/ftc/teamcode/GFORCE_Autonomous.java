@@ -8,6 +8,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.RobotLog;
+import com.vuforia.CameraDevice;
 
 @Autonomous(name="G-FORCE Autonomous", group="!Competition")
 public class GFORCE_Autonomous extends LinearOpMode {
@@ -32,6 +33,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
         autoConfig.init(hardwareMap.appContext, this);
         robot.init(this);
         nav.init(this, robot);
+
+        CameraDevice.getInstance().setFlashTorchMode( true );
 
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData(">", "Press Play to Start");
@@ -89,6 +92,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
         }
 
 
+        CameraDevice.getInstance().setFlashTorchMode( false );
 
         while(opModeIsActive()) {
             nav.waitForTarget(1);
