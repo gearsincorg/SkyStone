@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -54,13 +55,13 @@ public class GFORCE_Hardware {
     public Servo skystoneLiftRed = null;
     public Servo skystoneLiftBlue = null;
     public Servo stoneGrab = null;
-    public Servo capstoneHold = null;
-    public Servo stoneExtend = null;
+    public Servo capstoneRelease = null;
+    public CRServo stoneExtend = null;
 
     public Servo foundationGrabberLeft = null;
     public Servo foundationGrabberRight = null;
-    public Servo blockTransferLeft = null;
-    public Servo blockTransferRight = null;
+    public CRServo stoneTransferLeft = null;
+    public CRServo stoneTransferRight = null;
 
     public static BNO055IMU imu = null;
 
@@ -77,14 +78,18 @@ public class GFORCE_Hardware {
     public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 100) / (10 * 360) ;  // 10-100 gear reduction
 
     public final double LIFT_START_ANGLE         =  10;  //
+
+    // SERVO CONSTANTS
     public final double STONE_OPEN               = 0.5;
     public final double STONE_CLOSE              = 0;
-    public final double STONE_HOLD              = 0.51;
-    public final double STONE_RETRACT           = 0.50;
-    public final double FOUNDATION_SAFE_R = 0.49;
-    public final double FOUNDATION_SAFE_L = 0.55;
-    public final double FOUNDATION_DOWN_R = 0.18;   // 0.28 for spike
-    public final double FOUNDATION_DOWN_L = 0.89;   // 0.77 for spike
+    public final double CAPSTONE_HOLD           = 0.51;
+    public final double CAPSTONE_RELEASE        = 0.51;
+    public final double STONE_EXTEND            = 0.60;
+    public final double STONE_RETRACT           = 0.40;
+    public final double FOUNDATION_SAFE_R = 0.5;
+    public final double FOUNDATION_SAFE_L = 0.5;
+    public final double FOUNDATION_DOWN_R = 0.25;   //
+    public final double FOUNDATION_DOWN_L = 0.75;   //
 
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.012;  // Was 0.02
@@ -162,8 +167,8 @@ public class GFORCE_Hardware {
         rightBackDrive = configureMotor("right_back_drive", DcMotor.Direction.FORWARD);
         rightFrontDrive = configureMotor("right_front_drive", DcMotor.Direction.FORWARD);
 
-        leftCollect = configureMotor("left_collect", DcMotor.Direction.FORWARD);
-        rightCollect = configureMotor("right_collect", DcMotor.Direction.REVERSE);
+        leftCollect = configureMotor("left_collect", DcMotor.Direction.REVERSE);
+        rightCollect = configureMotor("right_collect", DcMotor.Direction.FORWARD);
 
         leftLift = configureMotor("left_lift", DcMotor.Direction.FORWARD);
         rightLift = configureMotor("right_lift", DcMotor.Direction.FORWARD);
@@ -176,24 +181,18 @@ public class GFORCE_Hardware {
 
         resetEncoders();
         stoneGrab = myOpMode.hardwareMap.get(Servo.class,"stone_grab");
-        capstoneHold = myOpMode.hardwareMap.get(Servo.class,"capstone_holder");
-        stoneExtend = myOpMode.hardwareMap.get(Servo.class,"stone_extend");
+        capstoneRelease = myOpMode.hardwareMap.get(Servo.class,"capstone_holder");
+        stoneExtend = myOpMode.hardwareMap.get(CRServo.class,"stone_extend");
         foundationGrabberRight = myOpMode.hardwareMap.get(Servo.class,"foundation_GR" );
         foundationGrabberLeft = myOpMode.hardwareMap.get(Servo.class,"foundation_GL" );
 
-        blockTransferLeft = myOpMode.hardwareMap.get(Servo.class"bTransfer_L");
-        blockTransferRight = myOpMode.hardwareMap.get(Servo.class"bTransfer_R");
+        stoneTransferLeft = myOpMode.hardwareMap.get(CRServo.class, "bTransfer_L");
+        stoneTransferRight = myOpMode.hardwareMap.get(CRServo.class, "bTransfer_R");
         skystoneLiftRed = myOpMode.hardwareMap.get(Servo.class, "lift_red");
         skystoneLiftBlue = myOpMode.hardwareMap.get(Servo.class, "lift_blue");
 
         setRedSkystoneGrabber(SkystoneGrabberPositions.START);
         setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
-
-        stoneGrab.setPosition(STONE_OPEN);
-        stoneExtend.setPosition(STONE_RETRACT);
-        capstoneHold.setPosition(STONE_HOLD);
-        foundationGrabberRight.setPosition(FOUNDATION_SAFE_R);
-        foundationGrabberLeft.setPosition(FOUNDATION_SAFE_L);
 
         timeoutSoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("ss_siren", "raw", myOpMode.hardwareMap.appContext.getPackageName());
         if (timeoutSoundID != 0) {
@@ -214,6 +213,13 @@ public class GFORCE_Hardware {
 
         // Set all motors to zero power
         stopRobot();
+
+        // Init all the servos
+        grabFoundation(false);
+        grabStone(false);
+        extendStone(false);
+        releaseCapstone(false);
+        transferStone(0);
     }
 
     // Configure a motor
@@ -666,7 +672,14 @@ public class GFORCE_Hardware {
         moveRobotVelocity(0, 0, 0);
     }
 
-    // Actuator Methods
+    public void runCollector(double power) {
+        leftCollect.setPower(power);
+        rightCollect.setPower(-power);
+    }
+
+    // ========================================================
+    // ----               SERVO Methods
+    // ========================================================
     private final double LIFT_RED_SAFE = 0.07;
     private final double LIFT_RED_READY = 0.55;
 
@@ -715,8 +728,44 @@ public class GFORCE_Hardware {
 
     }
 
-    public void runCollector(double power) {
-        leftCollect.setPower(power);
-        rightCollect.setPower(-power);
+
+    public void grabFoundation(boolean grab) {
+        if (grab) {
+            foundationGrabberLeft.setPosition(FOUNDATION_DOWN_L);
+            foundationGrabberRight.setPosition(FOUNDATION_DOWN_R);
+
+        } else {
+            foundationGrabberLeft.setPosition(FOUNDATION_SAFE_L);
+            foundationGrabberRight.setPosition(FOUNDATION_SAFE_R);
+        }
+    }
+
+    public void grabStone(boolean grab) {
+        if (grab) {
+            stoneGrab.setPosition(STONE_CLOSE);
+        } else {
+            stoneGrab.setPosition(STONE_OPEN);
+        }
+    }
+
+    public void transferStone(double transferSpeed) {
+        stoneTransferLeft.setPower(transferSpeed);
+        stoneTransferRight.setPower(-transferSpeed);
+    }
+
+    public void extendStone( boolean extend) {
+        if (extend) {
+            stoneExtend.setPower(STONE_EXTEND);
+        } else {
+            stoneExtend.setPower(STONE_RETRACT);
+        }
+    }
+
+    public void releaseCapstone( boolean release) {
+        if (release) {
+            capstoneRelease.setPosition(CAPSTONE_RELEASE);
+        } else {
+            capstoneRelease.setPosition(CAPSTONE_HOLD);
+        }
     }
 }

@@ -204,12 +204,10 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.foundationGrabberRight.setPosition(robot.FOUNDATION_SAFE_R);
         }
 */
-        if (gamepad2.right_bumper) {
-            robot.stoneGrab.setPosition(robot.STONE_CLOSE);
-        }
-        else if (gamepad2.left_bumper) {
-            robot.stoneGrab.setPosition(robot.STONE_OPEN);
-        }
+
+        robot.grabFoundation(gamepad1.left_bumper);
+        robot.transferStone(gamepad1.right_bumper? 1 : 0);
+
 
         if (gamepad2.right_trigger > 0.5) {
             robot.runCollector(1);
