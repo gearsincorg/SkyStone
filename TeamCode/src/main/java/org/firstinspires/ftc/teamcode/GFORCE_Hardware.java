@@ -59,6 +59,8 @@ public class GFORCE_Hardware {
 
     public Servo foundationGrabberLeft = null;
     public Servo foundationGrabberRight = null;
+    public Servo blockTransferLeft = null;
+    public Servo blockTransferRight = null;
 
     public static BNO055IMU imu = null;
 
@@ -179,6 +181,8 @@ public class GFORCE_Hardware {
         foundationGrabberRight = myOpMode.hardwareMap.get(Servo.class,"foundation_GR" );
         foundationGrabberLeft = myOpMode.hardwareMap.get(Servo.class,"foundation_GL" );
 
+        blockTransferLeft = myOpMode.hardwareMap.get(Servo.class"bTransfer_L");
+        blockTransferRight = myOpMode.hardwareMap.get(Servo.class"bTransfer_R");
         skystoneLiftRed = myOpMode.hardwareMap.get(Servo.class, "lift_red");
         skystoneLiftBlue = myOpMode.hardwareMap.get(Servo.class, "lift_blue");
 
@@ -709,5 +713,10 @@ public class GFORCE_Hardware {
                 break;
         }
 
+    }
+
+    public void runCollector(double power) {
+        leftCollect.setPower(power);
+        rightCollect.setPower(-power);
     }
 }

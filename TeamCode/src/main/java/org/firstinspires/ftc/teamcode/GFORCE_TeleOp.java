@@ -212,14 +212,11 @@ public class GFORCE_TeleOp extends LinearOpMode {
         }
 
         if (gamepad2.right_trigger > 0.5) {
-            robot.leftCollect.setPower(1);
-            robot.rightCollect.setPower(1);
+            robot.runCollector(1);
         } else if (gamepad2.left_trigger > 0.5) {
-            robot.leftCollect.setPower(-0.5);
-            robot.rightCollect.setPower(-0.5);
+            robot.runCollector(0.5);
         } else {
-            robot.leftCollect.setPower(0);
-            robot.rightCollect.setPower(0);
+            robot.runCollector(0);
         }
 
     }
