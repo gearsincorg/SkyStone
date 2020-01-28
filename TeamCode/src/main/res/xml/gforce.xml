@@ -9,7 +9,10 @@
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
             <Servo name="foundation_GL" port="0" />
             <Servo name="foundation_GR" port="1" />
-            <ContinuousRotationServo name="stone_extend" port="2" />
+            <Servo name="lift_red" port="2" />
+            <Servo name="lift_blue" port="3" />
+            <Servo name="stone_grab" port="4" />
+            <ContinuousRotationServo name="stone_extend" port="5" />
 
         </LynxModule>
         <LynxModule name="Child" port="3">
@@ -19,10 +22,8 @@
             <goBILDA5202SeriesMotor name="right_lift" port="3" />
             <ContinuousRotationServo name="bTransfer_L" port="0" />
             <ContinuousRotationServo name="bTransfer_R" port="1" />
-            <Servo name="lift_red" port="2" />
-            <Servo name="lift_blue" port="3" />
-            <Servo name="stone_grab" port="4" />
-            <Servo name="capstone_holder" port="5" />
+            <Servo name="capstone_holder" port="2" />
+
         </LynxModule>
     </LynxUsbDevice>
 </Robot>

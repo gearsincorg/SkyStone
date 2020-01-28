@@ -13,9 +13,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name="G-FORCE Teleop", group="!Competition")
 public class GFORCE_TeleOp extends LinearOpMode {
 
-    public final double AXIAL_JS_SCALE      = 0.5;
-    public final double LATERAL_JS_SCALE    = 0.5;
-    public final double YAW_JS_SCALE        = 0.25;
+    public final double AXIAL_JS_SCALE = 0.5;
+    public final double LATERAL_JS_SCALE = 0.5;
+    public final double YAW_JS_SCALE = 0.25;
 
     private ElapsedTime neutralTime = new ElapsedTime();
 
@@ -53,7 +53,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.updateMotion();  // Read all sensors and calculate motions
             controlBlockScoring();
             axialVel = 0;
-            lateralVel= 0;
+            lateralVel = 0;
             yawVel = 0;
 
             // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
@@ -163,51 +163,34 @@ public class GFORCE_TeleOp extends LinearOpMode {
     private void controlBlockScoring() {
 
 
-        if(gamepad2.x) {
+        if (gamepad2.x) {
             robot.leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             robot.rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
             robot.leftLift.setPower(-.10);
             robot.rightLift.setPower(-.10);
-        }
-        else if (gamepad2.y && (robot.leftLiftAngle < 40)) {
+        } else if (gamepad2.y && (robot.leftLiftAngle < 40)) {
             robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.leftLift.setPower(1);
             robot.rightLift.setPower(1);
-        }
-        else if (gamepad2.a && (robot.leftLiftAngle > 10 )) {
+        } else if (gamepad2.a && (robot.leftLiftAngle > 10)) {
             robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             if (robot.leftLiftAngle > 15) {
                 robot.leftLift.setPower(-0.9);
                 robot.rightLift.setPower(-0.9);
-            }
-            else {
+            } else {
                 robot.leftLift.setPower(-0.3);
                 robot.rightLift.setPower(-0.3);
             }
-        }
-        else {
+        } else {
             robot.leftLift.setPower(0.0);
             robot.rightLift.setPower(0.0);
         }
 
-
-/*
-        if(gamepad2.x) {
-            robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_DOWN_L);
-            robot.foundationGrabberRight.setPosition(robot.FOUNDATION_DOWN_R);
-        }
-        else if (gamepad2.b) {
-            robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_SAFE_L);
-            robot.foundationGrabberRight.setPosition(robot.FOUNDATION_SAFE_R);
-        }
-*/
-
-        robot.grabFoundation(gamepad1.left_bumper);
-        robot.transferStone(gamepad1.right_bumper? 1 : 0);
-
+        robot.grabStone(gamepad1.left_bumper);
+        robot.releaseCapstone(gamepad1.right_bumper);
 
         if (gamepad2.right_trigger > 0.5) {
             robot.runCollector(1);
@@ -217,6 +200,19 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.runCollector(0);
         }
 
-    }
 
+        if(gamepad2.left_bumper) {
+            robot.setBlueSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
+
+        } else {
+            robot.setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
+        }
+
+        if(gamepad2.right_bumper) {
+            robot.setRedSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
+
+        } else {
+            robot.setRedSkystoneGrabber(SkystoneGrabberPositions.START);
+        }
+    }
 }

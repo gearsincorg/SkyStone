@@ -82,14 +82,14 @@ public class GFORCE_Hardware {
     // SERVO CONSTANTS
     public final double STONE_OPEN               = 0.5;
     public final double STONE_CLOSE              = 0;
-    public final double CAPSTONE_HOLD           = 0.51;
-    public final double CAPSTONE_RELEASE        = 0.51;
+    public final double CAPSTONE_HOLD           = 0.5;
+    public final double CAPSTONE_RELEASE        = 0.7;
     public final double STONE_EXTEND            = 0.60;
-    public final double STONE_RETRACT           = 0.40;
+    public final double STONE_RETRACT           = -0.20;
     public final double FOUNDATION_SAFE_R = 0.5;
     public final double FOUNDATION_SAFE_L = 0.5;
-    public final double FOUNDATION_DOWN_R = 0.25;   //
-    public final double FOUNDATION_DOWN_L = 0.75;   //
+    public final double FOUNDATION_DOWN_R = 0.1;   //
+    public final double FOUNDATION_DOWN_L = 0.9;   //
 
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.012;  // Was 0.02
@@ -674,14 +674,14 @@ public class GFORCE_Hardware {
 
     public void runCollector(double power) {
         leftCollect.setPower(power);
-        rightCollect.setPower(-power);
+        rightCollect.setPower(power);
     }
 
     // ========================================================
     // ----               SERVO Methods
     // ========================================================
-    private final double LIFT_RED_SAFE = 0.07;
-    private final double LIFT_RED_READY = 0.55;
+    private final double LIFT_RED_SAFE = 0.5;
+    private final double LIFT_RED_READY = 0.85;
 
     public void setRedSkystoneGrabber(SkystoneGrabberPositions position) {
 
@@ -696,8 +696,8 @@ public class GFORCE_Hardware {
         }
     }
 
-    private final double LIFT_BLUE_SAFE = 0.96;
-    private final double LIFT_BLUE_READY = 0.52;
+    private final double LIFT_BLUE_SAFE = 0.5;
+    private final double LIFT_BLUE_READY = 0.15;
 
     public void setBlueSkystoneGrabber(SkystoneGrabberPositions position) {
 
