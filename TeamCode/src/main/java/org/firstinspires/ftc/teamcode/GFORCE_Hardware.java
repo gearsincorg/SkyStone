@@ -83,7 +83,7 @@ public class GFORCE_Hardware {
     public final double STONE_OPEN               = 0.5;
     public final double STONE_CLOSE              = 0;
     public final double CAPSTONE_HOLD           = 0.5;
-    public final double CAPSTONE_RELEASE        = 0.7;
+    public final double CAPSTONE_RELEASE        = 0.3;
     public final double STONE_EXTEND            = 0.60;
     public final double STONE_RETRACT           = -0.20;
     public final double FOUNDATION_SAFE_R = 0.5;
@@ -180,14 +180,18 @@ public class GFORCE_Hardware {
         }
 
         resetEncoders();
+
+        //Define and Initialize SkyStone Grabber Servos
         stoneGrab = myOpMode.hardwareMap.get(Servo.class,"stone_grab");
-        capstoneRelease = myOpMode.hardwareMap.get(Servo.class,"capstone_holder");
+        stoneTransferLeft = myOpMode.hardwareMap.get(CRServo.class, "bTransfer_L");
+        stoneTransferRight = myOpMode.hardwareMap.get(CRServo.class, "bTransfer_R");
         stoneExtend = myOpMode.hardwareMap.get(CRServo.class,"stone_extend");
+
+        capstoneRelease = myOpMode.hardwareMap.get(Servo.class,"capstone_holder");
+
         foundationGrabberRight = myOpMode.hardwareMap.get(Servo.class,"foundation_GR" );
         foundationGrabberLeft = myOpMode.hardwareMap.get(Servo.class,"foundation_GL" );
 
-        stoneTransferLeft = myOpMode.hardwareMap.get(CRServo.class, "bTransfer_L");
-        stoneTransferRight = myOpMode.hardwareMap.get(CRServo.class, "bTransfer_R");
         skystoneLiftRed = myOpMode.hardwareMap.get(Servo.class, "lift_red");
         skystoneLiftBlue = myOpMode.hardwareMap.get(Servo.class, "lift_blue");
 
@@ -205,6 +209,7 @@ public class GFORCE_Hardware {
         imu.initialize(parameters);
         resetHeading();
 
+        //Set the mode of the motors
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -214,7 +219,7 @@ public class GFORCE_Hardware {
         // Set all motors to zero power
         stopRobot();
 
-        // Init all the servos
+        // Initialize the stone servos
         grabFoundation(false);
         grabStone(false);
         extendStone(false);
@@ -450,7 +455,7 @@ public class GFORCE_Hardware {
         return (lateralMotion);
     }
 
-    // turn with both wheels
+    // Turn with both wheels
     public boolean turnToHeading(double heading, double timeOutSEC) {
         return generalRotationControl(heading, timeOutSEC, false);
     }
@@ -680,6 +685,8 @@ public class GFORCE_Hardware {
     // ========================================================
     // ----               SERVO Methods
     // ========================================================
+
+    //Setting the SkyStone Grabbers
     private final double LIFT_RED_SAFE = 0.5;
     private final double LIFT_RED_READY = 0.85;
 
@@ -728,7 +735,7 @@ public class GFORCE_Hardware {
 
     }
 
-
+    //Grabbing the Foundation
     public void grabFoundation(boolean grab) {
         if (grab) {
             foundationGrabberLeft.setPosition(FOUNDATION_DOWN_L);
@@ -740,6 +747,7 @@ public class GFORCE_Hardware {
         }
     }
 
+    //Collecting and Placing the Stone
     public void grabStone(boolean grab) {
         if (grab) {
             stoneGrab.setPosition(STONE_CLOSE);
@@ -761,6 +769,7 @@ public class GFORCE_Hardware {
         }
     }
 
+    //Releasing the Capstone
     public void releaseCapstone( boolean release) {
         if (release) {
             capstoneRelease.setPosition(CAPSTONE_RELEASE);

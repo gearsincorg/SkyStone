@@ -20,7 +20,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
     private ElapsedTime neutralTime = new ElapsedTime();
 
     /* Declare OpMode members. */
-    GFORCE_Hardware robot = new GFORCE_Hardware();   // Use steve hardware
+    GFORCE_Hardware robot = new GFORCE_Hardware();
 
     @Override
     public void runOpMode() {
@@ -37,21 +37,25 @@ public class GFORCE_TeleOp extends LinearOpMode {
         boolean autoHeadingOn = false;
 
         /* Initialize the hardware variables.
-         * The init() method of the hardware class does all the work here
+         * The init() method of the Hardware class does all the work here
          */
         robot.init(this);
 
-        // Wait for the game to start (driver presses PLAY)
+        // Wait for the game to start (Driver presses PLAY)
         telemetry.addData(">", "Press Play to Start");
         telemetry.update();
 
         waitForStart();
         robot.startMotion();
 
-        // run until the end of the match (driver presses STOP)
+        // Run until the end of the match (Driver presses STOP)
         while (opModeIsActive()) {
             robot.updateMotion();  // Read all sensors and calculate motions
             controlBlockScoring();
+
+            //Driver Controls
+
+            //Drive Code
             axialVel = 0;
             lateralVel = 0;
             yawVel = 0;
@@ -94,7 +98,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             //yawVel     = rotate;
 
             //-------------------------
-            // Determine Robot Centric motion (based on gyro heading)
+            // Determine Robot Centric Motion (based on gyro heading)
             if (gamepad1.a || gamepad1.b || gamepad1.x || gamepad1.y) {
                 if (gamepad1.y || gamepad1.dpad_up) {
                     axialVel = 0.1;
@@ -110,6 +114,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     lateralVel = 0.2;
                 }
 
+                //Field Centric Motion
             } else {
                 lateralVel = (forwardBack * Math.cos(Math.toRadians(robot.currentHeading))) -
                         (rightLeft * Math.sin(Math.toRadians(robot.currentHeading)));
@@ -130,7 +135,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                     (rotate == 0));
 
             if (rotate != 0) {
-                // We are turning with joystick.
+                // We are turning with the joystick
                 autoHeadingOn = false;
             } else if (!autoHeadingOn && robot.notTurning()) {
                 // We have just stopped turning, so lock in current heading
@@ -139,7 +144,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             }
 
             // Control Yaw, using manual or auto correction
-            // disable correction if JS are neutral for more than 2 seconds
+            // Disable correction if JS are neutral for more than 2 seconds
             if (!neutralSticks)
                 neutralTime.reset();
 
@@ -155,11 +160,20 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             robot.moveRobotVelocity();
 
-            // Send telemetry message to signify robot running;
-            robot.showEncoders();
-        }
-    }
+            //Release the capstone
+            if ((gamepad1.left_trigger > 0.5) && gamepad1.left_bumper) {
+                robot.releaseCapstone(true);
+            }
 
+            // Send telemetry message to signify robot running
+            robot.showEncoders();
+
+        }
+
+    }
+    //Co-pilot Controls
+
+    //Lift Code
     private void controlBlockScoring() {
 
 
@@ -189,18 +203,26 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.rightLift.setPower(0.0);
         }
 
-        robot.grabStone(gamepad1.left_bumper);
-        robot.releaseCapstone(gamepad1.right_bumper);
-
+        //Run Collector and Transfer Wheels
         if (gamepad2.right_trigger > 0.5) {
             robot.runCollector(1);
+            robot.transferStone(0.5);
         } else if (gamepad2.left_trigger > 0.5) {
             robot.runCollector(0.5);
+            robot.transferStone(-0.5);
         } else {
             robot.runCollector(0);
+            robot.transferStone(0);
         }
 
+        //Grab the stone
+        if(gamepad2.right_bumper) {
+            robot.grabStone(true);
+        } else if (gamepad2.left_bumper) {
+            robot.grabStone(false);
+        }
 
+        //Move the SkyStone Grabber
         if(gamepad2.left_bumper) {
             robot.setBlueSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
 
