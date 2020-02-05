@@ -12,7 +12,7 @@
             <Servo name="lift_red" port="2" />
             <Servo name="lift_blue" port="3" />
             <Servo name="stone_grab" port="4" />
-            <ContinuousRotationServo name="stone_extend" port="5" />
+            <Servo name="stone_extend" port="5" />
 
         </LynxModule>
         <LynxModule name="Child" port="3">

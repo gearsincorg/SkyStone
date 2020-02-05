@@ -56,7 +56,7 @@ public class GFORCE_Hardware {
     public Servo skystoneLiftBlue = null;
     public Servo stoneGrab = null;
     public Servo capstoneRelease = null;
-    public CRServo stoneExtend = null;
+    public Servo stoneExtend = null;
 
     public Servo foundationGrabberLeft = null;
     public Servo foundationGrabberRight = null;
@@ -84,8 +84,8 @@ public class GFORCE_Hardware {
     public final double STONE_CLOSE              = 0;
     public final double CAPSTONE_HOLD           = 0.5;
     public final double CAPSTONE_RELEASE        = 0.3;
-    public final double STONE_EXTEND            = 0.60;
-    public final double STONE_RETRACT           = -0.20;
+    public final double STONE_EXTEND            = 0.74;
+    public final double STONE_RETRACT           = 0.26;  // .25
     public final double FOUNDATION_SAFE_R = 0.5;
     public final double FOUNDATION_SAFE_L = 0.5;
     public final double FOUNDATION_DOWN_R = 0.1;   //
@@ -185,7 +185,7 @@ public class GFORCE_Hardware {
         stoneGrab = myOpMode.hardwareMap.get(Servo.class,"stone_grab");
         stoneTransferLeft = myOpMode.hardwareMap.get(CRServo.class, "bTransfer_L");
         stoneTransferRight = myOpMode.hardwareMap.get(CRServo.class, "bTransfer_R");
-        stoneExtend = myOpMode.hardwareMap.get(CRServo.class,"stone_extend");
+        stoneExtend = myOpMode.hardwareMap.get(Servo.class,"stone_extend");
 
         capstoneRelease = myOpMode.hardwareMap.get(Servo.class,"capstone_holder");
 
@@ -391,26 +391,29 @@ public class GFORCE_Hardware {
     // Common location to read all sensors
     public void readSensors() {
 
-        // Clear the BulkCache once per control cycle
-        for (LynxModule module : allHubs) {
-            module.clearBulkCache();
+        // If we are exiting, don't read bulk data
+        if (!myOpMode.isStopRequested()) {
+            // Clear the BulkCache once per control cycle
+            for (LynxModule module : allHubs) {
+                module.clearBulkCache();
+            }
+
+            encoderLF = leftFrontDrive.getCurrentPosition();
+            encoderRF = rightFrontDrive.getCurrentPosition();
+            encoderLB = leftBackDrive.getCurrentPosition();
+            encoderRB = rightBackDrive.getCurrentPosition();
+
+            encoderLLift = leftLift.getCurrentPosition();
+            encoderRLift = rightLift.getCurrentPosition();
+
+            leftLiftAngle = (encoderLLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
+            rightLiftAngle = (encoderRLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
+
+            currentHeading = getHeading();
+
+            intervalCycle = cycleTime.milliseconds() - lastCycle;
+            lastCycle = cycleTime.milliseconds();
         }
-
-        encoderLF = leftFrontDrive.getCurrentPosition();
-        encoderRF = rightFrontDrive.getCurrentPosition();
-        encoderLB = leftBackDrive.getCurrentPosition();
-        encoderRB = rightBackDrive.getCurrentPosition();
-
-        encoderLLift = leftLift.getCurrentPosition();
-        encoderRLift = rightLift.getCurrentPosition();
-
-        leftLiftAngle = (encoderLLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
-        rightLiftAngle = (encoderRLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
-
-        currentHeading = getHeading();
-
-        intervalCycle = cycleTime.milliseconds() - lastCycle;
-        lastCycle = cycleTime.milliseconds();
     }
 
     //Get the current encoder counts of the drive motors
@@ -588,6 +591,7 @@ public class GFORCE_Hardware {
         // set new integrated value and save current heading for future calculations
         lastHeading = angles.firstAngle;
         integratedZAxis = newHeading;
+        headingSetpoint = newHeading;
     }
 
     public void resetHeading() {
@@ -687,7 +691,7 @@ public class GFORCE_Hardware {
     // ========================================================
 
     //Setting the SkyStone Grabbers
-    private final double LIFT_RED_SAFE = 0.5;
+    private final double LIFT_RED_SAFE = 0.47;
     private final double LIFT_RED_READY = 0.85;
 
     public void setRedSkystoneGrabber(SkystoneGrabberPositions position) {
@@ -703,7 +707,7 @@ public class GFORCE_Hardware {
         }
     }
 
-    private final double LIFT_BLUE_SAFE = 0.5;
+    private final double LIFT_BLUE_SAFE = 0.53;
     private final double LIFT_BLUE_READY = 0.15;
 
     public void setBlueSkystoneGrabber(SkystoneGrabberPositions position) {
@@ -763,9 +767,9 @@ public class GFORCE_Hardware {
 
     public void extendStone( boolean extend) {
         if (extend) {
-            stoneExtend.setPower(STONE_EXTEND);
+            stoneExtend.setPosition(STONE_EXTEND);
         } else {
-            stoneExtend.setPower(STONE_RETRACT);
+            stoneExtend.setPosition(STONE_RETRACT);
         }
     }
 
