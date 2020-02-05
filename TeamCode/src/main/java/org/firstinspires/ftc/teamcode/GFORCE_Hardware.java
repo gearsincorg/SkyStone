@@ -167,8 +167,8 @@ public class GFORCE_Hardware {
         rightBackDrive = configureMotor("right_back_drive", DcMotor.Direction.FORWARD);
         rightFrontDrive = configureMotor("right_front_drive", DcMotor.Direction.FORWARD);
 
-        leftCollect = configureMotor("left_collect", DcMotor.Direction.REVERSE);
-        rightCollect = configureMotor("right_collect", DcMotor.Direction.FORWARD);
+        leftCollect = configureMotor("left_collect", DcMotor.Direction.FORWARD);
+        rightCollect = configureMotor("right_collect", DcMotor.Direction.REVERSE);
 
         leftLift = configureMotor("left_lift", DcMotor.Direction.FORWARD);
         rightLift = configureMotor("right_lift", DcMotor.Direction.FORWARD);

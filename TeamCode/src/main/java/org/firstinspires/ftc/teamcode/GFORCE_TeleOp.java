@@ -208,7 +208,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.runCollector(1);
             robot.transferStone(0.5);
         } else if (gamepad2.left_trigger > 0.5) {
-            robot.runCollector(0.5);
+            robot.runCollector(-0.5);
             robot.transferStone(-0.5);
         } else {
             robot.runCollector(0);
