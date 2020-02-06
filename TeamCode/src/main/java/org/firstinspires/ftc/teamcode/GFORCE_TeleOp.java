@@ -52,6 +52,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         while (opModeIsActive()) {
             robot.updateMotion();  // Read all sensors and calculate motions
             controlBlockScoring();
+            robot.craneControl();
 
             //Driver Controls
             if (gamepad1.back && gamepad1.start) {
@@ -128,12 +129,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
             }
 
             robot.moveRobotVelocity();
-
-            //Extend the Block if either control is pressed
-            robot.extendStone((gamepad1.left_trigger > 0.5) || gamepad1.left_bumper);
-
-            //Release the capstone if both controls are pressed
-            robot.releaseCapstone((gamepad1.left_trigger > 0.5) && gamepad1.left_bumper);
 
             //Move the SkyStone Grabbers (Temporary test code)
             if(gamepad1.right_bumper) {
@@ -216,23 +211,10 @@ public class GFORCE_TeleOp extends LinearOpMode {
             }
         }
 
-        //Run Collector and Transfer Wheels
-        if (gamepad2.right_trigger > 0.5) {
-            robot.runCollector(1);
-            robot.transferStone(0.75);
-        } else if (gamepad2.left_trigger > 0.5) {
+        //Reverse Collector and Transfer Wheels, fix this in Crane State machine
+        if (gamepad2.left_trigger > 0.5) {
             robot.runCollector(-0.5);
             robot.transferStone(-0.75);
-        } else {
-            robot.runCollector(0);
-            robot.transferStone(0);
-        }
-
-        //Grab the stone
-        if(gamepad2.right_bumper) {
-            robot.grabStone(true);
-        } else if (gamepad2.left_bumper) {
-            robot.grabStone(false);
         }
 
     }

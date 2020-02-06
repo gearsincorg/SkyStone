@@ -146,10 +146,14 @@ public class GFORCE_Hardware {
     private int timeoutSoundID = 0;
     public String autoPathName = "";
 
+    private CraneControl craneState = CraneControl.INIT;
+    private double liftSetpoint = LIFT_START_ANGLE;
+
     /* local OpMode members. */
     private ElapsedTime runTime = new ElapsedTime();
     private ElapsedTime cycleTime = new ElapsedTime();
     private ElapsedTime navTime = new ElapsedTime();
+    private ElapsedTime craneTime = new ElapsedTime();
 
     /* Constructor */
     public GFORCE_Hardware() {
@@ -779,6 +783,95 @@ public class GFORCE_Hardware {
             capstoneRelease.setPosition(CAPSTONE_RELEASE);
         } else {
             capstoneRelease.setPosition(CAPSTONE_HOLD);
+        }
+    }
+
+    // ========================================================
+    // ----               Crane Control Methods
+    // ========================================================
+
+    public void craneControl () {
+        switch (craneState) {
+            case INIT:
+                grabStone(false);
+                liftSetpoint = LIFT_START_ANGLE;
+                extendStone(false);
+                craneState = CraneControl.READY_TO_COLLECT;
+                break;
+
+            case READY_TO_COLLECT:
+                if (myOpMode.gamepad2.right_trigger > 0.5) {
+                    runCollector(1);
+                    transferStone(0.75);
+                    craneState = CraneControl.COLLECTING;
+                }
+                break;
+
+            case COLLECTING:
+                if (myOpMode.gamepad2.right_trigger < 0.5) {
+                    craneTime.reset();
+                    craneState = CraneControl.WAITING_FOR_STONE;
+                }
+                break;
+
+            case WAITING_FOR_STONE:
+                if (craneTime.time() > 2) {
+                    runCollector(0);
+                    transferStone(0);
+                    grabStone(true);
+                }
+                if (myOpMode.gamepad2.right_trigger > 0.5) {
+                    craneState = CraneControl.COLLECTING;
+                }
+                break;
+
+            case STONE_GRABBED:
+                if (myOpMode.gamepad2.right_trigger > 0.5) {
+                    runCollector(1);
+                    transferStone(0.75);
+                    //Remember to check for setting the height
+                    craneState = CraneControl.COLLECTING;
+                }
+                if (myOpMode.gamepad2.x) {
+                    extendStone(true);
+                    craneTime.reset();
+                    craneState = CraneControl.WAITING_TO_EXTEND;
+            }
+                break;
+
+            case WAITING_TO_EXTEND:
+                if (craneTime.time() > 0.5) {
+                    craneState = CraneControl.EXTENDED;
+                }
+                break;
+
+            case EXTENDED:
+                releaseCapstone((myOpMode.gamepad1.left_trigger > 0.5) && myOpMode.gamepad1.left_bumper);
+                if (myOpMode.gamepad2.left_bumper) {
+                    grabStone(false);
+                }
+                if (myOpMode.gamepad2.x) {
+                    extendStone(false);
+                    craneState = CraneControl.READY_TO_COLLECT;
+                }
+                break;
+
+            case LIFTING:
+                break;
+
+            case IN_POSITION:
+                break;
+
+
+            case WAITING_FOR_RELEASE:
+                break;
+
+            case STONE_RELEASED:
+                break;
+
+            case GOING_HOME:
+                break;
+
         }
     }
 }
