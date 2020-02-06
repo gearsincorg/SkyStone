@@ -54,11 +54,10 @@ public class GFORCE_TeleOp extends LinearOpMode {
             controlBlockScoring();
 
             //Driver Controls
-
-            //Drive Code
-            axialVel = 0;
-            lateralVel = 0;
-            yawVel = 0;
+            if (gamepad1.back && gamepad1.start) {
+                robot.resetHeading();
+                desiredHeading = 0;
+            }
 
             // Run wheels in POV mode (note: The joystick goes negative when pushed forwards, so negate it)
             // In this mode the Left stick moves the robot fwd and back, the Right stick turns left and right.
@@ -76,10 +75,10 @@ public class GFORCE_TeleOp extends LinearOpMode {
             // rotate = rotate * rotate * Math.signum(rotate);
             rotate *= YAW_JS_SCALE;
 
-            /*
-            if (gamepad1.y || gamepad1.dpad_up) {
+            // Jog controls
+            if (gamepad1.dpad_up) {
                 forwardBack = 0.1;
-            } else if (gamepad1.a || gamepad1.dpad_down) {
+            } else if (gamepad1.dpad_down) {
                 forwardBack = -0.1;
             } else if (gamepad1.x) {
                 rotate = 0.1;
@@ -90,50 +89,20 @@ public class GFORCE_TeleOp extends LinearOpMode {
             } else if (gamepad1.dpad_right) {
                 rightLeft = 0.2;
             }
-            */
 
-            // Convert to axis velocities for non-field-centric driving
-            //axialVel   = forwardBack;
-            //lateralVel = rightLeft;
-            //yawVel     = rotate;
+            //Field Centric Motion
+            axialVel = -((forwardBack * Math.sin(Math.toRadians(robot.currentHeading))) +
+                    (rightLeft * Math.cos(Math.toRadians(robot.currentHeading))));
 
-            //-------------------------
-            // Determine Robot Centric Motion (based on gyro heading)
-            if (gamepad1.a || gamepad1.b || gamepad1.x || gamepad1.y) {
-                if (gamepad1.y || gamepad1.dpad_up) {
-                    axialVel = 0.1;
-                } else if (gamepad1.a || gamepad1.dpad_down) {
-                    axialVel = -0.1;
-                } else if (gamepad1.x) {
-                    rotate = 0.1;
-                } else if (gamepad1.b) {
-                    rotate = -0.1;
-                } else if (gamepad1.dpad_left) {
-                    lateralVel = -0.2;
-                } else if (gamepad1.dpad_right) {
-                    lateralVel = 0.2;
-                }
-
-                //Field Centric Motion
-            } else {
-                lateralVel = (forwardBack * Math.cos(Math.toRadians(robot.currentHeading))) -
-                        (rightLeft * Math.sin(Math.toRadians(robot.currentHeading)));
-
-                axialVel = -((forwardBack * Math.sin(Math.toRadians(robot.currentHeading))) +
-                        (rightLeft * Math.cos(Math.toRadians(robot.currentHeading))));
-
-            }
+            lateralVel = (forwardBack * Math.cos(Math.toRadians(robot.currentHeading))) -
+                    (rightLeft * Math.sin(Math.toRadians(robot.currentHeading)));
 
             //Scale velocities to mm per second
             axialVel *= robot.MAX_VELOCITY_MMPS;
             lateralVel *= robot.MAX_VELOCITY_MMPS;
             yawVel = rotate * robot.MAX_VELOCITY_MMPS;
 
-            //Turning code
-            neutralSticks = ((forwardBack == 0) &&
-                    (rightLeft == 0) &&
-                    (rotate == 0));
-
+            // Control Yaw, using manual or auto correction
             if (rotate != 0) {
                 // We are turning with the joystick
                 autoHeadingOn = false;
@@ -143,15 +112,15 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 autoHeadingOn = true;
             }
 
-            // Control Yaw, using manual or auto correction
-            // Disable correction if JS are neutral for more than 2 seconds
-            if (!neutralSticks)
-                neutralTime.reset();
-
             robot.setAxialVelocity(axialVel);
             robot.setLateralVelocity(lateralVel);
 
-            if (autoHeadingOn && (neutralTime.time() < 2)) {
+            // Disable correction if JS are neutral for more than 2 seconds
+            neutralSticks = ((forwardBack == 0) && (rightLeft == 0) &&  (rotate == 0));
+            if (!neutralSticks)
+                neutralTime.reset();
+
+            if (autoHeadingOn && (neutralTime.time() < 3)) {
                 robot.setYawVelocityToHoldHeading(desiredHeading);
             } else {
                 robot.setYawVelocity(yawVel);
@@ -160,34 +129,60 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             robot.moveRobotVelocity();
 
-            //Release the capstone
-            if ((gamepad1.left_trigger > 0.5) && gamepad1.left_bumper) {
-                robot.releaseCapstone(true);
+            //Extend the Block if either control is pressed
+            robot.extendStone((gamepad1.left_trigger > 0.5) || gamepad1.left_bumper);
+
+            //Release the capstone if both controls are pressed
+            robot.releaseCapstone((gamepad1.left_trigger > 0.5) && gamepad1.left_bumper);
+
+            //Move the SkyStone Grabbers (Temporary test code)
+            if(gamepad1.right_bumper) {
+                robot.setBlueSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
+            } else {
+                robot.setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
+            }
+
+            if(gamepad1.right_trigger > 0.5) {
+                robot.setRedSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
+            } else {
+                robot.setRedSkystoneGrabber(SkystoneGrabberPositions.START);
             }
 
             // Send telemetry message to signify robot running
             robot.showEncoders();
-
         }
 
     }
-    //Co-pilot Controls
 
+    //Co-pilot Controls
     //Lift Code
     private void controlBlockScoring() {
+        double heightError = 0;
 
+        if (gamepad2.back && gamepad2.start) {
+            robot.leftLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            robot.rightLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            robot.leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            robot.rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
 
         if (gamepad2.x) {
             robot.leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             robot.rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            robot.leftLift.setPower(-0.10);
+            robot.rightLift.setPower(0);
+        } else if (gamepad2.b) {
+            robot.leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            robot.rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            robot.leftLift.setPower(0);
+            robot.rightLift.setPower(-0.10);
 
-            robot.leftLift.setPower(-.10);
-            robot.rightLift.setPower(-.10);
-        } else if (gamepad2.y && (robot.leftLiftAngle < 40)) {
+        } else if (gamepad2.y && (robot.leftLiftAngle < 42)) {
             robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.leftLift.setPower(1);
             robot.rightLift.setPower(1);
+
         } else if (gamepad2.a && (robot.leftLiftAngle > 10)) {
             robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -198,18 +193,36 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 robot.leftLift.setPower(-0.3);
                 robot.rightLift.setPower(-0.3);
             }
+
         } else {
-            robot.leftLift.setPower(0.0);
-            robot.rightLift.setPower(0.0);
+            // Try to keep the block level if it is up in the air.
+            if (robot.leftLiftAngle > 12) {
+                robot.leftLift.setPower(0.0);
+                heightError = (robot.leftLiftAngle - robot.rightLiftAngle);
+
+                if (heightError > 0.1) {
+                    robot.rightLift.setPower(0.1);
+                }
+                else if (heightError <  -0.1) {
+                    robot.rightLift.setPower(-0.1);
+                }
+                else {
+                    robot.rightLift.setPower(0);
+                }
+            }
+            else {
+                robot.leftLift.setPower(0.0);
+                robot.rightLift.setPower(0.0);
+            }
         }
 
         //Run Collector and Transfer Wheels
         if (gamepad2.right_trigger > 0.5) {
             robot.runCollector(1);
-            robot.transferStone(0.5);
+            robot.transferStone(0.75);
         } else if (gamepad2.left_trigger > 0.5) {
             robot.runCollector(-0.5);
-            robot.transferStone(-0.5);
+            robot.transferStone(-0.75);
         } else {
             robot.runCollector(0);
             robot.transferStone(0);
@@ -222,19 +235,5 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.grabStone(false);
         }
 
-        //Move the SkyStone Grabber
-        if(gamepad2.left_bumper) {
-            robot.setBlueSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
-
-        } else {
-            robot.setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
-        }
-
-        if(gamepad2.right_bumper) {
-            robot.setRedSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
-
-        } else {
-            robot.setRedSkystoneGrabber(SkystoneGrabberPositions.START);
-        }
     }
 }
