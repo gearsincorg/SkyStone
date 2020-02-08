@@ -103,6 +103,9 @@ public class GFORCE_Hardware {
     final double AXIAL_ENCODER_COUNTS_PER_MM   = 0.8602;
     final double LATERAL_ENCODER_COUNTS_PER_MM = 0.9134;
 
+    final double LIFT_GAIN          = 0.1;
+    final double LIFT_IN_LIMIT      = 2 ;
+
     // Robot states that we share with others
     public double axialMotion = 0;
     public double lateralMotion = 0;
@@ -147,12 +150,14 @@ public class GFORCE_Hardware {
     private boolean stoneInGrasp   = false;
     private boolean stoneExtended  = false;
     private boolean liftInPosition = true;
+    private double  liftAngle      = 0;
 
-    private int timeoutSoundID = 0;
-    public String autoPathName = "";
 
     private CraneControl craneState = CraneControl.INIT;
     private double liftSetpoint = LIFT_START_ANGLE;
+
+    private int timeoutSoundID = 0;
+    public String autoPathName = "";
 
     /* local OpMode members. */
     private ElapsedTime runTime = new ElapsedTime();
@@ -418,6 +423,7 @@ public class GFORCE_Hardware {
 
             leftLiftAngle = (encoderLLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
             rightLiftAngle = (encoderRLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
+            liftAngle = (leftLiftAngle + rightLiftAngle) / 2;
 
             currentHeading = getHeading();
 
@@ -630,9 +636,7 @@ public class GFORCE_Hardware {
         return (Math.abs(filteredTurnRate) < STOP_TURNRATE);
     }
 
-
     // Robot movement using +/- MAX_VELOCITY
-
     public void setAxialVelocity(double axialV) {
         driveAxial = Range.clip(axialV * AXIAL_ENCODER_COUNTS_PER_MM, -MAX_VELOCITY, MAX_VELOCITY);
     }
@@ -917,5 +921,36 @@ public class GFORCE_Hardware {
                 break;
 
         }
+    }
+
+    // --------------------------------------------------------------
+    // Lift Control
+    // --------------------------------------------------------------
+    public void setLiftSetpoint(double angle){
+        liftSetpoint = angle;
+    }
+
+    public void lockLiftInPlacet(){
+        liftSetpoint = liftAngle;
+    }
+
+    public double getLiftAngle() {
+        return liftAngle;
+    }
+
+    public boolean runLiftControl() {
+
+        // Determine lift position error
+        double leftLiftError  = liftSetpoint - leftLiftAngle;
+        double rightLiftError = liftSetpoint - rightLiftAngle;
+
+        double leftPower  = Range.clip(leftLiftError * LIFT_GAIN, -0.3, 0.9);
+        double rightPower = Range.clip(rightLiftError * LIFT_GAIN, -0.3, 0.9);
+
+        leftLift.setPower(leftPower);
+        rightLift.setPower(rightPower);
+
+        liftInPosition = (Math.abs(leftLiftError + rightLiftError) < LIFT_IN_LIMIT);
+        return liftInPosition;
     }
 }
