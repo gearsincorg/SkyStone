@@ -5,6 +5,7 @@ public enum CraneControl {
     READY_TO_COLLECT,
     COLLECTING,
     WAITING_FOR_STONE,
+    WAITING_FOR_GRAB,
     STONE_GRABBED,
     LIFTING,
     IN_POSITION,
@@ -12,5 +13,6 @@ public enum CraneControl {
     EXTENDED,
     WAITING_FOR_RELEASE,
     STONE_RELEASED,
+    WAITING_FOR_RETRACT,
     GOING_HOME
 }
