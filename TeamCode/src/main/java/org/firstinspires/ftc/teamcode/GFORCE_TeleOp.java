@@ -13,9 +13,18 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name="G-FORCE Teleop", group="!Competition")
 public class GFORCE_TeleOp extends LinearOpMode {
 
-    public final double AXIAL_JS_SCALE = 0.5;
-    public final double LATERAL_JS_SCALE = 0.5;
-    public final double YAW_JS_SCALE = 0.25;
+    public final double SLOW_AXIAL_JS_SCALE = 0.2;
+    public final double NORMAL_AXIAL_JS_SCALE = 0.6;
+    public final double FAST_AXIAL_JS_SCALE = 0.75;
+
+    public final double SLOW_LATERAL_JS_SCALE = 0.2;
+    public final double NORMAL_LATERAL_JS_SCALE = 0.6;
+    public final double FAST_LATERAL_JS_SCALE = 0.75;
+
+    public final double SLOW_YAW_JS_SCALE = 0.15;
+    public final double NORMAL_YAW_JS_SCALE = 0.25;
+    public final double FAST_YAW_JS_SCALE = 0.25;
+
 
     private ElapsedTime neutralTime = new ElapsedTime();
 
@@ -46,12 +55,14 @@ public class GFORCE_TeleOp extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+        robot.lockLiftInPlacet();
         robot.startMotion();
 
         // Run until the end of the match (Driver presses STOP)
         while (opModeIsActive()) {
             robot.updateMotion();  // Read all sensors and calculate motions
-            controlBlockScoring();
+            //controlBlockScoring();
+            robot.runLiftControl();
             robot.craneControl();
 
             //Driver Controls
@@ -65,31 +76,21 @@ public class GFORCE_TeleOp extends LinearOpMode {
             // This way it's also easy to just drive straight, or just turn.
 
             forwardBack = -gamepad1.left_stick_y;
-            // forwardBack = forwardBack * forwardBack * Math.signum(forwardBack);
-            forwardBack *= AXIAL_JS_SCALE;
-
             rightLeft = gamepad1.left_stick_x;
-            // rightLeft = rightLeft * rightLeft * Math.signum(rightLeft);
-            rightLeft *= LATERAL_JS_SCALE;
-
             rotate = -gamepad1.right_stick_x;
-            // rotate = rotate * rotate * Math.signum(rotate);
-            rotate *= YAW_JS_SCALE;
 
-            // Jog controls
-            if (gamepad1.dpad_up) {
-                forwardBack = 0.1;
-            } else if (gamepad1.dpad_down) {
-                forwardBack = -0.1;
-            } else if (gamepad1.x) {
-                rotate = 0.1;
-            } else if (gamepad1.b) {
-                rotate = -0.1;
-            } else if (gamepad1.dpad_left) {
-                rightLeft = -0.2;
-            } else if (gamepad1.dpad_right) {
-                rightLeft = 0.2;
+            //Three different speeds: slow, medium, and fast depending on what trigger the driver is holding
+
+            if (gamepad1.left_trigger > 0.5) {
+                forwardBack *= SLOW_AXIAL_JS_SCALE;
+                rightLeft *= SLOW_LATERAL_JS_SCALE;
+                rotate *= SLOW_YAW_JS_SCALE;
+            } else {
+                forwardBack *= NORMAL_AXIAL_JS_SCALE;
+                rightLeft *= NORMAL_LATERAL_JS_SCALE;
+                rotate *= NORMAL_YAW_JS_SCALE;
             }
+
 
             //Field Centric Motion
             axialVel = -((forwardBack * Math.sin(Math.toRadians(robot.currentHeading))) +
@@ -130,17 +131,20 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             robot.moveRobotVelocity();
 
-            //Move the SkyStone Grabbers (Temporary test code)
-            if(gamepad1.right_bumper) {
-                robot.setBlueSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
-            } else {
-                robot.setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
+            //Grab Foundation
+            robot.grabFoundation(gamepad1.right_trigger > 0.5);
+
+            //Co-pilot Lift Controls
+            if (gamepad2.y) {
+                robot.setLiftSetpoint(38);
             }
 
-            if(gamepad1.right_trigger > 0.5) {
-                robot.setRedSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
-            } else {
-                robot.setRedSkystoneGrabber(SkystoneGrabberPositions.START);
+            if (gamepad2.b) {
+                robot.setLiftSetpoint(25);
+            }
+
+            if (gamepad2.a) {
+                robot.setLiftSetpoint(10);
             }
 
             // Send telemetry message to signify robot running
@@ -149,36 +153,39 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     }
 
-    //Co-pilot Controls
+
+
+
     //Lift Code
+    /*
     private void controlBlockScoring() {
         double heightError = 0;
 
         if (gamepad2.back && gamepad2.start) {
             robot.leftLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             robot.rightLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            robot.leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            robot.rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
-        if (gamepad2.x) {
+        if (gamepad2.y) {
             robot.leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             robot.rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             robot.leftLift.setPower(-0.10);
             robot.rightLift.setPower(0);
-        } else if (gamepad2.b) {
+        } else if (gamepad2.a) {
             robot.leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             robot.rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             robot.leftLift.setPower(0);
             robot.rightLift.setPower(-0.10);
 
-        } else if (gamepad2.y && (robot.leftLiftAngle < 42)) {
+        } else if (gamepad2.dpad_up && (robot.leftLiftAngle < 42)) {
             robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.leftLift.setPower(1);
             robot.rightLift.setPower(1);
 
-        } else if (gamepad2.a && (robot.leftLiftAngle > 10)) {
+        } else if (gamepad2.dpad_down && (robot.leftLiftAngle > 10)) {
             robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             if (robot.leftLiftAngle > 15) {
@@ -211,11 +218,6 @@ public class GFORCE_TeleOp extends LinearOpMode {
             }
         }
 
-        //Reverse Collector and Transfer Wheels, fix this in Crane State machine
-        if (gamepad2.left_trigger > 0.5) {
-            robot.runCollector(-0.5);
-            robot.transferStone(-0.75);
-        }
-
     }
+    */
 }

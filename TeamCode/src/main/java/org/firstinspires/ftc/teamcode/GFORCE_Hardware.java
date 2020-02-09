@@ -82,14 +82,14 @@ public class GFORCE_Hardware {
     // SERVO CONSTANTS
     public final double STONE_OPEN               = 0.5;
     public final double STONE_CLOSE              = 0;
-    public final double CAPSTONE_HOLD           = 0.5;
+    public final double CAPSTONE_HOLD           = 0.55;
     public final double CAPSTONE_RELEASE        = 0.3;
-    public final double STONE_EXTEND            = 0.74;
+    public final double STONE_EXTEND            = 0.71;   // .74
     public final double STONE_RETRACT           = 0.26;  // .25
     public final double FOUNDATION_SAFE_R = 0.5;
     public final double FOUNDATION_SAFE_L = 0.5;
-    public final double FOUNDATION_DOWN_R = 0.1;   //
-    public final double FOUNDATION_DOWN_L = 0.9;   //
+    public final double FOUNDATION_DOWN_R = 0.2;   // .1
+    public final double FOUNDATION_DOWN_L = 0.8;   // .9
 
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.012;  // Was 0.02
@@ -104,7 +104,11 @@ public class GFORCE_Hardware {
     final double LATERAL_ENCODER_COUNTS_PER_MM = 0.9134;
 
     final double LIFT_GAIN          = 0.1;
-    final double LIFT_IN_LIMIT      = 2 ;
+    final double LIFT_IN_LIMIT      = 2;
+    final double LIFT_UPPER_LIMIT   = 44;
+    final double LIFT_LOWER_LIMIT   = 10;
+    final double RAISE_POWER = 0.9;
+    final double LOWER_POWER = -0.5;
 
     // Robot states that we share with others
     public double axialMotion = 0;
@@ -149,6 +153,7 @@ public class GFORCE_Hardware {
     // Scoring Status variables
     private boolean stoneInGrasp   = false;
     private boolean stoneExtended  = false;
+    private boolean foundationGrabbed = false;
     private boolean liftInPosition = true;
     private double  liftAngle      = 0;
 
@@ -763,6 +768,8 @@ public class GFORCE_Hardware {
             foundationGrabberLeft.setPosition(FOUNDATION_SAFE_L);
             foundationGrabberRight.setPosition(FOUNDATION_SAFE_R);
         }
+
+        foundationGrabbed = grab;
     }
 
     //Collecting and Placing the Stone
@@ -818,6 +825,15 @@ public class GFORCE_Hardware {
                     transferStone(1.0);
                     craneState = CraneControl.COLLECTING;
                 }
+                //Reverse Collector and Transfer Wheels, fix this in Crane State machine
+                else if (myOpMode.gamepad2.left_trigger > 0.5) {
+                    runCollector(-0.5);
+                    transferStone(-0.75);
+                } else {
+                    runCollector(0);
+                    transferStone(0);
+                }
+
                 break;
 
             case COLLECTING:
@@ -826,11 +842,19 @@ public class GFORCE_Hardware {
                     craneTime.reset();
                     craneState = CraneControl.WAITING_FOR_STONE;
                 }
+
+                //Reverse Collector and Transfer Wheels, fix this in Crane State machine
+                else if (myOpMode.gamepad2.left_trigger > 0.5) {
+                    runCollector(-0.5);
+                    transferStone(-0.75);
+                    craneState = CraneControl.READY_TO_COLLECT;
+                }
+
                 break;
 
             case WAITING_FOR_STONE:
                 // check for transfer complete event
-                if (craneTime.time() > 2) {
+                if (craneTime.time() > 1.5) {
                     runCollector(0);
                     transferStone(0);
                     grabStone(true);
@@ -839,9 +863,17 @@ public class GFORCE_Hardware {
                 }
 
                 // check for re-collect event
-                if (myOpMode.gamepad2.right_trigger > 0.5) {
+                else if (myOpMode.gamepad2.right_trigger > 0.5) {
                     craneState = CraneControl.COLLECTING;
                 }
+
+                //Reverse Collector and Transfer Wheels, fix this in Crane State machine
+                else if (myOpMode.gamepad2.left_trigger > 0.5) {
+                    runCollector(-0.5);
+                    transferStone(-0.75);
+                    craneState = CraneControl.READY_TO_COLLECT;
+                }
+
                 break;
 
             case WAITING_FOR_GRAB:
@@ -855,13 +887,14 @@ public class GFORCE_Hardware {
 
                 // check for re-collect event
                 if (myOpMode.gamepad2.right_trigger > 0.5) {
+                    grabStone(false);
                     runCollector(1);
                     transferStone(0.75);
                     craneState = CraneControl.COLLECTING;
                 }
 
                 // check for extend event
-                if (myOpMode.gamepad2.x) {
+                else if (myOpMode.gamepad2.x) {
                     extendStone(true);
                     craneTime.reset();
                     craneState = CraneControl.WAITING_TO_EXTEND;
@@ -877,7 +910,7 @@ public class GFORCE_Hardware {
 
             case EXTENDED:
                 // check for capstone release state/action
-                releaseCapstone((myOpMode.gamepad1.left_trigger > 0.5) && myOpMode.gamepad1.left_bumper);
+                releaseCapstone(myOpMode.gamepad1.dpad_down);
 
                 // check for stone release event
                 if (myOpMode.gamepad2.left_bumper) {
@@ -885,9 +918,18 @@ public class GFORCE_Hardware {
                     craneTime.reset();
                     craneState = CraneControl.WAITING_FOR_RELEASE;
                 }
+
+                //check for retract event
+                if (myOpMode.gamepad2.back) {
+                    extendStone(false);
+                    craneState = CraneControl.STONE_GRABBED;
+                }
                 break;
 
             case WAITING_FOR_RELEASE:
+                // check for capstone release state/action
+                releaseCapstone(myOpMode.gamepad1.dpad_down);
+
                 // check for extend complete event
                 if (craneTime.time() > 0.5) {
                     craneState = CraneControl.STONE_RELEASED;
@@ -895,12 +937,18 @@ public class GFORCE_Hardware {
                 break;
 
             case STONE_RELEASED:
+                // check for capstone release state/action
+                releaseCapstone(myOpMode.gamepad1.dpad_down);
+
                 // check for go-home event
                 if (myOpMode.gamepad2.x) {
                     extendStone(false);
                     craneTime.reset();
                     craneState = CraneControl.WAITING_FOR_RETRACT;
                 }
+
+                //Home code to raise the lift a few degrees when retracting
+
                 break;
 
             case WAITING_FOR_RETRACT:
@@ -932,25 +980,76 @@ public class GFORCE_Hardware {
 
     public void lockLiftInPlacet(){
         liftSetpoint = liftAngle;
+        liftInPosition = true;
     }
 
     public double getLiftAngle() {
         return liftAngle;
     }
 
+    public void zeroLiftEncoders () {
+        leftLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
     public boolean runLiftControl() {
+        double leftLiftError;
+        double rightLiftError;
+        double leftPower = 0;
+        double rightPower = 0;
 
-        // Determine lift position error
-        double leftLiftError  = liftSetpoint - leftLiftAngle;
-        double rightLiftError = liftSetpoint - rightLiftAngle;
+        if (myOpMode.gamepad2.back && myOpMode.gamepad2.start) {
+           zeroLiftEncoders();
+        }
 
-        double leftPower  = Range.clip(leftLiftError * LIFT_GAIN, -0.3, 0.9);
-        double rightPower = Range.clip(rightLiftError * LIFT_GAIN, -0.3, 0.9);
+        if (myOpMode.gamepad1.x || myOpMode.gamepad1.b)  {
+
+            if (myOpMode.gamepad1.x) {
+                zeroLiftEncoders();
+                leftPower = -0.10;
+                rightPower = 0;
+                lockLiftInPlacet();
+            }
+
+            if (myOpMode.gamepad1.b) {
+                zeroLiftEncoders();
+                leftPower = 0;
+                rightPower = -0.10;
+                lockLiftInPlacet();
+            }
+        } else {
+
+            if (myOpMode.gamepad2.dpad_up && (liftAngle < LIFT_UPPER_LIMIT)) {
+                leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                leftPower = RAISE_POWER;
+                rightPower = RAISE_POWER;
+                lockLiftInPlacet();
+
+            } else if (myOpMode.gamepad2.dpad_down && (liftAngle > LIFT_LOWER_LIMIT)) {
+                leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                leftPower = LOWER_POWER;
+                rightPower = LOWER_POWER;
+                lockLiftInPlacet();
+
+            } else {
+                // Determine lift position error
+                leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                leftLiftError = liftSetpoint - leftLiftAngle;
+                rightLiftError = liftSetpoint - rightLiftAngle;
+                leftPower = Range.clip(leftLiftError * LIFT_GAIN, LOWER_POWER, RAISE_POWER);
+                rightPower = Range.clip(rightLiftError * LIFT_GAIN, LOWER_POWER, RAISE_POWER);
+                liftInPosition = (Math.abs(leftLiftError + rightLiftError) < LIFT_IN_LIMIT);
+            }
+        }
 
         leftLift.setPower(leftPower);
         rightLift.setPower(rightPower);
 
-        liftInPosition = (Math.abs(leftLiftError + rightLiftError) < LIFT_IN_LIMIT);
         return liftInPosition;
     }
 }
