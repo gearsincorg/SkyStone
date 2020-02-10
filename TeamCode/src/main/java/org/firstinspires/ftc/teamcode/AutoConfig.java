@@ -21,7 +21,7 @@ public class AutoConfig
   Context context;
   OpMode opMode;
 
-  public static int MENU_ITEMS = 8;
+  public static int MENU_ITEMS = 9;
 
   public class Param {
       public boolean redAlliance = false;
@@ -31,6 +31,7 @@ public class AutoConfig
       public boolean scoreFirstSkyStone = false;
       public boolean scoreBothSkyStones = false;
       public boolean parkUnderBridge = false;
+      public boolean parkCloseToWall = false;
       public boolean moveFoundation = false;
 
       //public List<AutoMenuItem> menuItems = new ArrayList<>(LOCATION_ITEMS);
@@ -119,6 +120,9 @@ public class AutoConfig
               autoOptions.parkUnderBridge = !autoOptions.parkUnderBridge;
               break;
           case 7:
+              autoOptions.parkCloseToWall = !autoOptions.parkCloseToWall;
+              break;
+          case 8:
               autoOptions.moveFoundation = !autoOptions.moveFoundation;
               break;
       }
@@ -147,6 +151,7 @@ public class AutoConfig
         outputStreamWriter.write(Boolean.toString(autoOptions.scoreFirstSkyStone)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.scoreBothSkyStones)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.parkUnderBridge)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.parkCloseToWall)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.moveFoundation)  + "\n");
 
       outputStreamWriter.close();
@@ -174,6 +179,7 @@ public class AutoConfig
         autoOptions.scoreFirstSkyStone = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.scoreBothSkyStones = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.parkUnderBridge = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.parkCloseToWall = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.moveFoundation = Boolean.valueOf(bufferedReader.readLine());
         inputStream.close();
       }
@@ -192,7 +198,8 @@ public class AutoConfig
       opMode.telemetry.addData((currentMenuIndex == 4) ? "4 > First SkyStone"   : "4   First SkyStone", autoOptions.scoreFirstSkyStone ? "YES" : "no");
       opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > Both SkyStones"   : "5   Both SkyStones", autoOptions.scoreBothSkyStones ? "YES" : "no");
       opMode.telemetry.addData((currentMenuIndex == 6) ? "6 > Park"   : "6  Park", autoOptions.parkUnderBridge ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 7) ? "7 > Move Foundation"   : "7  Move Foundation", autoOptions.moveFoundation ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 7) ? "7 > Park Close to"   : "7  Park Close to", autoOptions.parkCloseToWall ? "Wall" : "Bridge");
+      opMode.telemetry.addData((currentMenuIndex == 8) ? "8 > Move Foundation"   : "8  Move Foundation", autoOptions.moveFoundation ? "YES" : "no");
       opMode.telemetry.update();
   }
 }

@@ -296,7 +296,7 @@ public class GFORCE_Navigation
 
         // Next, translate the camera lens to where it is on the robot.
         // In this example, it is centered (left to right), but forward of the middle of the robot, and above ground level.
-        final float CAMERA_FORWARD_DISPLACEMENT  = 70;    // eg: Camera is 70 mm behind the robot origin (front edge for grabbing SkyStone)
+        final float CAMERA_FORWARD_DISPLACEMENT  = 0;    // eg: Camera is 00 mm behind the robot origin (front edge for grabbing SkyStone)
         final float CAMERA_VERTICAL_DISPLACEMENT = 100;   // eg: Camera is 100 mm above ground
         final float CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
 
@@ -342,6 +342,8 @@ public class GFORCE_Navigation
     public boolean waitForTarget(double timeout) {
         navTime.reset();
         while (myOpMode.opModeIsActive() && !targetIsVisible(0) && (navTime.time() < timeout)) {
+            myRobot.setYawVelocityToHoldHeading();
+            myRobot.moveRobotVelocity();
             showNavTelemetry(true);
         }
         showNavTelemetry(true);

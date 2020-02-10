@@ -84,7 +84,7 @@ public class GFORCE_Hardware {
     public final double STONE_CLOSE              = 0;
     public final double CAPSTONE_HOLD           = 0.55;
     public final double CAPSTONE_RELEASE        = 0.3;
-    public final double STONE_EXTEND            = 0.71;   // .74
+    public final double STONE_EXTEND            = 0.74;   // .71
     public final double STONE_RETRACT           = 0.26;  // .25
     public final double FOUNDATION_SAFE_R = 0.5;
     public final double FOUNDATION_SAFE_L = 0.5;
@@ -829,6 +829,7 @@ public class GFORCE_Hardware {
                 else if (myOpMode.gamepad2.left_trigger > 0.5) {
                     runCollector(-0.5);
                     transferStone(-0.75);
+                    grabStone(false);
                 } else {
                     runCollector(0);
                     transferStone(0);
@@ -847,6 +848,7 @@ public class GFORCE_Hardware {
                 else if (myOpMode.gamepad2.left_trigger > 0.5) {
                     runCollector(-0.5);
                     transferStone(-0.75);
+                    grabStone(false);
                     craneState = CraneControl.READY_TO_COLLECT;
                 }
 
@@ -871,6 +873,7 @@ public class GFORCE_Hardware {
                 else if (myOpMode.gamepad2.left_trigger > 0.5) {
                     runCollector(-0.5);
                     transferStone(-0.75);
+                    grabStone(false);
                     craneState = CraneControl.READY_TO_COLLECT;
                 }
 

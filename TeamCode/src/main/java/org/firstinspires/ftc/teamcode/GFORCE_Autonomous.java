@@ -18,9 +18,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
     GFORCE_Hardware     robot         = new GFORCE_Hardware();
     GFORCE_Navigation   nav           = new GFORCE_Navigation();
 
-    final double STUD_RANGE = 20;               // Plus or minus 10 millimeters
-    final double BLOCK_PUSH_DISTANCE = 30;      // Was an extra 10mm, changed to 30 mm for new phone mount because it is further back
-    final double BLOCK_CENTER_OFFSET = -45;     // Camera to grab offset
+    final double STUD_RANGE = 20;              // Plus or minus 10 millimeters
+    final double BLOCK_PUSH_DISTANCE = 0;      // Was an extra 10mm, changed to 30 mm for new phone mount because it is further back
+    final double BLOCK_CENTER_OFFSET = -60;    // Camera to grab offset  (was -45)
     public static final String TAG = "G-FORCE";
 
     double error;
@@ -113,11 +113,18 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.driveAxialVelocity(error, 0, 80,2,true,true);
 
         //Calculate new error
+        nav.targetIsVisible(0);
+
         error = (-nav.robotX);
+
+        if (robot.allianceColor == GFORCE_Hardware.AllianceColor.BLUE) {
+            error -= 70;
+        }
+
         robot.driveLateralVelocity(error + BLOCK_PUSH_DISTANCE, 0, 380, 2, true,false);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
         robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateralVelocity(400, 0, -500, 4, true,false);
+        robot.driveLateralVelocity(250, 0, -500, 4, true,false);
     }
 
     private void startQuarry() {
@@ -128,18 +135,18 @@ public class GFORCE_Autonomous extends LinearOpMode {
             //Finding the first SkyStone
             robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
             robot.driveLateralVelocity(600, 0, 600, 4, true, false);
-            robot.sleepAndHoldHeading(0, 0.5);
+            //robot.sleepAndHoldHeading(0, 0.5);
 
             //Determine the position of the SkyStone
-            if (nav.waitForTarget(1.5)) {
+            if (nav.waitForTarget(1)) {
                 skyStonePosition = 1;
             } else {
-                robot.driveAxialVelocity(200, 0, 250, 2, true, true);
-                if (nav.waitForTarget(1.5)) {
+                robot.driveAxialVelocity(150, 0, 400, 2, true, true);
+                if (nav.waitForTarget(1)) {
                     skyStonePosition = 2;
                 } else {
-                    robot.driveAxialVelocity(200, 0, 250, 2, true, true);
-                    if (nav.waitForTarget(2)) {
+                    robot.driveAxialVelocity(150, 0, 400, 2, true, true);
+                    if (nav.waitForTarget(1)) {
                         skyStonePosition = 3;
                     }
                 }
@@ -149,33 +156,40 @@ public class GFORCE_Autonomous extends LinearOpMode {
             if (skyStonePosition > 0) {
                 //Getting and placing the first SkyStone
                 driveAndGrabBlock();
-                robot.driveAxialVelocity(900 + (skyStonePosition * 200), 0, -800, 20, true, true);
+                robot.driveAxialVelocity(900 + (skyStonePosition * 200), 0, -1500, 20, true, true);
                 robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
                 robot.sleepAndHoldHeading(0, 0.5);
 
                 // Getting and placing second SkyStone if requested
                 if (autoConfig.autoOptions.scoreBothSkyStones) {
-                    robot.driveAxialVelocity(1625 + (skyStonePosition * 175), 0, 1100, 20, true, true);
+                    robot.driveAxialVelocity(1500 + (skyStonePosition * 200), 0, 1500, 20, true, true);
 
                     //Drive closer to see the target
-                    robot.driveLateralVelocity(150, 0, 600, 2, true, false);
+                    //robot.driveLateralVelocity(50, 0, 600, 2, true, false);
 
                     //Get the second SkyStone if we found it
                     if (nav.waitForTarget(1)) {
                         driveAndGrabBlock();
-                        robot.driveAxialVelocity(1400 + (skyStonePosition * 200), 0, -1000, 20, true, true);
+                        robot.driveAxialVelocity(1400 + (skyStonePosition * 200), 0, -1500, 20, true, true);
                         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
 
                         //Parking under the bridge if requested regardless of if we did both SkyStones
                         if (autoConfig.autoOptions.parkUnderBridge) {
-                            robot.driveAxialVelocity(300, 0, 400, 4, true, true);
+                            if (autoConfig.autoOptions.parkCloseToWall) {
+                                robot.driveAxialVelocity(300, 0, 600, 4, true, true);
+                            } else {
+                                //park near bridge code
+                            }
                         }
                     } else {
 
                         //If we didn't find the second SkyStone
                         if (autoConfig.autoOptions.parkUnderBridge) {
-                            robot.driveLateralVelocity(150,0,-300,3,true,false);
-                            robot.driveAxialVelocity(1400, 0, -1000, 6, true, true);
+                            if (autoConfig.autoOptions.parkCloseToWall) {
+                                robot.driveAxialVelocity(1400, 0, -1000, 6, true, true);
+                            } else {
+                                //park near bridge code
+                            }
                         }
                     }
 
@@ -183,7 +197,11 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
                     //If we only decided to find and place one SkyStone
                     if (autoConfig.autoOptions.parkUnderBridge) {
-                        robot.driveAxialVelocity(750, 0, 400, 5, true, true);
+                        if (autoConfig.autoOptions.parkCloseToWall) {
+                            robot.driveAxialVelocity(750, 0, 600, 5, true, true);
+                        } else {
+                            //park near bridge code
+                        }
                     }
                 }
 
@@ -191,17 +209,25 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
                 //We did not see ANY SkyStones
                 if (autoConfig.autoOptions.parkUnderBridge) {
-                    robot.driveLateralVelocity(150,0,-300,3,true,true);
-                    robot.driveAxialVelocity(900, 0, -1000, 4, true, true);
-
+                    if (autoConfig.autoOptions.parkCloseToWall) {
+                        robot.driveLateralVelocity(150, 0, -600, 3, true, true);
+                        robot.driveAxialVelocity(900, 0, -1250, 4, true, true);
+                    }
+                    else {
+                        //park near bridge code
+                    }
                 }
             }
         } else {
 
             //Parking under bridge if we choose not to score any SkyStones
             if (autoConfig.autoOptions.parkUnderBridge) {
-                robot.driveLateralVelocity(50,0,400,3,true,true);
-                robot.driveAxialVelocity(400, 0, -400, 4, true, true);
+                if (autoConfig.autoOptions.parkCloseToWall) {
+                    robot.driveLateralVelocity(50, 0, 400, 3, true, true);
+                    robot.driveAxialVelocity(400, 0, -400, 4, true, true);
+                } else {
+                    //park near bridge code
+                }
             }
         }
 
@@ -224,7 +250,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 robot.driveAxialVelocity(200, 0, -1000, 1, true, false);
                 robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_SAFE_L);
                 robot.foundationGrabberRight.setPosition(robot.FOUNDATION_SAFE_R);
-                if (autoConfig.autoOptions.parkUnderBridge) {
+                if (autoConfig.autoOptions.parkUnderBridge && autoConfig.autoOptions.parkCloseToWall) {
                     robot.driveLateralVelocity(600,0,-600,2,true,false);
                     robot.driveAxialVelocity(1100, 0, 800, 4, true, false);
                 }
@@ -233,15 +259,19 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 robot.driveAxialVelocity(200, 180, -1000, 1, true, false);
                 robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_SAFE_L);
                 robot.foundationGrabberRight.setPosition(robot.FOUNDATION_SAFE_R);
-                if (autoConfig.autoOptions.parkUnderBridge) {
+                if (autoConfig.autoOptions.parkUnderBridge  && autoConfig.autoOptions.parkCloseToWall) {
                     robot.driveLateralVelocity(600,180,600,2,true,false);
                     robot.driveAxialVelocity(1100, 180, 800, 4, true, false);
                 }
 
             }
         } else if (autoConfig.autoOptions.parkUnderBridge) {
-                robot.driveLateralVelocity(50,0,100,2,true,false);
+            if (autoConfig.autoOptions.parkCloseToWall) {
+                robot.driveLateralVelocity(50, 0, 100, 2, true, false);
                 robot.driveAxialVelocity(800, 0, 1000, 4, true, true);
+            } else {
+                //park near bridge code
+            }
         }
 
     }
