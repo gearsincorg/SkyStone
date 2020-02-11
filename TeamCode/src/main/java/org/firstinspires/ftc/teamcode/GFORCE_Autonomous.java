@@ -7,6 +7,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.RobotLog;
 import com.vuforia.CameraDevice;
 
@@ -18,10 +19,11 @@ public class GFORCE_Autonomous extends LinearOpMode {
     GFORCE_Hardware     robot         = new GFORCE_Hardware();
     GFORCE_Navigation   nav           = new GFORCE_Navigation();
 
-    final double STUD_RANGE = 20;              // Plus or minus 10 millimeters
-    final double BLOCK_PUSH_DISTANCE = 0;      // Was an extra 10mm, changed to 30 mm for new phone mount because it is further back
-    final double BLOCK_CENTER_OFFSET = -60;    // Camera to grab offset  (was -45)
+    final double BLOCK_PUSH_DISTANCE = 10;      // Was an extra 10mm, changed to 30 mm for new phone mount because it is further back
+    final double BLOCK_CENTER_OFFSET = -60;    // Camera to grab offset
     public static final String TAG = "G-FORCE";
+
+    private ElapsedTime autoTime = new ElapsedTime();
 
     double error;
     int skyStonePosition = 0;
@@ -55,7 +57,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         //Starting autonomous reset heading to zero
         robot.resetHeading();
-        if (!autoConfig.autoOptions.disabled) {
+        autoTime.reset();
+
+        if (autoConfig.autoOptions.enabled) {
             if (autoConfig.autoOptions.startBuilding) {
                 startBuildingZone();
 
@@ -114,7 +118,6 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         //Calculate new error
         nav.targetIsVisible(0);
-
         error = (-nav.robotX);
 
         if (robot.allianceColor == GFORCE_Hardware.AllianceColor.BLUE) {
@@ -156,7 +159,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
             if (skyStonePosition > 0) {
                 //Getting and placing the first SkyStone
                 driveAndGrabBlock();
-                robot.driveAxialVelocity(900 + (skyStonePosition * 200), 0, -1500, 20, true, true);
+                robot.driveAxialVelocity(900 + (skyStonePosition * 200), 0, -1200, 20, true, true);
                 robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
                 robot.sleepAndHoldHeading(0, 0.5);
 
@@ -170,67 +173,84 @@ public class GFORCE_Autonomous extends LinearOpMode {
                     //Get the second SkyStone if we found it
                     if (nav.waitForTarget(1)) {
                         driveAndGrabBlock();
-                        robot.driveAxialVelocity(1400 + (skyStonePosition * 200), 0, -1500, 20, true, true);
+                        robot.driveAxialVelocity(1400 + (skyStonePosition * 200), 0, -1200, 20, true, true);
                         robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
 
                         //Parking under the bridge if requested regardless of if we did both SkyStones
-                        if (autoConfig.autoOptions.parkUnderBridge) {
+                        if (autoConfig.autoOptions.park) {
+                            holdForPark();
                             if (autoConfig.autoOptions.parkCloseToWall) {
+                                //park near Wall
+                                robot.driveLateralVelocity(600, 0, -500, 4, true,false);
                                 robot.driveAxialVelocity(300, 0, 600, 4, true, true);
                             } else {
                                 //park near bridge code
+                                robot.driveAxialVelocity(300, 0, 600, 4, true, true);
                             }
                         }
                     } else {
 
                         //If we didn't find the second SkyStone
-                        if (autoConfig.autoOptions.parkUnderBridge) {
+                        if (autoConfig.autoOptions.park) {
+                            holdForPark();
                             if (autoConfig.autoOptions.parkCloseToWall) {
+                                //park near Wall
+                                robot.driveLateralVelocity(750, 0, -500, 4, true,false);
                                 robot.driveAxialVelocity(1400, 0, -1000, 6, true, true);
                             } else {
                                 //park near bridge code
+                                robot.driveAxialVelocity(1400, 0, -1000, 6, true, true);
                             }
                         }
                     }
-
                 } else {
 
                     //If we only decided to find and place one SkyStone
-                    if (autoConfig.autoOptions.parkUnderBridge) {
+                    if (autoConfig.autoOptions.park) {
+                        holdForPark();
                         if (autoConfig.autoOptions.parkCloseToWall) {
+                            //park near Wall
+                            robot.driveLateralVelocity(600, 0, -500, 4, true,false);
                             robot.driveAxialVelocity(750, 0, 600, 5, true, true);
                         } else {
                             //park near bridge code
+                            robot.driveAxialVelocity(750, 0, 600, 5, true, true);
                         }
                     }
                 }
-
             } else {
 
                 //We did not see ANY SkyStones
-                if (autoConfig.autoOptions.parkUnderBridge) {
+                if (autoConfig.autoOptions.park) {
+                    holdForPark();
                     if (autoConfig.autoOptions.parkCloseToWall) {
-                        robot.driveLateralVelocity(150, 0, -600, 3, true, true);
+                        //park near Wall
+                        robot.driveLateralVelocity(750, 0, -500, 4, true,false);
                         robot.driveAxialVelocity(900, 0, -1250, 4, true, true);
                     }
                     else {
                         //park near bridge code
+                        robot.driveLateralVelocity(150, 0, -600, 3, true, true);
+                        robot.driveAxialVelocity(900, 0, -1250, 4, true, true);
                     }
                 }
             }
         } else {
 
             //Parking under bridge if we choose not to score any SkyStones
-            if (autoConfig.autoOptions.parkUnderBridge) {
+            if (autoConfig.autoOptions.park) {
+                holdForPark();
                 if (autoConfig.autoOptions.parkCloseToWall) {
-                    robot.driveLateralVelocity(50, 0, 400, 3, true, true);
+                    //park near Wall
+                    robot.driveLateralVelocity(25, 0, 400, 3, true, true);
                     robot.driveAxialVelocity(400, 0, -400, 4, true, true);
                 } else {
                     //park near bridge code
+                    robot.driveLateralVelocity(700, 0, 400, 3, true, true);
+                    robot.driveAxialVelocity(400, 0, -400, 4, true, true);
                 }
             }
         }
-
     }
 
     private void startBuildingZone() {
@@ -250,29 +270,57 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 robot.driveAxialVelocity(200, 0, -1000, 1, true, false);
                 robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_SAFE_L);
                 robot.foundationGrabberRight.setPosition(robot.FOUNDATION_SAFE_R);
-                if (autoConfig.autoOptions.parkUnderBridge && autoConfig.autoOptions.parkCloseToWall) {
-                    robot.driveLateralVelocity(600,0,-600,2,true,false);
-                    robot.driveAxialVelocity(1100, 0, 800, 4, true, false);
+                if (autoConfig.autoOptions.park) {
+                    holdForPark();
+                    if (autoConfig.autoOptions.parkCloseToWall) {
+                        // Park by wall
+                        robot.driveLateralVelocity(600, 0, -600, 2, true, false);
+                        robot.driveAxialVelocity(1100, 0, 800, 4, true, false);
+                    }
+                    else {
+                        // Park by Bridge
+                        // robot.driveLateralVelocity(600, 0, -600, 2, true, false);  // May not need any movement to wards wall
+                        robot.driveAxialVelocity(1100, 0, 800, 4, true, false);
+                    }
                 }
             } else {
                 robot.turnToHeading(180, 4);
                 robot.driveAxialVelocity(200, 180, -1000, 1, true, false);
                 robot.foundationGrabberLeft.setPosition(robot.FOUNDATION_SAFE_L);
                 robot.foundationGrabberRight.setPosition(robot.FOUNDATION_SAFE_R);
-                if (autoConfig.autoOptions.parkUnderBridge  && autoConfig.autoOptions.parkCloseToWall) {
-                    robot.driveLateralVelocity(600,180,600,2,true,false);
-                    robot.driveAxialVelocity(1100, 180, 800, 4, true, false);
+                if (autoConfig.autoOptions.park) {
+                    holdForPark();
+                    if (autoConfig.autoOptions.parkCloseToWall) {
+                        // Park by wall
+                        robot.driveLateralVelocity(600, 180, 600, 2, true, false);
+                        robot.driveAxialVelocity(1100, 180, 800, 4, true, false);
+                    }
+                    else {
+                        // Park by Bridge
+                        // robot.driveLateralVelocity(600, 180, 600, 2, true, false); // May not need any movement to wards wall
+                        robot.driveAxialVelocity(1100, 180, 800, 4, true, false);
+                    }
                 }
-
             }
-        } else if (autoConfig.autoOptions.parkUnderBridge) {
+        } else if (autoConfig.autoOptions.park) {
+            holdForPark();
             if (autoConfig.autoOptions.parkCloseToWall) {
-                robot.driveLateralVelocity(50, 0, 100, 2, true, false);
+                //park near Wall
+                robot.driveLateralVelocity(25, 0, 100, 2, true, false);
                 robot.driveAxialVelocity(800, 0, 1000, 4, true, true);
             } else {
                 //park near bridge code
+                robot.driveLateralVelocity(700, 0, 100, 2, true, false);
+                robot.driveAxialVelocity(800, 0, 1000, 4, true, true);
             }
         }
+    }
 
+    private void holdForPark() {
+        // Wait here till delay timer elapsed.
+        while (autoTime.time() < autoConfig.autoOptions.delayInSec) {
+            telemetry.addData("Park Countdown", "%4.1f", autoConfig.autoOptions.delayInSec - autoTime.time() );
+            telemetry.update();
+        }
     }
 }

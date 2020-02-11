@@ -26,11 +26,11 @@ public class AutoConfig
   public class Param {
       public boolean redAlliance = false;
       public int delayInSec = 0;
-      public boolean disabled = false;
+      public boolean enabled = true;
       public boolean startBuilding = false;
       public boolean scoreFirstSkyStone = false;
       public boolean scoreBothSkyStones = false;
-      public boolean parkUnderBridge = false;
+      public boolean park = false;
       public boolean parkCloseToWall = false;
       public boolean moveFoundation = false;
 
@@ -105,7 +105,7 @@ public class AutoConfig
                   autoOptions.delayInSec--;
               break;
           case 2:
-              autoOptions.disabled = !autoOptions.disabled;
+              autoOptions.enabled = !autoOptions.enabled;
               break;
           case 3:
               autoOptions.startBuilding = !autoOptions.startBuilding;
@@ -117,7 +117,7 @@ public class AutoConfig
               autoOptions.scoreBothSkyStones = !autoOptions.scoreBothSkyStones;
               break;
           case 6:
-              autoOptions.parkUnderBridge = !autoOptions.parkUnderBridge;
+              autoOptions.park = !autoOptions.park;
               break;
           case 7:
               autoOptions.parkCloseToWall = !autoOptions.parkCloseToWall;
@@ -146,11 +146,11 @@ public class AutoConfig
       // write each configuration parameter as a string on its own line
         outputStreamWriter.write(Boolean.toString(autoOptions.redAlliance)   + "\n");
         outputStreamWriter.write(Integer.toString(autoOptions.delayInSec)   + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.disabled)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.enabled)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.startBuilding)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.scoreFirstSkyStone)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.scoreBothSkyStones)  + "\n");
-        outputStreamWriter.write(Boolean.toString(autoOptions.parkUnderBridge)  + "\n");
+        outputStreamWriter.write(Boolean.toString(autoOptions.park)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.parkCloseToWall)  + "\n");
         outputStreamWriter.write(Boolean.toString(autoOptions.moveFoundation)  + "\n");
 
@@ -174,11 +174,11 @@ public class AutoConfig
 
         autoOptions.redAlliance = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.delayInSec  = Integer.valueOf(bufferedReader.readLine());
-        autoOptions.disabled = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.enabled = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.startBuilding = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.scoreFirstSkyStone = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.scoreBothSkyStones = Boolean.valueOf(bufferedReader.readLine());
-        autoOptions.parkUnderBridge = Boolean.valueOf(bufferedReader.readLine());
+        autoOptions.park = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.parkCloseToWall = Boolean.valueOf(bufferedReader.readLine());
         autoOptions.moveFoundation = Boolean.valueOf(bufferedReader.readLine());
         inputStream.close();
@@ -191,15 +191,15 @@ public class AutoConfig
 
   public void updateMenu ()
   {
-      opMode.telemetry.addData((currentMenuIndex == 0) ? "0 > Alliance"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "Blue");
-      opMode.telemetry.addData((currentMenuIndex == 1) ? "1 > Delay"   : "1   Delay", autoOptions.delayInSec);
-      opMode.telemetry.addData((currentMenuIndex == 2) ? "2 > Run Auto"   : "2   Run Auto", autoOptions.disabled ? "no" : "YES");
-      opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > Starting Position"   : "3   Starting Position", autoOptions.startBuilding ? "Building Zone" : "Quarry");
-      opMode.telemetry.addData((currentMenuIndex == 4) ? "4 > First SkyStone"   : "4   First SkyStone", autoOptions.scoreFirstSkyStone ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > Both SkyStones"   : "5   Both SkyStones", autoOptions.scoreBothSkyStones ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 6) ? "6 > Park"   : "6  Park", autoOptions.parkUnderBridge ? "YES" : "no");
-      opMode.telemetry.addData((currentMenuIndex == 7) ? "7 > Park Close to"   : "7  Park Close to", autoOptions.parkCloseToWall ? "Wall" : "Bridge");
-      opMode.telemetry.addData((currentMenuIndex == 8) ? "8 > Move Foundation"   : "8  Move Foundation", autoOptions.moveFoundation ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 0) ? "0 > ALLIANCE"   : "0   Alliance", autoOptions.redAlliance ? "RED" : "Blue");
+      opMode.telemetry.addData((currentMenuIndex == 1) ? "1 > PARK DELAY"   : "1   Park Delay", autoOptions.delayInSec);
+      opMode.telemetry.addData((currentMenuIndex == 2) ? "2 > RUN AUTO"   : "2   Run Auto", autoOptions.enabled ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 3) ? "3 > START POSITION"   : "3   Start Position", autoOptions.startBuilding ? "BUILDING ZONE" : "Quarry");
+      opMode.telemetry.addData((currentMenuIndex == 4) ? "4 > FIRST SKYSTONE"   : "4   First SkyStone", autoOptions.scoreFirstSkyStone ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 5) ? "5 > BOTH SKYSTONES"   : "5   Both SkyStones", autoOptions.scoreBothSkyStones ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 6) ? "6 > PARK"   : "6  Park", autoOptions.park ? "YES" : "no");
+      opMode.telemetry.addData((currentMenuIndex == 7) ? "7 > PARK NEAR"   : "7  Park Near", autoOptions.parkCloseToWall ? "WALL" : "Bridge");
+      opMode.telemetry.addData((currentMenuIndex == 8) ? "8 > MOVE FOUNDATION"   : "8  Move Foundation", autoOptions.moveFoundation ? "YES" : "no");
       opMode.telemetry.update();
   }
 }
