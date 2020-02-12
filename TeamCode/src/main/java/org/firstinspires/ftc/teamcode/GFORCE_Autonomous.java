@@ -99,8 +99,10 @@ public class GFORCE_Autonomous extends LinearOpMode {
         CameraDevice.getInstance().setFlashTorchMode( false );
 
         while(opModeIsActive()) {
+            robot.stopRobot();
             nav.waitForTarget(1);
             nav.showNavTelemetry(true);
+            robot.showEncoders();
         }
     }
 
@@ -230,7 +232,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                     }
                     else {
                         //park near bridge code
-                        robot.driveLateralVelocity(150, 0, -600, 3, true, true);
+                        robot.driveLateralVelocity(150, 0, -600, 3, true, false);
                         robot.driveAxialVelocity(900, 0, -1250, 4, true, true);
                     }
                 }
@@ -242,11 +244,11 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 holdForPark();
                 if (autoConfig.autoOptions.parkCloseToWall) {
                     //park near Wall
-                    robot.driveLateralVelocity(25, 0, 400, 3, true, true);
+                    robot.driveLateralVelocity(25, 0, 400, 3, true, false);
                     robot.driveAxialVelocity(400, 0, -400, 4, true, true);
                 } else {
                     //park near bridge code
-                    robot.driveLateralVelocity(700, 0, 400, 3, true, true);
+                    robot.driveLateralVelocity(700, 0, 400, 3, true, false);
                     robot.driveAxialVelocity(400, 0, -400, 4, true, true);
                 }
             }
