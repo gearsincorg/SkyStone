@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.RobotLog;
@@ -63,6 +64,10 @@ public class GFORCE_Hardware {
     public CRServo stoneTransferLeft = null;
     public CRServo stoneTransferRight = null;
 
+    public DigitalChannel leftLimit = null;
+    public DigitalChannel rightLimit = null;
+
+
     public static BNO055IMU imu = null;
 
     public final double MAX_VELOCITY        = 2500;  // Counts per second
@@ -108,6 +113,7 @@ public class GFORCE_Hardware {
     final double LIFT_IN_LIMIT      = 2;
     final double LIFT_UPPER_LIMIT   = 45;
     final double LIFT_LOWER_LIMIT   = 10;
+    final double COLLECTOR_RELEASE  = 5.0;  // Lift by this amount to release collector
     final double RAISE_POWER = 0.9;
     final double AUTO_LOWER_POWER = -0.8;
     final double MANUAL_LOWER_POWER = -0.5;
@@ -158,9 +164,13 @@ public class GFORCE_Hardware {
     private boolean foundationGrabbed = false;
     private boolean liftInPosition = true;
     private double  liftAngle      = 0;
+    private boolean leftLimitTripped = false;
+    private boolean rightLimitTripped = false;
 
 
     private CraneControl craneState = CraneControl.INIT;
+    private LiftControl  liftState  = LiftControl.AUTO;
+
     private double liftSetpoint = LIFT_START_ANGLE;
 
     private int timeoutSoundID = 0;
@@ -171,6 +181,7 @@ public class GFORCE_Hardware {
     private ElapsedTime cycleTime = new ElapsedTime();
     private ElapsedTime navTime = new ElapsedTime();
     private ElapsedTime craneTime = new ElapsedTime();
+    private ElapsedTime liftTime = new ElapsedTime();
 
     /* Constructor */
     public GFORCE_Hardware() {
@@ -218,6 +229,12 @@ public class GFORCE_Hardware {
 
         setRedSkystoneGrabber(SkystoneGrabberPositions.START);
         setBlueSkystoneGrabber(SkystoneGrabberPositions.START);
+
+        leftLimit = myOpMode.hardwareMap.get(DigitalChannel.class, "left_limit");
+        rightLimit = myOpMode.hardwareMap.get(DigitalChannel.class, "right_limit");
+
+        leftLimit.setMode(DigitalChannel.Mode.INPUT);
+        rightLimit.setMode(DigitalChannel.Mode.INPUT);
 
         timeoutSoundID = myOpMode.hardwareMap.appContext.getResources().getIdentifier("ss_siren", "raw", myOpMode.hardwareMap.appContext.getPackageName());
         if (timeoutSoundID != 0) {
@@ -435,6 +452,9 @@ public class GFORCE_Hardware {
             encoderLLift = leftLift.getCurrentPosition();
             encoderRLift = rightLift.getCurrentPosition();
 
+            leftLimitTripped = !leftLimit.getState();
+            rightLimitTripped = !rightLimit.getState();
+
             leftLiftAngle = (encoderLLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
             rightLiftAngle = (encoderRLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
             liftAngle = (leftLiftAngle + rightLiftAngle) / 2;
@@ -556,6 +576,7 @@ public class GFORCE_Hardware {
         myOpMode.telemetry.addData("axes",  "A:L:Y %6.0f %6.0f %6.0f", driveAxial, driveLateral,driveYaw);
         myOpMode.telemetry.addData("motion","axial %6.1f, lateral %6.1f", getAxialMotion(), getLateralMotion());
         myOpMode.telemetry.addData("Lift angle","L:R %6.1f, %6.1f", leftLiftAngle, rightLiftAngle);
+        myOpMode.telemetry.addData("Limits L:R","%s, %s", leftLimitTripped, rightLimitTripped);
         myOpMode.telemetry.update();
     }
 
@@ -965,9 +986,10 @@ public class GFORCE_Hardware {
                 // check for capstone release state/action
                 releaseCapstone(myOpMode.gamepad1.dpad_down);
 
-                // check for extend complete event
+                // check for release complete event
                 if (craneTime.time() > 0.5) {
                     craneState = CraneControl.STONE_RELEASED;
+                    liftSetpoint += 2 ;
                 }
                 break;
 
@@ -1029,69 +1051,74 @@ public class GFORCE_Hardware {
         rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-    public boolean runLiftControl() {
-        double leftLiftError;
-        double rightLiftError;
+    public void runLiftControl() {
+        switch (liftState) {
+            case AUTO:
+
+                if (myOpMode.gamepad2.back && myOpMode.gamepad2.start) {
+                    liftSetpoint += COLLECTOR_RELEASE;
+                    liftState = LiftControl.HOME_RAISING;
+                    liftTime.reset();  //
+                }
+                else if (myOpMode.gamepad2.dpad_up && (liftAngle < LIFT_UPPER_LIMIT)) {
+                    liftSetpoint = liftAngle + 2 + (2 * liftTime.time());  // speed up lift over time
+
+                }
+                else if (myOpMode.gamepad2.dpad_down && (liftAngle > LIFT_LOWER_LIMIT)) {
+                    liftSetpoint = liftAngle - 2 - (2 * liftTime.time());  // speed up lift over time;
+                }
+                else {
+                    liftTime.reset();  //
+                }
+
+                setLiftPower();
+                break;
+
+            case HOME_RAISING:
+                if (liftInPosition) {
+                    liftState = LiftControl.HOME_LOWERING;
+                }
+                setLiftPower();
+                break;
+
+            case HOME_LOWERING:
+                leftLift.setPower(leftLimitTripped ? 0 : -0.20);
+                rightLift.setPower(rightLimitTripped ? 0 : -0.20);
+
+                if (leftLimitTripped && rightLimitTripped) {
+                    liftState = LiftControl.AUTO;
+                    leftLift.setPower(0);
+                    rightLift.setPower(0);
+                    zeroLiftEncoders ();
+                    liftSetpoint = LIFT_LOWER_LIMIT;
+                }
+        }
+    }
+
+    private void setLiftPower () {
         double leftPower = 0;
         double rightPower = 0;
 
-        if (myOpMode.gamepad2.back && myOpMode.gamepad2.start) {
-            zeroLiftEncoders();
-        }
+        // Restrict Lift Setpoint;
+        liftSetpoint = Range.clip(liftSetpoint, LIFT_LOWER_LIMIT, LIFT_UPPER_LIMIT);
 
-        if (myOpMode.gamepad1.x && myOpMode.gamepad1.b) {
-            zeroLiftEncoders();
-            leftPower = -0.10;
-            rightPower = -0.10;
-            lockLiftInPlacet();
-        }
+        // Determine lift position error
+        double leftLiftError = liftSetpoint - leftLiftAngle;
+        double rightLiftError = liftSetpoint - rightLiftAngle;
+        leftPower = Range.clip(leftLiftError * LIFT_GAIN, AUTO_LOWER_POWER, RAISE_POWER);
+        rightPower = Range.clip(rightLiftError * LIFT_GAIN, AUTO_LOWER_POWER, RAISE_POWER);
 
-        else if (myOpMode.gamepad1.x) {
-            zeroLiftEncoders();
-            leftPower = -0.10;
-            rightPower = 0;
-            lockLiftInPlacet();
-        }
-
-        else if (myOpMode.gamepad1.b) {
-            zeroLiftEncoders();
+        if ((leftPower < 0) && leftLimitTripped) {
             leftPower = 0;
-            rightPower = -0.10;
-            lockLiftInPlacet();
-
-
-        } else {
-
-            if (myOpMode.gamepad2.dpad_up && (liftAngle < LIFT_UPPER_LIMIT)) {
-                leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                leftPower = RAISE_POWER;
-                rightPower = RAISE_POWER;
-                lockLiftInPlacet();
-
-            } else if (myOpMode.gamepad2.dpad_down && (liftAngle > LIFT_LOWER_LIMIT)) {
-                leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                leftPower = MANUAL_LOWER_POWER;
-                rightPower = MANUAL_LOWER_POWER;
-                lockLiftInPlacet();
-
-            } else {
-                // Determine lift position error
-                leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                leftLiftError = liftSetpoint - leftLiftAngle;
-                rightLiftError = liftSetpoint - rightLiftAngle;
-                leftPower = Range.clip(leftLiftError * LIFT_GAIN, AUTO_LOWER_POWER, RAISE_POWER);
-                rightPower = Range.clip(rightLiftError * LIFT_GAIN, AUTO_LOWER_POWER, RAISE_POWER);
-                liftInPosition = (Math.abs(leftLiftError + rightLiftError) < LIFT_IN_LIMIT);
-            }
         }
+
+        if ((rightPower < 0) && rightLimitTripped) {
+            rightPower = 0;
+        }
+
+        liftInPosition = (Math.abs(leftLiftError + rightLiftError) < LIFT_IN_LIMIT);
 
         leftLift.setPower(leftPower);
         rightLift.setPower(rightPower);
-
-        return liftInPosition;
-
     }
 }
