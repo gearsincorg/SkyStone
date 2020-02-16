@@ -1107,7 +1107,7 @@ public class GFORCE_Hardware {
         double rightLiftError = liftSetpoint - rightLiftAngle;
         leftPower = Range.clip(leftLiftError * LIFT_GAIN, AUTO_LOWER_POWER, RAISE_POWER);
         rightPower = Range.clip(rightLiftError * LIFT_GAIN, AUTO_LOWER_POWER, RAISE_POWER);
-
+/*
         if ((leftPower < 0) && leftLimitTripped) {
             leftPower = 0;
         }
@@ -1115,6 +1115,8 @@ public class GFORCE_Hardware {
         if ((rightPower < 0) && rightLimitTripped) {
             rightPower = 0;
         }
+
+ */
 
         liftInPosition = (Math.abs(leftLiftError + rightLiftError) < LIFT_IN_LIMIT);
 

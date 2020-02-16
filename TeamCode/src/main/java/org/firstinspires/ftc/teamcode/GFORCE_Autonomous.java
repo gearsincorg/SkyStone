@@ -129,7 +129,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
         robot.driveLateralVelocity(error + BLOCK_PUSH_DISTANCE, 0, 380, 2, true,false);
         robot.setSkystoneGrabber(SkystoneGrabberPositions.GRAB_DOWN);
         robot.sleepAndHoldHeading(0, 1);
-        robot.driveLateralVelocity(250, 0, -500, 4, true,false);
+        robot.driveLateralVelocity(400, 0, -500, 4, true,false);
     }
 
     private void startQuarry() {
