@@ -16,8 +16,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
     /* Declare OpMode members. */
     public AutoConfig   autoConfig    = new AutoConfig();
-    GFORCE_Hardware     robot         = new GFORCE_Hardware();
-    GFORCE_Navigation   nav           = new GFORCE_Navigation();
+    public GFORCE_Hardware     robot         = new GFORCE_Hardware();
+    public GFORCE_Navigation   nav           = new GFORCE_Navigation();
 
     final double BLOCK_PUSH_DISTANCE = 10;      // Was an extra 10mm, changed to 30 mm for new phone mount because it is further back
     final double BLOCK_CENTER_OFFSET = -60;    // Camera to grab offset
@@ -100,26 +100,27 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         while(opModeIsActive()) {
             robot.stopRobot();
-            nav.waitForTarget(1);
-            nav.showNavTelemetry(true);
+            // nav.waitForTarget(1);
             robot.showEncoders();
+            nav.showNavTelemetry(true);
         }
     }
 
     public void driveAndGrabBlock() {
         // Determine the error based on the target OFFSET required
+        nav.targetIsVisible(0);
         if (robot.allianceColor == GFORCE_Hardware.AllianceColor.RED) {
             error = ( BLOCK_CENTER_OFFSET - nav.robotY);
         } else {
             error = (BLOCK_CENTER_OFFSET + nav.robotY);
         }
 
-
-        RobotLog.ii(TAG, String.format("Error=%5.0f robotY=%5.0f ", error, nav.robotY));
-        robot.driveAxialVelocity(error, 0, 80,2,true,true);
+        RobotLog.ii(TAG, String.format("Error=%5.0f robotX=%5.0f robotY=%5.0f ", error, nav.robotX, nav.robotY));
+        robot.driveAxialVelocity(error, 0, 240,2,true,true);
 
         //Calculate new error
         nav.targetIsVisible(0);
+        RobotLog.ii(TAG, String.format("Error=%5.0f robotX=%5.0f robotY=%5.0f ", error, nav.robotX, nav.robotY));
         error = (-nav.robotX);
 
         if (robot.allianceColor == GFORCE_Hardware.AllianceColor.BLUE) {
@@ -139,28 +140,30 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
             //Finding the first SkyStone
             robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-            robot.driveLateralVelocity(600, 0, 600, 4, true, false);
-            //robot.sleepAndHoldHeading(0, 0.5);
+            robot.driveLateralVelocity(330, 0, 600, 4, true, false);
 
             //Determine the position of the SkyStone
-            if (nav.waitForTarget(1)) {
-                skyStonePosition = 1;
-            } else {
-                robot.driveAxialVelocity(150, 0, 400, 2, true, true);
-                if (nav.waitForTarget(1)) {
-                    skyStonePosition = 2;
+            if (nav.waitForTarget(2)) {
+                RobotLog.ii(TAG, String.format("Nav X:Y %5.0f:%5.0f ", nav.robotX, nav.robotY));
+
+                if (nav.robotY > 100) {
+                    skyStonePosition = 1;
+                } else if (nav.robotY < -100) {
+                    skyStonePosition = 3;
                 } else {
-                    robot.driveAxialVelocity(150, 0, 400, 2, true, true);
-                    if (nav.waitForTarget(1)) {
-                        skyStonePosition = 3;
-                    }
+                    skyStonePosition = 2;
                 }
+
             }
 
             //Get the first SkyStone if we found it
             if (skyStonePosition > 0) {
                 //Getting and placing the first SkyStone
-                driveAndGrabBlock();
+                double distance = (-430 + nav.robotY);
+                robot.driveAxialVelocity(distance,0,600,4,true,true);
+                robot.turnToHeading(-135,2);
+            }
+            /*
                 robot.driveAxialVelocity(900 + (skyStonePosition * 200), 0, -1200, 20, true, true);
                 robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
                 robot.sleepAndHoldHeading(0, 0.5);
@@ -237,6 +240,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
                     }
                 }
             }
+
+             */
         } else {
 
             //Parking under bridge if we choose not to score any SkyStones

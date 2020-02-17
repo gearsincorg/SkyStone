@@ -6,6 +6,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.RobotLog;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
@@ -345,7 +346,11 @@ public class GFORCE_Navigation
             myRobot.setYawVelocityToHoldHeading();
             myRobot.moveRobotVelocity();
             showNavTelemetry(true);
+
+            RobotLog.ii(TAG, String.format("Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
+
         }
+        myRobot.stopRobot();
         showNavTelemetry(true);
 
         return (targetFound);

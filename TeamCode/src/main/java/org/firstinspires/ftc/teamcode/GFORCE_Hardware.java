@@ -316,7 +316,7 @@ public class GFORCE_Hardware {
         // Loop until the robot has driven to where it needs to go
         // Remember to call updateMotion() once per loop cycle.
         while (myOpMode.opModeIsActive() && updateMotion() &&
-                (Math.abs(getAxialMotion()) < absMm) &&
+                (Math.abs(axialMotion) < absMm) &&
                 (runTime.seconds() < endingTime)) {
             RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
             setAxialVelocity(getProfileVelocity(vel, getAxialMotion(), absMm));
@@ -326,7 +326,7 @@ public class GFORCE_Hardware {
             showEncoders();
         }
 
-        RobotLog.ii(TAG, String.format("Breaking A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+        stopRobot();
         updateMotion();
         RobotLog.ii(TAG, String.format("Last A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
@@ -349,7 +349,7 @@ public class GFORCE_Hardware {
         double endingTime = runTime.seconds() + timeOutSec;
         double absMm = Math.abs(mm);
 
-        RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
+        RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f : %5.0f : %5.0f ", mm, vel, heading));
 
         // Reverse Lateral directions for blue autonomous and when flipOnBlue is true
         if ((allianceColor == AllianceColor.BLUE) && flipOnBlue) {
@@ -369,7 +369,7 @@ public class GFORCE_Hardware {
         // Loop until the robot has driven to where it needs to go
         // Remember to call updateMotion() once per loop cycle.
         while (myOpMode.opModeIsActive() && updateMotion() &&
-                (Math.abs(getLateralMotion()) < absMm) &&
+                (Math.abs(lateralMotion) < absMm) &&
                 (runTime.seconds() < endingTime)) {
             RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
             setAxialVelocity(-axialMotion);  //  Reverse any drift
@@ -377,12 +377,6 @@ public class GFORCE_Hardware {
             setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
             showEncoders();
-        }
-        stopRobot();
-
-        if (hardBreak) {
-            setLateralVelocity(-vel);
-            myOpMode.sleep(100);
         }
 
         stopRobot();
@@ -543,12 +537,13 @@ public class GFORCE_Hardware {
             // currentHeading = getHeading();
 
             updateMotion();
-            RobotLog.ii(TAG, String.format("sleep A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
             inPosition = setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
             showEncoders();
             myOpMode.sleep(10);
+            RobotLog.ii(TAG, String.format("Gen Rot Heading %5.0f ", getHeading()));
+
         }
         stopRobot();
 
