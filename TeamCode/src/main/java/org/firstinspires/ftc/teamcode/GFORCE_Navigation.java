@@ -92,6 +92,10 @@ public class GFORCE_Navigation
     private String              targetName;
     private OpenGLMatrix        robotLocation;
     private ElapsedTime navTime;    // Used to track driving timeout
+    private boolean             targetAverageAvailable;
+    private int                 targetAverageCount;
+    public double              targetAverageX;
+    public double              targetAverageY;
 
     /* Constructor */
     public GFORCE_Navigation(){
@@ -107,6 +111,10 @@ public class GFORCE_Navigation
         robotLocation = null;
         navTime = new ElapsedTime();
         targetsSkyStone = null;
+        targetAverageAvailable = false;
+        targetAverageCount = 0;
+        targetAverageX = 0;
+        targetAverageY = 0;
     }
 
     /***
@@ -342,13 +350,14 @@ public class GFORCE_Navigation
 
     public boolean waitForTarget(double timeout) {
         navTime.reset();
-        while (myOpMode.opModeIsActive() && !targetIsVisible(0) && (navTime.time() < timeout)) {
-            myRobot.setYawVelocityToHoldHeading();
+        resetTargetAverages();
+        while (myOpMode.opModeIsActive() && !targetAverageAvailable && (navTime.time() < timeout)) {
+            targetIsVisible(0);
+            myRobot.setYawVelocityToHoldHeadingWithUpdate();
             myRobot.moveRobotVelocity();
             showNavTelemetry(true);
 
             RobotLog.ii(TAG, String.format("Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
-
         }
         myRobot.stopRobot();
         showNavTelemetry(true);
@@ -417,6 +426,21 @@ public class GFORCE_Navigation
 
                 // Target relative bearing is the target currentHeading relative to the direction the robot is pointing.
                 relativeBearing = targetBearing - robotBearing;
+
+                //Calculate target averages if requested
+                if (!targetAverageAvailable) {
+                    targetAverageX += robotX;
+                    targetAverageY += robotY;
+                    targetAverageCount++;
+
+                    if (targetAverageCount == 3) {
+                        targetAverageX /= 3;
+                        targetAverageY /= 3;
+                        robotX = targetAverageX;
+                        robotY = targetAverageY;
+                        targetAverageAvailable = true;
+                    }
+                }
             }
             targetFound = true;
         }
@@ -427,6 +451,12 @@ public class GFORCE_Navigation
         }
 
         return targetFound;
+    }
+
+    public void resetTargetAverages() {
+        targetAverageX = 0;
+        targetAverageY = 0;
+        targetAverageAvailable = false;
     }
 
     public void showNavTelemetry(boolean doUpdate) {

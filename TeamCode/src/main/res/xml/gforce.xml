@@ -17,8 +17,8 @@
             <LynxEmbeddedIMU name="imu" port="0" bus="0" />
         </LynxModule>
         <LynxModule name="Child" port="3">
-            <goBILDA5202SeriesMotor name="left_collect" port="0" />
-            <goBILDA5202SeriesMotor name="right_collect" port="1" />
+            <goBILDA5202SeriesMotor name="right_collect" port="0" />
+            <goBILDA5202SeriesMotor name="left_collect" port="1" />
             <goBILDA5202SeriesMotor name="left_lift" port="2" />
             <goBILDA5202SeriesMotor name="right_lift" port="3" />
             <ContinuousRotationServo name="bTransfer_L" port="0" />

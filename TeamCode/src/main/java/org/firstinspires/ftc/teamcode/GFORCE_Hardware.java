@@ -37,7 +37,7 @@ public class GFORCE_Hardware {
         BLUE
     }
 
-    public static final String TAG = "G-FORCE";
+    public static final String TAG = "Hardware";
 
     /* Public OpMode members. */
     public AllianceColor allianceColor = AllianceColor.UNKNOWN_COLOR;
@@ -98,7 +98,7 @@ public class GFORCE_Hardware {
     public final double FOUNDATION_DOWN_L = 0.8;   // .9
 
     // Driving constants Yaw heading
-    final double HEADING_GAIN       = 0.012;  // Was 0.02
+    final double HEADING_GAIN       = 0.015;  // Was 0.012
     final double TURN_RATE_TC       = 0.6;
     final double STOP_TURNRATE      = 0.020;
     final double GYRO_360_READING   = 360.0;
@@ -199,8 +199,8 @@ public class GFORCE_Hardware {
         rightBackDrive = configureMotor("right_back_drive", DcMotor.Direction.FORWARD);
         rightFrontDrive = configureMotor("right_front_drive", DcMotor.Direction.FORWARD);
 
-        leftCollect = configureMotor("left_collect", DcMotor.Direction.FORWARD);
-        rightCollect = configureMotor("right_collect", DcMotor.Direction.REVERSE);
+        leftCollect = configureMotor("left_collect", DcMotor.Direction.REVERSE);
+        rightCollect = configureMotor("right_collect", DcMotor.Direction.FORWARD);
 
         leftLift = configureMotor("left_lift", DcMotor.Direction.FORWARD);
         rightLift = configureMotor("right_lift", DcMotor.Direction.FORWARD);
@@ -534,15 +534,11 @@ public class GFORCE_Hardware {
                 (navTime.time() < timeOutSEC) &&
                 (!inPosition || waitFullTimeout)) {
 
-            // currentHeading = getHeading();
-
             updateMotion();
 
             inPosition = setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
             showEncoders();
-            myOpMode.sleep(10);
-            RobotLog.ii(TAG, String.format("Gen Rot Heading %5.0f ", getHeading()));
 
         }
         stopRobot();
@@ -608,23 +604,39 @@ public class GFORCE_Hardware {
 
         }
         adjustedIntegratedZAxis = integratedZAxis * GYRO_SCALE_FACTOR;
-        return (adjustedIntegratedZAxis);
+        currentHeading = adjustedIntegratedZAxis;
+        return (currentHeading);
     }
 
     public void setHeadingSetpoint(double newSetpoint) {
         headingSetpoint = newSetpoint;
     }
 
+    public boolean setYawVelocityToHoldHeadingWithUpdate(double newSetpoint) {
+        getHeading();
+        setHeadingSetpoint(newSetpoint);
+        return (setYawVelocityToHoldHeading());
+    }
+
+    public boolean setYawVelocityToHoldHeadingWithUpdate() {
+        getHeading();
+        return setYawVelocityToHoldHeading();
+    }
+
+    // NOTE: updateMotion() or getHeading() MUST be called prior to this call
     public boolean setYawVelocityToHoldHeading(double newSetpoint) {
 
         setHeadingSetpoint(newSetpoint);
         return (setYawVelocityToHoldHeading());
     }
 
+    // NOTE: updateMotion() or getHeading() MUST be called prior to this call
     public boolean setYawVelocityToHoldHeading() {
         // double error = normalizeHeading(headingSetpoint - getHeading());
         double error = normalizeHeading(headingSetpoint - currentHeading);
         double yaw = Range.clip(error * HEADING_GAIN, -0.25, 0.25);
+
+        RobotLog.ii(TAG, String.format("sYVTHH SP:CH:Y %6.3f %6.3f %6.3f" , headingSetpoint, currentHeading, yaw));
 
         setYawVelocity(yaw * AUTO_ROTATION_DPS);
         return (Math.abs(error) < YAW_IS_CLOSE);
@@ -725,10 +737,11 @@ public class GFORCE_Hardware {
         moveRobotVelocity(0, 0, 0);
     }
 
-    public void runCollector(double power) {
-        leftCollect.setPower(power);
-        rightCollect.setPower(power);
+    public void runCollectors(double leftPower, double rightPower) {
+        leftCollect.setPower(leftPower);
+        rightCollect.setPower(rightPower);
     }
+
 
     // ========================================================
     // ----               SERVO Methods
@@ -846,7 +859,7 @@ public class GFORCE_Hardware {
             case READY_TO_COLLECT:
                 // check for collect event
                 if (myOpMode.gamepad2.right_trigger > 0.5) {
-                    runCollector(1);
+                    runCollectors(1,1);
                     transferStone(1.0);
                     craneState = CraneControl.COLLECTING;
                 }
@@ -860,11 +873,11 @@ public class GFORCE_Hardware {
 
                 //Reverse Collector and Transfer Wheels
                 else if (myOpMode.gamepad2.left_trigger > 0.5) {
-                    runCollector(-0.5);
+                    runCollectors(-0.5,-0.5);
                     transferStone(-0.75);
                     grabStone(false);
                 } else {
-                    runCollector(0);
+                    runCollectors(0,0);
                     transferStone(0);
                 }
 
@@ -879,7 +892,7 @@ public class GFORCE_Hardware {
 
                 //Reverse Collector and Transfer Wheels
                 else if (myOpMode.gamepad2.left_trigger > 0.5) {
-                    runCollector(-0.5);
+                    runCollectors(-0.5,-0.5);
                     transferStone(-0.75);
                     grabStone(false);
                     craneState = CraneControl.READY_TO_COLLECT;
@@ -890,7 +903,7 @@ public class GFORCE_Hardware {
             case WAITING_FOR_STONE:
                 // check for transfer complete event
                 if (craneTime.time() > 1.5) {
-                    runCollector(0);
+                    runCollectors(0,0);
                     transferStone(0);
                     grabStone(true);
                     craneTime.reset();
@@ -900,7 +913,7 @@ public class GFORCE_Hardware {
                  //Reverse Collector and Transfer Wheels
                 else if (myOpMode.gamepad2.left_trigger > 0.5) {
                     grabStone(false);
-                    runCollector(-0.5);
+                    runCollectors(-0.5,-0.5);
                     transferStone(-0.75);
                     craneState = CraneControl.READY_TO_COLLECT;
                 }
@@ -926,7 +939,7 @@ public class GFORCE_Hardware {
                 // check for re-collect event
                 if (myOpMode.gamepad2.right_trigger > 0.5) {
                     grabStone(false);
-                    runCollector(1);
+                    runCollectors(1,1);
                     transferStone(0.75);
                     craneState = CraneControl.COLLECTING;
                 }
@@ -934,7 +947,7 @@ public class GFORCE_Hardware {
                 //Reverse Collector and Transfer Wheels
                 else if (myOpMode.gamepad2.left_trigger > 0.5) {
                     grabStone(false);
-                    runCollector(-0.5);
+                    runCollectors(-0.5,-0.5);
                     transferStone(-0.75);
                     craneState = CraneControl.READY_TO_COLLECT;
                 }
