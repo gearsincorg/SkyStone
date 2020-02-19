@@ -386,6 +386,58 @@ public class GFORCE_Hardware {
         return (runTime.seconds() < endingTime);
     }
 
+    /***
+     *
+     * @param axialV
+     * @param lateralV
+     * @param axialD
+     * @param lateralD
+     * @param heading
+     * @param timeOutSEC
+     */
+    public void driveBlind(double axialV, double axialD, double lateralV, double lateralD, double heading, double timeOutSEC) {
+        /* Flip translation and rotations if we are RED
+        if (myRobot.allianceColor == GFORCE_Hardware.AllianceColor.RED) {
+            lateral *= -1.0;
+            heading *= -1.0;
+        }
+
+         */
+        double absAxialMm = Math.abs(axialD);
+        double absLateralMm = Math.abs(lateralD);
+
+        // If we are moving backwards, set vel negative
+        if ((absAxialMm * axialV) < 0.0) {
+            axialV = -Math.abs(axialV);
+        } else {
+            axialV = Math.abs(axialV);
+        }
+
+        // If we are moving backwards, set vel negative
+        if ((absLateralMm * lateralV) < 0.0) {
+            lateralV = -Math.abs(lateralV);
+        } else {
+            lateralV = Math.abs(lateralV);
+        }
+
+        startMotion();
+        navTime.reset();
+        while (myOpMode.opModeIsActive() && updateMotion() &&
+                (navTime.time() <  timeOutSEC) &&
+                !((Math.abs(lateralMotion) > absLateralMm) && (Math.abs(axialMotion) > absAxialMm)) ){
+
+            setAxialVelocity(getProfileVelocity(axialV, getAxialMotion(), absAxialMm));
+            setLateralVelocity(getProfileVelocity(lateralV, getLateralMotion(), absLateralMm));
+            setYawVelocityToHoldHeadingWithUpdate(heading);
+            moveRobotVelocity();
+            showEncoders();
+
+            myOpMode.telemetry.addData("Blind Move", "A:L:H %5.2f %5.2f %3.0f", axialMotion, lateralMotion, heading);
+            myOpMode.telemetry.update();
+        }
+        stopRobot();
+    }
+
     //
     public double getProfileVelocity(double topVel, double dTraveled, double dGoal) {
         double profileVelocity = 0;

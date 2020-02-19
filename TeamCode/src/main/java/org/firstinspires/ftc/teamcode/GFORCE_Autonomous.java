@@ -69,6 +69,15 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         } else {
             // Testing code
+
+            robot.driveBlind(500, 200, 0, 0, 0,5);
+            sleep(1000);
+            robot.driveBlind(0, 0, 500,200, 0,5);
+            sleep(1000);
+            robot.driveBlind(-500, 200, -500,200, 0,5);
+            sleep(1000);
+
+            /*
             robot.driveAxialVelocity(600, 0, 100,10,true,false);
             robot.sleepAndHoldHeading(0, 0.5);
             robot.driveAxialVelocity(600, 0, -100,10,true,false);
@@ -93,6 +102,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
             robot.sleepAndHoldHeading(0, 0.5);
             robot.driveAxialVelocity(600, 0, -2000,10,true,false);
             robot.sleepAndHoldHeading(0, 1);
+
+             */
         }
 
 
@@ -154,21 +165,21 @@ public class GFORCE_Autonomous extends LinearOpMode {
             //Get the first SkyStone if we found it
             if (skyStonePosition > 0) {
                 //Getting and placing the first SkyStone
-                double distance = (-150 + nav.robotY);
-                robot.driveAxialVelocity(distance,0,600,4,true,true);
-                robot.turnToHeading(-110,2);
+                double axialDistance = (300 - nav.robotY);
+                double lateralDistance = Math.abs(nav.robotX) -300;
+                robot.driveBlind(600, axialDistance, 600, lateralDistance,0,5);
+                robot.turnToHeading(-135,2);
                 robot.runCollectors(0.6,0);
                 robot.transferStone(1);
-                robot.driveAxialVelocity(475,-110,-400,3, true, true);
+                //robot.driveAxialVelocity(475,-110,-400,3, true, true);
                 robot.runCollectors(1,0.2);
-                robot.driveAxialVelocity(100,-110,-200,1, true, true);
-                robot.turnToHeading(-135,1);
+                robot.driveAxialVelocity(400,-135,-400,2, true, true);
                 robot.runCollectors(1,1);
                 robot.sleepAndHoldHeading(-135,0.5);
-                robot.driveAxialVelocity(325,-135,400,2,true,true);
+                robot.driveAxialVelocity(400,-135,400,2,true,true);
                 robot.runCollectors(0,0);
                 robot.turnToHeading(-180,2);
-                robot.driveAxialVelocity(1550 + (200 * skyStonePosition),-180,1200,4,true,true);
+                robot.driveAxialVelocity(1350 + (200 * skyStonePosition),-180,1200,4,true,true);
                 robot.grabStone(true);
                 robot.turnToHeading(-270,2);
                 robot.driveAxialVelocity(300,-270,400,2,true,true);
@@ -179,6 +190,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 robot.grabStone(false);
                 sleep(500);
                 robot.extendStone(false);
+
+
 
             }
             /*

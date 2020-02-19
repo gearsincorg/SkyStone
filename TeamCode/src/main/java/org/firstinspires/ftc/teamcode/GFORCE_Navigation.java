@@ -318,35 +318,6 @@ public class GFORCE_Navigation
         targetsSkyStone.activate();
     }
 
-    /***
-     * driveBlind simply drives in deadreckoning mode in the requested direction
-     * @param axial     Power in axial direction
-     * @param lateral   Power in Lateral Direction
-     * @param heading   Desired robot heading
-     * @param timeOutSEC  Desited transit time.
-     */
-    public void driveBlind(double axial, double lateral, double heading, double timeOutSEC) {
-        // Flip translation and rotations if we are RED
-        if (myRobot.allianceColor == GFORCE_Hardware.AllianceColor.RED) {
-            lateral *= -1.0;
-            heading *= -1.0;
-        }
-
-        navTime.reset();
-        while (myOpMode.opModeIsActive() && (navTime.time() <  timeOutSEC)){
-            myRobot.setAxialVelocity(axial);
-            myRobot.setLateralVelocity(lateral);
-            myRobot.getHeading();
-            myRobot.setYawVelocityToHoldHeading(heading);
-            myRobot.moveRobotVelocity();
-
-            myOpMode.telemetry.addData("Path", myRobot.autoPathName);
-            myOpMode.telemetry.addData("Blind Move", "A:L:H %5.2f %5.2f %3.0f", axial, lateral, heading);
-            myOpMode.telemetry.update();
-        }
-        myRobot.stopRobot();
-    }
-
 
     public boolean waitForTarget(double timeout) {
         navTime.reset();

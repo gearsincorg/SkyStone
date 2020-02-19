@@ -136,11 +136,11 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
             //Co-pilot Lift Controls
             if (gamepad2.y) {
-                robot.setLiftSetpoint(38);
+                robot.setLiftSetpoint(45);
             }
 
             if (gamepad2.b) {
-                robot.setLiftSetpoint(25);
+                robot.setLiftSetpoint(26);
             }
 
             if (gamepad2.a) {
