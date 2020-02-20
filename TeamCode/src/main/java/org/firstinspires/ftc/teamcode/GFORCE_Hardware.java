@@ -106,8 +106,8 @@ public class GFORCE_Hardware {
 
     final double YAW_IS_CLOSE = 2.0;  // angle within which we are "close"
 
-    final double AXIAL_ENCODER_COUNTS_PER_MM   = 0.8602;
-    final double LATERAL_ENCODER_COUNTS_PER_MM = 0.9134;
+    final double AXIAL_ENCODER_COUNTS_PER_MM   = 0.958; // was 0.8602
+    final double LATERAL_ENCODER_COUNTS_PER_MM = 0.958;  // was 0.9134
 
     final double LIFT_GAIN          = 0.1;
     final double LIFT_IN_LIMIT      = 2;
@@ -788,6 +788,11 @@ public class GFORCE_Hardware {
     public void runCollectors(double leftPower, double rightPower) {
         leftCollect.setPower(leftPower);
         rightCollect.setPower(rightPower);
+    }
+
+    public void runCollector(double Power) {
+        leftCollect.setPower(Power);
+        rightCollect.setPower(Power);
     }
 
     // ========================================================

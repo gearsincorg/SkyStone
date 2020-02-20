@@ -192,39 +192,46 @@ public class GFORCE_Navigation
     }
 
     /***
-     *  Strafes across the field looking for a target image.  Stop when near the target centerline
-     * @param targetID  Vuforia target index
-     * @param axial     Desired Axial motion to find target
-     * @param lateral   desired Lateral motion to find target
-     * @param heading   desired robot heading while searching for target
-     * @param timeOutSEC Max time to locate target
-     * @return
+     *  Strafes across the field looking for a target image.  Stop when see target
      */
-    public boolean findTarget(int targetID, double axial, double lateral, double heading, double timeOutSEC) {
-        boolean         targetLock      = false;
+    public boolean findTarget(double mm, double vel,  double heading, double timeOutSEC, boolean flipOnBlue) {
+        boolean         targetLock = false;
+        double          absMm = Math.abs(mm);
 
-        // Flip translation and rotations if we are RED
-        if (myRobot.allianceColor == GFORCE_Hardware.AllianceColor.RED) {
-            lateral *= -1.0;
-            heading *= -1.0;
+        // Reverse axial directions for blue autonomous if flipOnBlue is true
+        if ((myRobot.allianceColor == GFORCE_Hardware.AllianceColor.BLUE) && flipOnBlue) {
+            vel = -vel;
+        }
+
+        // If we are moving backwards, set vel negative
+        if ((mm * vel) < 0.0) {
+            vel = -Math.abs(vel);
+        } else {
+            vel = Math.abs(vel);
         }
 
         navTime.reset();
-        while (myOpMode.opModeIsActive() && !targetLock && (navTime.time() <  timeOutSEC)){
-            myRobot.setAxialVelocity(axial);
-            myRobot.setLateralVelocity(lateral);
-            myRobot.getHeading();
-            myRobot.setYawVelocityToHoldHeading();
+        //Save the current position
+        myRobot.startMotion();
+
+        myRobot.setLateralVelocity(0);
+        myRobot.setAxialVelocity(vel);
+
+        targetLock = targetIsVisible(0);
+
+        while (myOpMode.opModeIsActive() &&
+                 !targetLock &&
+                 myRobot.updateMotion() &&
+                (Math.abs(myRobot.axialMotion) < absMm) &&
+                (navTime.time() <  timeOutSEC)){
+
+            myRobot.setYawVelocityToHoldHeading(heading);
             myRobot.moveRobotVelocity();
 
-            if (targetIsVisible(targetID)) {
-                targetLock = (Math.abs(robotY) < NEAR_CENTER);
-            }
-            myOpMode.telemetry.addData("Path", myRobot.autoPathName);
-            myOpMode.telemetry.addData("Find Targ", "A:L:H %5.3f %5.3f %3.0f", axial, lateral, heading);
-            showNavTelemetry(false);
-            myOpMode.telemetry.update();
+            targetLock = targetIsVisible(0);
+            showNavTelemetry(true);
         }
+
         myRobot.stopRobot();
         return (targetLock);
     }
@@ -241,10 +248,10 @@ public class GFORCE_Navigation
          * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
          * If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
          */
-        int cameraMonitorViewId = myOpMode.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", myOpMode.hardwareMap.appContext.getPackageName());
-        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
+        // int cameraMonitorViewId = myOpMode.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", myOpMode.hardwareMap.appContext.getPackageName());
+        // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
 
-        // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
+        VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters();
 
         parameters.vuforiaLicenseKey = VUFORIA_KEY;
         parameters.cameraDirection   = CAMERA_CHOICE;
@@ -324,16 +331,11 @@ public class GFORCE_Navigation
         resetTargetAverages();
         while (myOpMode.opModeIsActive() && !targetAverageAvailable && (navTime.time() < timeout)) {
             targetIsVisible(0);
-            RobotLog.ii(TAG, String.format("WFT Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
-
             myRobot.setYawVelocityToHoldHeadingWithUpdate();
             myRobot.moveRobotVelocity();
             showNavTelemetry(true);
 
         }
-
-        RobotLog.ii(TAG, String.format("WFT Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
-
         myRobot.stopRobot();
         showNavTelemetry(true);
 
@@ -416,6 +418,10 @@ public class GFORCE_Navigation
                         targetAverageAvailable = true;
                     }
                 }
+                RobotLog.ii(TAG, String.format("TIF NEW: Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
+            }
+            else {
+                RobotLog.ii(TAG, String.format("TIF OLD: Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
             }
             targetFound = true;
         }

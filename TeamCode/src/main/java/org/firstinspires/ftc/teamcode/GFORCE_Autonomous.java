@@ -46,6 +46,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 nav.addNavTelemetry();
             }
             autoConfig.init_loop(); //Run menu system
+            sleep(20);
         }
 
         // Get alliance color from Menu
@@ -69,8 +70,8 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         } else {
             // Testing code
-            robot.driveLateralVelocity(300, 0, 600,5,true,false);
-            robot.driveAxialVelocity(300, 0, 600,5,true,false);
+            robot.driveLateralVelocity(500, 0, 600,5,true,false);
+            robot.driveAxialVelocity(1000, 0, 600,5,true,false);
             robot.stopRobot();
             sleep(1000);
 
@@ -143,21 +144,26 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
             //Finding the first SkyStone
             robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-            robot.driveLateralVelocity(330, 0, 600, 4, true, false);
-            robot.sleepAndHoldHeading(0,0.5);
-            //Determine the position of the SkyStone
-            if (nav.waitForTarget(1)) {
-                RobotLog.ii(TAG, String.format("Nav X:Y %5.0f:%5.0f ", nav.robotX, nav.robotY));
+            robot.driveLateralVelocity(500, 0, 600, 4, true, false);
 
-                if (nav.robotY > 100) {
-                    skyStonePosition = 3;
-                } else if (nav.robotY < -100) {
-                    skyStonePosition = 1;
-                } else {
+            if (nav.waitForTarget(0.25)) {
+                double blockCenter = 220 - nav.robotY ;  // Offset from tile center
+                if (blockCenter > 200) {
                     skyStonePosition = 2;
+                } else {
+                    skyStonePosition = 3;
                 }
 
+                RobotLog.ii(TAG, String.format("BLOCK T:M:O:P %5.0f %5.0f %5.0f %d",
+                        nav.robotY, robot.getAxialMotion(), blockCenter, skyStonePosition ));
             }
+            else {
+                robot.driveAxialVelocity(300, 0, -600, 2,true, true);
+                if (nav.waitForTarget(0.5)) {
+                    skyStonePosition = 1;
+                }
+            }
+
 
             //Get the first SkyStone if we found it
             if (skyStonePosition > 0) {
@@ -170,29 +176,30 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 robot.turnToHeading(-135,2);
                 robot.sleepAndHoldHeading(-135,1);
 
-                robot.runCollectors(0.6,0);
                 robot.transferStone(1);
-                //robot.driveAxialVelocity(475,-110,-400,3, true, true);
-                robot.runCollectors(1,0.2);
-                robot.driveAxialVelocity(400,-135,-400,2, true, true);
-                robot.runCollectors(1,1);
-                robot.sleepAndHoldHeading(-135,0.5);
+                robot.runCollector(1);
+                robot.driveAxialVelocity(400,-135,-300,2, true, true);
+                // robot.sleepAndHoldHeading(-135,0.5);  // eliminate ??
                 robot.driveAxialVelocity(400,-135,400,2,true,true);
-                robot.runCollectors(0,0);
+                robot.runCollector(0.25);
                 robot.turnToHeading(-180,2);
-                robot.driveAxialVelocity(1350 + (200 * skyStonePosition),-180,1200,4,true,true);
+                robot.runCollector(0);
+                robot.driveAxialVelocity(1200 + (200 * skyStonePosition),-180,1200,4,true,true);
                 robot.grabStone(true);
                 robot.turnToHeading(-270,2);
-                robot.driveAxialVelocity(300,-270,400,2,true,true);
-                robot.extendStone(true);
-                sleep(500);
                 robot.transferStone(0);
+                robot.driveAxialVelocity(300,-270,200,1,true,true);
+                robot.transferStone(0);
+                robot.extendStone(true);
+                sleep(750);
                 robot.grabFoundation(true);
                 robot.grabStone(false);
                 sleep(500);
                 robot.extendStone(false);
-
-
+                robot.driveAxialVelocity(600,-270,-600,4,true,true);
+                robot.turnToHeading(-180,4);
+                robot.driveAxialVelocity(200,-180,300,1,true,true);
+                robot.grabFoundation(false);
 
             }
             /*
