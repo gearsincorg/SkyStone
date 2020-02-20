@@ -135,16 +135,16 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.grabFoundation(gamepad1.right_trigger > 0.5);
 
             //Co-pilot Lift Controls
-            if (gamepad2.y) {
-                robot.setLiftSetpoint(45);
+            if (gamepad2.y && robot.stoneInGrasp) {
+                robot.setLiftSetpoint(robot.LIFT_HIGH_SETPOINT);
             }
 
-            if (gamepad2.b) {
-                robot.setLiftSetpoint(26);
+            if (gamepad2.b && robot.stoneInGrasp) {
+                robot.setLiftSetpoint(robot.LIFT_MID_SETPOINT);
             }
 
             if (gamepad2.a) {
-                robot.setLiftSetpoint(10);
+                robot.setLiftSetpoint(robot.LIFT_LOWER_LIMIT);
             }
 
             // Send telemetry message to signify robot running

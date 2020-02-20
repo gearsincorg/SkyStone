@@ -113,10 +113,15 @@ public class GFORCE_Hardware {
     final double LIFT_IN_LIMIT      = 2;
     final double LIFT_UPPER_LIMIT   = 45;
     final double LIFT_LOWER_LIMIT   = 10;
+    final double LIFT_MID_SETPOINT  = 26;
+    final double LIFT_HIGH_SETPOINT = LIFT_UPPER_LIMIT ;
+
+
     final double COLLECTOR_RELEASE  = 5.0;  // Lift by this amount to release collector
     final double RAISE_POWER = 0.9;
     final double AUTO_LOWER_POWER = -0.8;
-    final double MANUAL_LOWER_POWER = -0.5;
+
+
 
     // Robot states that we share with others
     public double axialMotion = 0;
@@ -159,7 +164,7 @@ public class GFORCE_Hardware {
     private double headingSetpoint = 0;
 
     // Scoring Status variables
-    private boolean stoneInGrasp   = false;
+    public  boolean stoneInGrasp   = false;
     private boolean stoneExtended  = false;
     private boolean foundationGrabbed = false;
     private boolean liftInPosition = true;
@@ -167,9 +172,9 @@ public class GFORCE_Hardware {
     private boolean leftLimitTripped = false;
     private boolean rightLimitTripped = false;
 
-
     private CraneControl craneState = CraneControl.INIT;
     private LiftControl  liftState  = LiftControl.AUTO;
+    private boolean lastExtend      = false;
 
     private double liftSetpoint = LIFT_START_ANGLE;
 
@@ -308,7 +313,7 @@ public class GFORCE_Hardware {
             vel = Math.abs(vel);
         }
 
-        RobotLog.ii(TAG, String.format("Drive-Axial adjusted mm:vel:head %5.0f:%5.0f ", mm, vel, heading));
+        RobotLog.ii(TAG, String.format("DAV D:V:H %5.0f:%5.0f ", mm, vel, heading));
 
         //Save the current position
         startMotion();
@@ -318,7 +323,7 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() && updateMotion() &&
                 (Math.abs(axialMotion) < absMm) &&
                 (runTime.seconds() < endingTime)) {
-            RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+            RobotLog.ii(TAG, String.format("DAV A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
             setAxialVelocity(getProfileVelocity(vel, getAxialMotion(), absMm));
             setLateralVelocity(-lateralMotion);  // Reverse any drift
             setYawVelocityToHoldHeading(heading);
@@ -328,7 +333,7 @@ public class GFORCE_Hardware {
 
         stopRobot();
         updateMotion();
-        RobotLog.ii(TAG, String.format("Last A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+        RobotLog.ii(TAG, String.format("DAV Last A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
 
         // Return true if we have not timed out
@@ -349,7 +354,7 @@ public class GFORCE_Hardware {
         double endingTime = runTime.seconds() + timeOutSec;
         double absMm = Math.abs(mm);
 
-        RobotLog.ii(TAG, String.format("Drive-Lateral mm:vel:head %5.0f : %5.0f : %5.0f ", mm, vel, heading));
+        RobotLog.ii(TAG, String.format("DLV D:V:H %5.0f : %5.0f : %5.0f ", mm, vel, heading));
 
         // Reverse Lateral directions for blue autonomous and when flipOnBlue is true
         if ((allianceColor == AllianceColor.BLUE) && flipOnBlue) {
@@ -371,7 +376,7 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() && updateMotion() &&
                 (Math.abs(lateralMotion) < absMm) &&
                 (runTime.seconds() < endingTime)) {
-            RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+            RobotLog.ii(TAG, String.format("DLV A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
             setAxialVelocity(-axialMotion);  //  Reverse any drift
             setLateralVelocity(getProfileVelocity(vel, getLateralMotion(), absMm));
             setYawVelocityToHoldHeading(heading);
@@ -380,29 +385,14 @@ public class GFORCE_Hardware {
         }
 
         stopRobot();
-        RobotLog.ii(TAG, String.format("Motion A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+        RobotLog.ii(TAG, String.format("DLV Last A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
         // Return true if we have not timed out
         return (runTime.seconds() < endingTime);
     }
 
-    /***
-     *
-     * @param axialV
-     * @param lateralV
-     * @param axialD
-     * @param lateralD
-     * @param heading
-     * @param timeOutSEC
-     */
+    /*
     public void driveBlind(double axialV, double axialD, double lateralV, double lateralD, double heading, double timeOutSEC) {
-        /* Flip translation and rotations if we are RED
-        if (myRobot.allianceColor == GFORCE_Hardware.AllianceColor.RED) {
-            lateral *= -1.0;
-            heading *= -1.0;
-        }
-
-         */
         double absAxialMm = Math.abs(axialD);
         double absLateralMm = Math.abs(lateralD);
 
@@ -439,6 +429,7 @@ public class GFORCE_Hardware {
         }
         stopRobot();
     }
+    */
 
     //
     public double getProfileVelocity(double topVel, double dTraveled, double dGoal) {
@@ -476,7 +467,7 @@ public class GFORCE_Hardware {
         // Make sure the final velocity sign is correct.
         profileVelocity = Range.clip(profileVelocity, 0, absTopVel) * Math.signum(topVel);
 
-        Log.d("G-FORCE AUTO", String.format("T:V:D:A %5.3f %4.2f %5.2f %5.2f",
+        Log.d(TAG, String.format("GVP T:V:D:A %5.3f %4.2f %5.2f %5.2f",
                  getMotionTime(), profileVelocity, absdTraveled, currentVel / AXIAL_ENCODER_COUNTS_PER_MM));
 
         return (profileVelocity);
@@ -597,11 +588,8 @@ public class GFORCE_Hardware {
                 driveYaw = 0;
             }
 
-
-
             moveRobotVelocity();
             showEncoders();
-
         }
         stopRobot();
 
@@ -663,7 +651,6 @@ public class GFORCE_Hardware {
 
             integratedZAxis += deltaH;
             lastHeading = heading;
-
         }
         adjustedIntegratedZAxis = integratedZAxis * GYRO_SCALE_FACTOR;
         currentHeading = adjustedIntegratedZAxis;
@@ -785,7 +772,6 @@ public class GFORCE_Hardware {
         rightBackDrive.setVelocity(rightBackVel);
 
         // Log.d("G-FORCE AUTO", String.format("M %5.1f %5.1f %5.1f %5.1f ", leftFrontVel, rightFrontVel, leftBackVel, rightBackVel));
-
     }
 
     public void setAxialPower (double power) {
@@ -803,7 +789,6 @@ public class GFORCE_Hardware {
         leftCollect.setPower(leftPower);
         rightCollect.setPower(rightPower);
     }
-
 
     // ========================================================
     // ----               SERVO Methods
@@ -919,20 +904,17 @@ public class GFORCE_Hardware {
                 break;
 
             case READY_TO_COLLECT:
+                // check for extend toggle event
+                if (extendJustClicked()) {
+                    extendStone(!stoneExtended);
+                }
+
                 // check for collect event
                 if (myOpMode.gamepad2.right_trigger > 0.5) {
                     runCollectors(1,1);
                     transferStone(1.0);
                     craneState = CraneControl.COLLECTING;
                 }
-                //check for retract event
-
-                /*else if (myOpMode.gamepad2.back) {
-                    extendStone(true);
-                    craneState = CraneControl.WAITING_TO_EXTEND;
-                }
-                 */
-
                 //Reverse Collector and Transfer Wheels
                 else if (myOpMode.gamepad2.left_trigger > 0.5) {
                     runCollectors(-0.5,-0.5);
@@ -964,8 +946,7 @@ public class GFORCE_Hardware {
 
             case WAITING_FOR_STONE:
                 // check for transfer complete event
-                if (craneTime.time() > 1.5) {
-                    runCollectors(0,0);
+                if (craneTime.time() > 1.25) {
                     transferStone(0);
                     grabStone(true);
                     craneTime.reset();
@@ -984,14 +965,12 @@ public class GFORCE_Hardware {
                 else if (myOpMode.gamepad2.right_trigger > 0.5) {
                     craneState = CraneControl.COLLECTING;
                 }
-
-
-
                 break;
 
             case WAITING_FOR_GRAB:
                 if (craneTime.time() > 0.5) {
                     craneState = CraneControl.STONE_GRABBED;
+                    runCollectors(0,0);
                 }
                 break;
 
@@ -1015,7 +994,7 @@ public class GFORCE_Hardware {
                 }
 
                 // check for extend event
-                else if (myOpMode.gamepad2.x) {
+                else if (extendJustClicked()) {
                     extendStone(true);
                     craneTime.reset();
                     craneState = CraneControl.WAITING_TO_EXTEND;
@@ -1041,7 +1020,7 @@ public class GFORCE_Hardware {
                 }
 
                 //check for retract event
-                if (myOpMode.gamepad2.back) {
+                if (extendJustClicked() || myOpMode.gamepad2.back) {
                     extendStone(false);
                     craneState = CraneControl.STONE_GRABBED;
                 }
@@ -1049,7 +1028,6 @@ public class GFORCE_Hardware {
                 if (myOpMode.gamepad1.a) {
                     stoneExtend.setPosition(STONE_EXTRA);
                 }
-
                 break;
 
             case WAITING_FOR_RELEASE:
@@ -1059,7 +1037,7 @@ public class GFORCE_Hardware {
                 // check for release complete event
                 if (craneTime.time() > 0.5) {
                     craneState = CraneControl.STONE_RELEASED;
-                    liftSetpoint += 2 ;
+                    liftSetpoint += 3 ;
                 }
                 break;
 
@@ -1068,14 +1046,11 @@ public class GFORCE_Hardware {
                 releaseCapstone(myOpMode.gamepad1.dpad_down);
 
                 // check for go-home event
-                if (myOpMode.gamepad2.x) {
+                if (extendJustClicked()) {
                     extendStone(false);
                     craneTime.reset();
                     craneState = CraneControl.WAITING_FOR_RETRACT;
                 }
-
-                //Home code to raise the lift a few degrees when retracting
-
                 break;
 
             case WAITING_FOR_RETRACT:
@@ -1192,5 +1167,13 @@ public class GFORCE_Hardware {
 
         leftLift.setPower(leftPower);
         rightLift.setPower(rightPower);
+    }
+
+    public boolean extendJustClicked() {
+        boolean clicked = false;
+
+        clicked = (myOpMode.gamepad2.x && !lastExtend);
+        lastExtend = myOpMode.gamepad2.x;
+        return (clicked);
     }
 }

@@ -69,10 +69,10 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
         } else {
             // Testing code
-
-            robot.driveBlind(600, 500, 600,200, 0,5);
+            robot.driveLateralVelocity(300, 0, 600,5,true,false);
+            robot.driveAxialVelocity(300, 0, 600,5,true,false);
+            robot.stopRobot();
             sleep(1000);
-            robot.driveBlind(600, 200, 600,500, 0,5);
 
             /*
             robot.driveAxialVelocity(600, 0, 100,10,true,false);
