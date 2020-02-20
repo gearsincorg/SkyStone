@@ -70,12 +70,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
         } else {
             // Testing code
 
-            robot.driveBlind(500, 200, 0, 0, 0,5);
+            robot.driveBlind(600, 500, 600,200, 0,5);
             sleep(1000);
-            robot.driveBlind(0, 0, 500,200, 0,5);
-            sleep(1000);
-            robot.driveBlind(-500, 200, -500,200, 0,5);
-            sleep(1000);
+            robot.driveBlind(600, 200, 600,500, 0,5);
 
             /*
             robot.driveAxialVelocity(600, 0, 100,10,true,false);
@@ -147,9 +144,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
             //Finding the first SkyStone
             robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
             robot.driveLateralVelocity(330, 0, 600, 4, true, false);
-
+            robot.sleepAndHoldHeading(0,0.5);
             //Determine the position of the SkyStone
-            if (nav.waitForTarget(2)) {
+            if (nav.waitForTarget(1)) {
                 RobotLog.ii(TAG, String.format("Nav X:Y %5.0f:%5.0f ", nav.robotX, nav.robotY));
 
                 if (nav.robotY > 100) {
@@ -165,10 +162,14 @@ public class GFORCE_Autonomous extends LinearOpMode {
             //Get the first SkyStone if we found it
             if (skyStonePosition > 0) {
                 //Getting and placing the first SkyStone
-                double axialDistance = (300 - nav.robotY);
-                double lateralDistance = Math.abs(nav.robotX) -300;
-                robot.driveBlind(600, axialDistance, 600, lateralDistance,0,5);
+                double axialDistance = (390 - nav.robotY);
+                double lateralDistance = Math.abs(nav.robotX) - 170;
+                robot.driveLateralVelocity(lateralDistance,0,600,3,true,false);
+                robot.driveAxialVelocity(axialDistance,0,-600,3,true,true);
+                sleep(100);
                 robot.turnToHeading(-135,2);
+                robot.sleepAndHoldHeading(-135,1);
+
                 robot.runCollectors(0.6,0);
                 robot.transferStone(1);
                 //robot.driveAxialVelocity(475,-110,-400,3, true, true);

@@ -434,6 +434,8 @@ public class GFORCE_Hardware {
 
             myOpMode.telemetry.addData("Blind Move", "A:L:H %5.2f %5.2f %3.0f", axialMotion, lateralMotion, heading);
             myOpMode.telemetry.update();
+            RobotLog.ii(TAG, String.format("MB Ap,Av Lp,Lv %5.0f,%5.0f %5.0f,%5.0f ",
+                                           axialMotion, driveAxial, lateralMotion, driveLateral));
         }
         stopRobot();
     }
@@ -589,6 +591,14 @@ public class GFORCE_Hardware {
             updateMotion();
 
             inPosition = setYawVelocityToHoldHeading(heading);
+
+            //Brake if velocity is too high
+            if (Math.abs(rightFrontDrive.getVelocity()) > Math.abs(driveYaw)) {
+                driveYaw = 0;
+            }
+
+
+
             moveRobotVelocity();
             showEncoders();
 

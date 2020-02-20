@@ -324,12 +324,16 @@ public class GFORCE_Navigation
         resetTargetAverages();
         while (myOpMode.opModeIsActive() && !targetAverageAvailable && (navTime.time() < timeout)) {
             targetIsVisible(0);
+            RobotLog.ii(TAG, String.format("WFT Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
+
             myRobot.setYawVelocityToHoldHeadingWithUpdate();
             myRobot.moveRobotVelocity();
             showNavTelemetry(true);
 
-            RobotLog.ii(TAG, String.format("Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
         }
+
+        RobotLog.ii(TAG, String.format("WFT Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
+
         myRobot.stopRobot();
         showNavTelemetry(true);
 
