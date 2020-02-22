@@ -66,6 +66,7 @@ public class GFORCE_Navigation
 
     // Constants
     static final String TAG = "NAV";
+    static final boolean LOGGING = false;
 
     private static final int     MAX_TARGETS         =  13;
     private static final double  ON_AXIS             =  10;      // Within 1 cm of centerline
@@ -131,111 +132,6 @@ public class GFORCE_Navigation
         // myOpMode.telemetry.addData("Gyro", "%6.1f°", myRobot.getHeading()  );
     }
 
-    /***
-     *  Lock onto target and track to desired standoff position in front of image
-     * @param targetID          Vuforia Target Index
-     * @param standOffDistance  Desired target distance in mm
-     * @param axialDrift        Default motion if no image found
-     * @param timeOutSEC        Max time to acquire target
-     * @return
-     */
-    public boolean acquireTarget(int targetID, double standOffDistance, double axialDrift, double timeOutSEC){
-        navTime.reset();
-        while (myOpMode.opModeIsActive() && !atTarget(targetID, standOffDistance, axialDrift) && (navTime.time() < timeOutSEC)) {
-
-            myOpMode.telemetry.addData("Path", myRobot.autoPathName);
-            myOpMode.telemetry.addData("Acquire Targ" , "Elapsed Time %3.1f", navTime.time());
-            myOpMode.telemetry.update();
-        }
-        myRobot.stopRobot();
-        myOpMode.telemetry.update();
-
-       //return true if we saw the target
-        return (navTime.time() < timeOutSEC);
-    }
-
-    /***
-     * Start tacking Vuforia images
-     */
-    public void activateTracking() {
-
-        /** Start tracking the data sets we care about. */
-        if (targetsSkyStone != null)
-            targetsSkyStone.activate();
-    }
-
-    /***
-     *  Determines drive required to get in front of target (on X axis) and away by STANDOFF_DISTANCE
-     * @param targetID
-     * @param standOffDistance
-     * @param axialDrift
-     * @return
-     */
-    boolean atTarget(int targetID, double standOffDistance, double axialDrift) {
-        boolean closeEnough = false;
-
-        // In this mode the robot attempts to get in front of target (on X axis) and away by STANDOFF_DISTANCE
-        if (targetIsVisible(targetID))
-        {
-            addNavTelemetry();
-            closeEnough = targetDirections(standOffDistance);
-        }
-        else
-        {
-            // Drive slowly forward
-            myRobot.setAxialVelocity(axialDrift);
-            myRobot.setLateralVelocity(0);
-            myRobot.setYawVelocity(0);
-        }
-        myRobot.moveRobotVelocity();
-        return closeEnough;
-    }
-
-    /***
-     *  Strafes across the field looking for a target image.  Stop when see target
-     */
-    public boolean findTarget(double mm, double vel,  double heading, double timeOutSEC, boolean flipOnBlue) {
-        boolean         targetLock = false;
-        double          absMm = Math.abs(mm);
-
-        // Reverse axial directions for blue autonomous if flipOnBlue is true
-        if ((myRobot.allianceColor == GFORCE_Hardware.AllianceColor.BLUE) && flipOnBlue) {
-            vel = -vel;
-        }
-
-        // If we are moving backwards, set vel negative
-        if ((mm * vel) < 0.0) {
-            vel = -Math.abs(vel);
-        } else {
-            vel = Math.abs(vel);
-        }
-
-        navTime.reset();
-        //Save the current position
-        myRobot.startMotion();
-
-        myRobot.setLateralVelocity(0);
-        myRobot.setAxialVelocity(vel);
-
-        targetLock = targetIsVisible(0);
-
-        while (myOpMode.opModeIsActive() &&
-                 !targetLock &&
-                 myRobot.updateMotion() &&
-                (Math.abs(myRobot.axialMotion) < absMm) &&
-                (navTime.time() <  timeOutSEC)){
-
-            myRobot.setYawVelocityToHoldHeading(heading);
-            myRobot.moveRobotVelocity();
-
-            targetLock = targetIsVisible(0);
-            showNavTelemetry(true);
-        }
-
-        myRobot.stopRobot();
-        return (targetLock);
-    }
-
      /* Initialize standard Hardware interfaces */
     public void init(LinearOpMode opMode, GFORCE_Hardware robot) {
 
@@ -245,8 +141,6 @@ public class GFORCE_Navigation
 
         /*
          * Configure Vuforia by creating a Parameter object, and passing it to the Vuforia engine.
-         * We can pass Vuforia the handle to a camera preview resource (on the RC phone);
-         * If no camera monitor is desired, use the parameter-less constructor instead (commented out below).
          */
         // int cameraMonitorViewId = myOpMode.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", myOpMode.hardwareMap.appContext.getPackageName());
         // VuforiaLocalizer.Parameters parameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
@@ -267,36 +161,12 @@ public class GFORCE_Navigation
         VuforiaTrackable stoneTarget = targetsSkyStone.get(0);
         stoneTarget.setName("Stone Target");
 
-        /**
-         * In order for localization to work, we need to tell the system where each target is on the field, and
-         * where the phone resides on the robot.  These specifications are in the form of <em>transformation matrices.</em>
-         * Transformation matrices are a central, important concept in the math here involved in localization.
-         * See <a href="https://en.wikipedia.org/wiki/Transformation_matrix">Transformation Matrix</a>
-         * for detailed information. Commonly, you'll encounter transformation matrices as instances
-         * of the {@link OpenGLMatrix} class.
-         *
-         * If you are standing in the Red Alliance Station looking towards the center of the field,
-         *     - The X axis runs from your left to the right. (positive from the center to the right)
-         *     - The Y axis runs from the Red Alliance Station towards the other side of the field
-         *       where the Blue Alliance Station is. (Positive is from the center, towards the BlueAlliance station)
-         *     - The Z axis runs from the floor, upwards towards the ceiling.  (Positive is above the floor)
-         *
-         * Before being transformed, each target image is conceptually located at the origin of the field's
-         *  coordinate system (the center of the field), facing up.
-         */
-
         // Set the position of the Stone Target.  Since it's not fixed in position, assume it's at the field origin.
         // Rotated it to to face forward, and raised it to sit on the ground correctly.
         // This can be used for generic target-centric approach algorithms
         stoneTarget.setLocation(OpenGLMatrix
                 .translation(0, 0, stoneZ)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, XYZ, DEGREES, 90, 0, -90)));
-
-        //
-        // Create a transformation matrix describing where the phone is on the robot.
-        // The phone starts out lying flat, with the screen facing Up and with the physical top of the phone
-        // pointing to the LEFT side of the Robot.
-        // The two examples below assume that the camera is facing forward out the front of the robot.
 
         // We need to rotate the camera around it's long axis to bring the correct camera forward.
         if (CAMERA_CHOICE == FRONT) {
@@ -313,8 +183,8 @@ public class GFORCE_Navigation
         // Next, translate the camera lens to where it is on the robot.
         // In this example, it is centered (left to right), but forward of the middle of the robot, and above ground level.
         final float CAMERA_FORWARD_DISPLACEMENT  = 0;    // eg: Camera is 00 mm behind the robot origin (front edge for grabbing SkyStone)
-        final float CAMERA_VERTICAL_DISPLACEMENT = 100;   // eg: Camera is 100 mm above ground
         final float CAMERA_LEFT_DISPLACEMENT     = 0;     // eg: Camera is ON the robot's center line
+        final float CAMERA_VERTICAL_DISPLACEMENT = 100;   // eg: Camera is 100 mm above ground
 
         OpenGLMatrix robotFromCamera = OpenGLMatrix
                 .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
@@ -325,7 +195,6 @@ public class GFORCE_Navigation
         targetsSkyStone.activate();
     }
 
-
     public boolean waitForTarget(double timeout) {
         navTime.reset();
         resetTargetAverages();
@@ -334,7 +203,6 @@ public class GFORCE_Navigation
             myRobot.setYawVelocityToHoldHeadingWithUpdate();
             myRobot.moveRobotVelocity();
             showNavTelemetry(true);
-
         }
         myRobot.stopRobot();
         showNavTelemetry(true);
@@ -418,10 +286,10 @@ public class GFORCE_Navigation
                         targetAverageAvailable = true;
                     }
                 }
-                RobotLog.ii(TAG, String.format("TIF NEW: Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
+                if (LOGGING) RobotLog.ii(TAG, String.format("TIV NEW: Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
             }
             else {
-                RobotLog.ii(TAG, String.format("TIF OLD: Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
+                if (LOGGING) RobotLog.ii(TAG, String.format("TIV OLD: Time=%5.3f robotX=%5.0f robotY=%5.0f ", navTime.time(), robotX, robotY));
             }
             targetFound = true;
         }

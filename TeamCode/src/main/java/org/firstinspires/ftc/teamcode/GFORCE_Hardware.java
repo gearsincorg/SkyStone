@@ -25,8 +25,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
-// Temporary
-
 import java.util.List;
 
 public class GFORCE_Hardware {
@@ -37,6 +35,8 @@ public class GFORCE_Hardware {
     }
 
     public static final String TAG = "Hardware";
+    public static final boolean LOGGING = false;  // Set to true to add data to logfile
+
 
     /* Public OpMode members. */
     public AllianceColor allianceColor = AllianceColor.UNKNOWN_COLOR;
@@ -176,7 +176,6 @@ public class GFORCE_Hardware {
     private double liftSetpoint = LIFT_START_ANGLE;
 
     private int timeoutSoundID = 0;
-    public String autoPathName = "";
 
     /* local OpMode members. */
     private ElapsedTime runTime = new ElapsedTime();
@@ -255,7 +254,6 @@ public class GFORCE_Hardware {
         imu.initialize(parameters);
         setHeading(lastHeading);
 
-
         //Set the mode of the motors
         setDriveMode(DcMotor.RunMode.RUN_USING_ENCODER);
         leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -294,7 +292,7 @@ public class GFORCE_Hardware {
      * @param timeOutSec
      * @return
      */
-    public boolean driveAxialVelocity(double mm, double heading, double vel, double timeOutSec, boolean hardBreak, boolean flipOnBlue) {
+    public boolean driveAxialVelocity(double mm, double heading, double vel, double timeOutSec, boolean flipOnBlue) {
         double endingTime = runTime.seconds() + timeOutSec;
         double absMm = Math.abs(mm);
 
@@ -320,7 +318,7 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() && updateMotion() &&
                 (Math.abs(axialMotion) < absMm) &&
                 (runTime.seconds() < endingTime)) {
-            RobotLog.ii(TAG, String.format("DAV A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+            if (LOGGING) RobotLog.ii(TAG, String.format("DAV A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
             setAxialVelocity(getProfileVelocity(vel, getAxialMotion(), absMm));
             setLateralVelocity(-lateralMotion);  // Reverse any drift
             setYawVelocityToHoldHeading(heading);
@@ -332,9 +330,12 @@ public class GFORCE_Hardware {
         updateMotion();
         RobotLog.ii(TAG, String.format("DAV Last A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
-
         // Return true if we have not timed out
-        return (runTime.seconds() < endingTime);
+        boolean success = (runTime.seconds() < endingTime) ;
+        if (!success) {
+            playTimoutSound();
+        }
+        return (success);
     }
 
     /**
@@ -346,7 +347,7 @@ public class GFORCE_Hardware {
      * @param timeOutSec
      * @return
      */
-    public boolean driveLateralVelocity(double mm, double heading, double vel, double timeOutSec, boolean hardBreak, boolean flipOnBlue) {
+    public boolean driveLateralVelocity(double mm, double heading, double vel, double timeOutSec, boolean flipOnBlue) {
 
         double endingTime = runTime.seconds() + timeOutSec;
         double absMm = Math.abs(mm);
@@ -373,7 +374,7 @@ public class GFORCE_Hardware {
         while (myOpMode.opModeIsActive() && updateMotion() &&
                 (Math.abs(lateralMotion) < absMm) &&
                 (runTime.seconds() < endingTime)) {
-            RobotLog.ii(TAG, String.format("DLV A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
+            if (LOGGING) RobotLog.ii(TAG, String.format("DLV A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
             setAxialVelocity(-axialMotion);  //  Reverse any drift
             setLateralVelocity(getProfileVelocity(vel, getLateralMotion(), absMm));
             setYawVelocityToHoldHeading(heading);
@@ -385,48 +386,12 @@ public class GFORCE_Hardware {
         RobotLog.ii(TAG, String.format("DLV Last A:L %5.0f:%5.0f ", axialMotion, lateralMotion));
 
         // Return true if we have not timed out
-        return (runTime.seconds() < endingTime);
+        boolean success = (runTime.seconds() < endingTime) ;
+        if (!success) {
+            playTimoutSound();
+        }
+        return (success);
     }
-
-    /*
-    public void driveBlind(double axialV, double axialD, double lateralV, double lateralD, double heading, double timeOutSEC) {
-        double absAxialMm = Math.abs(axialD);
-        double absLateralMm = Math.abs(lateralD);
-
-        // If we are moving backwards, set vel negative
-        if ((absAxialMm * axialV) < 0.0) {
-            axialV = -Math.abs(axialV);
-        } else {
-            axialV = Math.abs(axialV);
-        }
-
-        // If we are moving backwards, set vel negative
-        if ((absLateralMm * lateralV) < 0.0) {
-            lateralV = -Math.abs(lateralV);
-        } else {
-            lateralV = Math.abs(lateralV);
-        }
-
-        startMotion();
-        navTime.reset();
-        while (myOpMode.opModeIsActive() && updateMotion() &&
-                (navTime.time() <  timeOutSEC) &&
-                !((Math.abs(lateralMotion) > absLateralMm) && (Math.abs(axialMotion) > absAxialMm)) ){
-
-            setAxialVelocity(getProfileVelocity(axialV, getAxialMotion(), absAxialMm));
-            setLateralVelocity(getProfileVelocity(lateralV, getLateralMotion(), absLateralMm));
-            setYawVelocityToHoldHeadingWithUpdate(heading);
-            moveRobotVelocity();
-            showEncoders();
-
-            myOpMode.telemetry.addData("Blind Move", "A:L:H %5.2f %5.2f %3.0f", axialMotion, lateralMotion, heading);
-            myOpMode.telemetry.update();
-            RobotLog.ii(TAG, String.format("MB Ap,Av Lp,Lv %5.0f,%5.0f %5.0f,%5.0f ",
-                                           axialMotion, driveAxial, lateralMotion, driveLateral));
-        }
-        stopRobot();
-    }
-    */
 
     //
     public double getProfileVelocity(double topVel, double dTraveled, double dGoal) {
@@ -464,7 +429,7 @@ public class GFORCE_Hardware {
         // Make sure the final velocity sign is correct.
         profileVelocity = Range.clip(profileVelocity, 0, absTopVel) * Math.signum(topVel);
 
-        Log.d(TAG, String.format("GVP T:V:D:A %5.3f %4.2f %5.2f %5.2f",
+        if (LOGGING) Log.d(TAG, String.format("GVP T:V:D:A %5.3f %4.2f %5.2f %5.2f",
                  getMotionTime(), profileVelocity, absdTraveled, currentVel / AXIAL_ENCODER_COUNTS_PER_MM));
 
         return (profileVelocity);
@@ -480,14 +445,12 @@ public class GFORCE_Hardware {
                 module.clearBulkCache();
             }
 
-            encoderLF = leftFrontDrive.getCurrentPosition();
-            encoderRF = rightFrontDrive.getCurrentPosition();
-            encoderLB = leftBackDrive.getCurrentPosition();
-            encoderRB = rightBackDrive.getCurrentPosition();
-
-            encoderLLift = leftLift.getCurrentPosition();
-            encoderRLift = rightLift.getCurrentPosition();
-
+            encoderLF =         leftFrontDrive.getCurrentPosition();
+            encoderRF =         rightFrontDrive.getCurrentPosition();
+            encoderLB =         leftBackDrive.getCurrentPosition();
+            encoderRB =         rightBackDrive.getCurrentPosition();
+            encoderLLift =      leftLift.getCurrentPosition();
+            encoderRLift =      rightLift.getCurrentPosition();
             leftLimitTripped = !leftLimit.getState();
             rightLimitTripped = !rightLimit.getState();
 
@@ -495,7 +458,7 @@ public class GFORCE_Hardware {
             rightLiftAngle = (encoderRLift / LIFT_COUNTS_PER_DEGREE) + LIFT_START_ANGLE;
             liftAngle = (leftLiftAngle + rightLiftAngle) / 2;
 
-            currentHeading = getHeading();
+            getHeading();
 
             intervalCycle = cycleTime.milliseconds() - lastCycle;
             lastCycle = cycleTime.milliseconds();
@@ -526,7 +489,6 @@ public class GFORCE_Hardware {
         axialMotion /= AXIAL_ENCODER_COUNTS_PER_MM;
         lateralMotion = ((-deltaLeftBack + deltaLeftFront + deltaRightBack - deltaRightFront) / 4);
         lateralMotion /= LATERAL_ENCODER_COUNTS_PER_MM;
-
         return (true);
     }
 
@@ -558,25 +520,15 @@ public class GFORCE_Hardware {
         boolean inPosition = false;  // needed to run at least one control cycle.
         boolean timedOut = false;
 
-
-        /*
-        Verify this, but heading is not reversed because robot orientation is flipped 180
-        Reverse heading if alliance color is blue and flipOnBlue is true
-        if ((allianceColor == AllianceColor.BLUE) && flipOnBlue) {
-            heading = -heading;
-            }
-        */
-
         setHeadingSetpoint(heading);
         setAxialVelocity(0);
         setLateralVelocity(0);
         navTime.reset();
 
         while (myOpMode.opModeIsActive() &&
+                updateMotion() &&
                 (navTime.time() < timeOutSEC) &&
                 (!inPosition || waitFullTimeout)) {
-
-            updateMotion();
 
             inPosition = setYawVelocityToHoldHeading(heading);
 
@@ -606,7 +558,6 @@ public class GFORCE_Hardware {
 
     public void resetEncoders() {
         setDriveMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        //arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
     public void showEncoders() {
@@ -682,7 +633,7 @@ public class GFORCE_Hardware {
         double error = normalizeHeading(headingSetpoint - currentHeading);
         double yaw = Range.clip(error * HEADING_GAIN, -0.25, 0.25);
 
-        RobotLog.ii(TAG, String.format("sYVTHH SP:CH:Y %6.3f %6.3f %6.3f" , headingSetpoint, currentHeading, yaw));
+        if (LOGGING) RobotLog.ii(TAG, String.format("sYVTHH SP:CH:Y %6.3f %6.3f %6.3f" , headingSetpoint, currentHeading, yaw));
 
         setYawVelocity(yaw * AUTO_ROTATION_DPS);
         return (Math.abs(error) < YAW_IS_CLOSE);
@@ -842,7 +793,6 @@ public class GFORCE_Hardware {
                 setRedSkystoneGrabber(position);
                 break;
         }
-
     }
 
     //Grabbing the Foundation
@@ -855,7 +805,6 @@ public class GFORCE_Hardware {
             foundationGrabberLeft.setPosition(FOUNDATION_SAFE_L);
             foundationGrabberRight.setPosition(FOUNDATION_SAFE_R);
         }
-
         foundationGrabbed = grab;
     }
 
@@ -1188,11 +1137,9 @@ public class GFORCE_Hardware {
         if ((rightPower < 0) && rightLimitTripped) {
             rightPower = 0;
         }
-
  */
 
         liftInPosition = (Math.abs(leftLiftError + rightLiftError) < LIFT_IN_LIMIT);
-
         leftLift.setPower(leftPower);
         rightLift.setPower(rightPower);
     }
