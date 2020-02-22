@@ -80,18 +80,14 @@ public class GFORCE_Hardware {
     public final double LATERAL_GAIN        = 0.0025; // Distance from x axis that we start to slow down. 0027
     public final double AXIAL_GAIN          = 0.0015; // Distance from target that we start to slow down. 0017
 
-    public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 100) / (10 * 360) ;  // 10-100 gear reduction
-
-    public final double LIFT_START_ANGLE         =  10;  //
-
     // SERVO CONSTANTS
     public final double STONE_OPEN               = 0.5;
     public final double STONE_CLOSE              = 0;
     public final double CAPSTONE_HOLD           = 0.55;
     public final double CAPSTONE_RELEASE        = 0.3;
-    public final double STONE_EXTEND            = 0.72;   // .71 then .74
+    public final double STONE_EXTEND            = 0.72;
     public final double STONE_EXTRA             = 1.00;
-    public final double STONE_RETRACT           = 0.26;  // .25
+    public final double STONE_RETRACT           = 0.27;  // .25
     public final double FOUNDATION_SAFE_R = 0.5;
     public final double FOUNDATION_SAFE_L = 0.5;
     public final double FOUNDATION_DOWN_R = 0.2;   // .1
@@ -109,19 +105,21 @@ public class GFORCE_Hardware {
     final double AXIAL_ENCODER_COUNTS_PER_MM   = 0.958; // was 0.8602
     final double LATERAL_ENCODER_COUNTS_PER_MM = 0.958;  // was 0.9134
 
+
     final double LIFT_GAIN          = 0.1;
     final double LIFT_IN_LIMIT      = 2;
-    final double LIFT_UPPER_LIMIT   = 45;
+    final double LIFT_UPPER_LIMIT   = 55;
     final double LIFT_LOWER_LIMIT   = 10;
-    final double LIFT_MID_SETPOINT  = 26;
-    final double LIFT_HIGH_SETPOINT = LIFT_UPPER_LIMIT ;
+    final double LIFT_MID_SETPOINT  = 30;
+    final double LIFT_HIGH_SETPOINT = LIFT_UPPER_LIMIT - 1 ;
 
+    // public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 2 * 94) / (26 * 360) ;  // 24-96 gear reduction
+    public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 2 * 90) / (30 * 360) ;  // 30-90 gear reduction
+    public final double LIFT_START_ANGLE         =  LIFT_LOWER_LIMIT;  //
 
     final double COLLECTOR_RELEASE  = 5.0;  // Lift by this amount to release collector
-    final double RAISE_POWER = 0.9;
-    final double AUTO_LOWER_POWER = -0.8;
-
-
+    final double AUTO_RAISE_POWER = 0.9;
+    final double AUTO_LOWER_POWER = -0.6;
 
     // Robot states that we share with others
     public double axialMotion = 0;
@@ -868,8 +866,8 @@ public class GFORCE_Hardware {
             stoneGrab.setPosition(STONE_CLOSE);
         } else {
             stoneGrab.setPosition(STONE_OPEN);
+            stoneInGrasp = false;
         }
-        stoneInGrasp = grab;
     }
 
     public void transferStone(double transferSpeed) {
@@ -951,7 +949,7 @@ public class GFORCE_Hardware {
 
             case WAITING_FOR_STONE:
                 // check for transfer complete event
-                if (craneTime.time() > 1.25) {
+                if (craneTime.time() > 1.4) {
                     transferStone(0);
                     grabStone(true);
                     craneTime.reset();
@@ -976,6 +974,7 @@ public class GFORCE_Hardware {
                 if (craneTime.time() > 0.5) {
                     craneState = CraneControl.STONE_GRABBED;
                     runCollectors(0,0);
+                    stoneInGrasp = true;
                 }
                 break;
 
@@ -1118,7 +1117,12 @@ public class GFORCE_Hardware {
                     liftSetpoint = liftAngle - 2 - (2 * liftTime.time());  // speed up lift over time;
                 }
                 else {
-                    liftTime.reset();  //
+                    liftTime.reset();
+
+                    // Run lift using left Joystick
+                    if(Math.abs(myOpMode.gamepad2.left_stick_y) > 0.1 ) {
+                        liftSetpoint -= (myOpMode.gamepad2.left_stick_y * 1.5);  // speed up lift over time;
+                    }
                 }
 
                 setLiftPower();
@@ -1155,8 +1159,10 @@ public class GFORCE_Hardware {
         // Determine lift position error
         double leftLiftError = liftSetpoint - leftLiftAngle;
         double rightLiftError = liftSetpoint - rightLiftAngle;
-        leftPower = Range.clip(leftLiftError * LIFT_GAIN, AUTO_LOWER_POWER, RAISE_POWER);
-        rightPower = Range.clip(rightLiftError * LIFT_GAIN, AUTO_LOWER_POWER, RAISE_POWER);
+
+        leftPower = Range.clip(leftLiftError * LIFT_GAIN, AUTO_LOWER_POWER, AUTO_RAISE_POWER);
+        rightPower = Range.clip(rightLiftError * LIFT_GAIN, AUTO_LOWER_POWER, AUTO_RAISE_POWER);
+
 /*
         if ((leftPower < 0) && leftLimitTripped) {
             leftPower = 0;
@@ -1177,8 +1183,8 @@ public class GFORCE_Hardware {
     public boolean extendJustClicked() {
         boolean clicked = false;
 
-        clicked = (myOpMode.gamepad2.x && !lastExtend);
-        lastExtend = myOpMode.gamepad2.x;
+        clicked = (myOpMode.gamepad2.a && !lastExtend);
+        lastExtend = myOpMode.gamepad2.a;
         return (clicked);
     }
 }

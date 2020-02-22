@@ -186,6 +186,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 robot.runCollector(0);
                 robot.driveAxialVelocity(1200 + (200 * skyStonePosition),-180,1200,4,true,true);
                 robot.grabStone(true);
+                robot.stoneInGrasp = true;
                 robot.turnToHeading(-270,2);
                 robot.transferStone(0);
                 robot.driveAxialVelocity(300,-270,200,1,true,true);
@@ -198,8 +199,9 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 robot.extendStone(false);
                 robot.driveAxialVelocity(600,-270,-600,4,true,true);
                 robot.turnToHeading(-180,4);
-                robot.driveAxialVelocity(200,-180,300,1,true,true);
                 robot.grabFoundation(false);
+                robot.driveAxialVelocity(200,-180,300,1,true,true);
+                robot.driveAxialVelocity(1200,-180,-1000,2,true,true);
 
             }
             /*

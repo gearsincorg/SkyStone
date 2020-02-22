@@ -143,7 +143,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
                 robot.setLiftSetpoint(robot.LIFT_MID_SETPOINT);
             }
 
-            if (gamepad2.a) {
+            if (gamepad2.x) {
                 robot.setLiftSetpoint(robot.LIFT_LOWER_LIMIT);
             }
 
@@ -152,72 +152,4 @@ public class GFORCE_TeleOp extends LinearOpMode {
         }
 
     }
-
-
-
-
-    //Lift Code
-    /*
-    private void controlBlockScoring() {
-        double heightError = 0;
-
-        if (gamepad2.back && gamepad2.start) {
-            robot.leftLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            robot.rightLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        }
-
-        if (gamepad2.y) {
-            robot.leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            robot.rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            robot.leftLift.setPower(-0.10);
-            robot.rightLift.setPower(0);
-        } else if (gamepad2.a) {
-            robot.leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            robot.rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            robot.leftLift.setPower(0);
-            robot.rightLift.setPower(-0.10);
-
-        } else if (gamepad2.dpad_up && (robot.leftLiftAngle < 42)) {
-            robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            robot.leftLift.setPower(1);
-            robot.rightLift.setPower(1);
-
-        } else if (gamepad2.dpad_down && (robot.leftLiftAngle > 10)) {
-            robot.leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            robot.rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            if (robot.leftLiftAngle > 15) {
-                robot.leftLift.setPower(-0.9);
-                robot.rightLift.setPower(-0.9);
-            } else {
-                robot.leftLift.setPower(-0.3);
-                robot.rightLift.setPower(-0.3);
-            }
-
-        } else {
-            // Try to keep the block level if it is up in the air.
-            if (robot.leftLiftAngle > 12) {
-                robot.leftLift.setPower(0.0);
-                heightError = (robot.leftLiftAngle - robot.rightLiftAngle);
-
-                if (heightError > 0.1) {
-                    robot.rightLift.setPower(0.1);
-                }
-                else if (heightError <  -0.1) {
-                    robot.rightLift.setPower(-0.1);
-                }
-                else {
-                    robot.rightLift.setPower(0);
-                }
-            }
-            else {
-                robot.leftLift.setPower(0.0);
-                robot.rightLift.setPower(0.0);
-            }
-        }
-
-    }
-    */
 }
