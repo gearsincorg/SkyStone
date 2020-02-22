@@ -29,7 +29,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 import java.util.List;
 
-
 public class GFORCE_Hardware {
     public static enum AllianceColor {
         UNKNOWN_COLOR,
@@ -1129,25 +1128,43 @@ public class GFORCE_Hardware {
                 break;
 
             case HOME_RAISING:
-                if (liftInPosition) {
+                if (liftInPosition || (liftTime.time() > 1.0)) {
+                    leftLift.setPower(0);
+                    rightLift.setPower(0);
+                    leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    rightLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    liftTime.reset();
                     liftState = LiftControl.HOME_LOWERING;
+                } else {
+                    setLiftPower();
                 }
-                setLiftPower();
                 break;
 
             case HOME_LOWERING:
                 leftLift.setPower(leftLimitTripped ? 0 : -0.20);
                 rightLift.setPower(rightLimitTripped ? 0 : -0.20);
 
-                if (leftLimitTripped && rightLimitTripped) {
-                    liftState = LiftControl.AUTO;
+                if ((leftLimitTripped && rightLimitTripped) || (liftTime.time() > 2.0)) {
                     leftLift.setPower(0);
                     rightLift.setPower(0);
                     zeroLiftEncoders ();
                     liftSetpoint = LIFT_LOWER_LIMIT;
+                    leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                    liftState = LiftControl.AUTO;
                 }
         }
     }
+
+    public void releaseCollectorArms() {
+        liftSetpoint += COLLECTOR_RELEASE;
+        liftState = LiftControl.HOME_RAISING;
+        liftTime.reset();  //
+
+        while (liftState != LiftControl.AUTO) {
+            runLiftControl();
+        }
+    };
 
     private void setLiftPower () {
         double leftPower = 0;

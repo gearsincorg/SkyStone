@@ -142,9 +142,10 @@ public class GFORCE_Autonomous extends LinearOpMode {
         //Are we doing any SkyStones?
         if (autoConfig.autoOptions.scoreFirstSkyStone || autoConfig.autoOptions.scoreBothSkyStones) {
 
-            //Finding the first SkyStone
+            // Move to where you should be able to see skystones 2 or 3 and release collectors
             robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
             robot.driveLateralVelocity(500, 0, 600, 4, true, false);
+            robot.releaseCollectorArms();
 
             if (nav.waitForTarget(0.25)) {
                 double blockCenter = 220 - nav.robotY ;  // Offset from tile center
@@ -164,8 +165,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 }
             }
 
-
-            //Get the first SkyStone if we found it
+            //Get the SkyStone if we found it
             if (skyStonePosition > 0) {
                 //Getting and placing the first SkyStone
                 double axialDistance = (390 - nav.robotY);
@@ -175,15 +175,17 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 sleep(100);
                 robot.turnToHeading(-135,2);
                 robot.sleepAndHoldHeading(-135,1);
-
                 robot.transferStone(1);
                 robot.runCollector(1);
+
+                // Collect Skystone
                 robot.driveAxialVelocity(400,-135,-300,2, true, true);
-                // robot.sleepAndHoldHeading(-135,0.5);  // eliminate ??
                 robot.driveAxialVelocity(400,-135,400,2,true,true);
                 robot.runCollector(0.25);
                 robot.turnToHeading(-180,2);
                 robot.runCollector(0);
+
+                // Drive to Foundation
                 robot.driveAxialVelocity(1200 + (200 * skyStonePosition),-180,1200,4,true,true);
                 robot.grabStone(true);
                 robot.stoneInGrasp = true;
@@ -191,98 +193,52 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 robot.transferStone(0);
                 robot.driveAxialVelocity(300,-270,200,1,true,true);
                 robot.transferStone(0);
+
+                // Place stone on foundation
                 robot.extendStone(true);
                 sleep(750);
-                robot.grabFoundation(true);
+
+                // Are we moving foundation
+                if (autoConfig.autoOptions.moveFoundation) {
+                    robot.grabFoundation(true);
+                }
+
+                // Release stone and retract shuttle
                 robot.grabStone(false);
                 sleep(500);
                 robot.extendStone(false);
-                robot.driveAxialVelocity(600,-270,-600,4,true,true);
-                robot.turnToHeading(-180,4);
-                robot.grabFoundation(false);
-                robot.driveAxialVelocity(200,-180,300,1,true,true);
-                robot.driveAxialVelocity(1200,-180,-1000,2,true,true);
 
-            }
-            /*
-                robot.driveAxialVelocity(900 + (skyStonePosition * 200), 0, -1200, 20, true, true);
-                robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-                robot.sleepAndHoldHeading(0, 0.5);
+                // Are we moving the foundation?
+                if (autoConfig.autoOptions.moveFoundation) {
+                    // Pull foundation towards driver station and turn it to back wall
+                    robot.driveAxialVelocity(600, -270, -600, 4, true, true);
+                    robot.turnToHeading(-180, 4);
 
-                // Getting and placing second SkyStone if requested
-                if (autoConfig.autoOptions.scoreBothSkyStones) {
-                    robot.driveAxialVelocity(1500 + (skyStonePosition * 200), 0, 1500, 20, true, true);
+                    // Release foundation and push against back wall
+                    robot.grabFoundation(false);
+                    robot.driveAxialVelocity(200, -180, 300, 1, true, true);
 
-                    //Drive closer to see the target
-                    //robot.driveLateralVelocity(50, 0, 600, 2, true, false);
-
-                    //Get the second SkyStone if we found it
-                    if (nav.waitForTarget(1)) {
-                        driveAndGrabBlock();
-                        robot.driveAxialVelocity(1400 + (skyStonePosition * 200), 0, -1200, 20, true, true);
-                        robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-
-                        //Parking under the bridge if requested regardless of if we did both SkyStones
-                        if (autoConfig.autoOptions.park) {
-                            holdForPark();
-                            if (autoConfig.autoOptions.parkCloseToWall) {
-                                //park near Wall
-                                robot.driveLateralVelocity(600, 0, -500, 4, true,false);
-                                robot.driveAxialVelocity(300, 0, 600, 4, true, true);
-                            } else {
-                                //park near bridge code
-                                robot.driveAxialVelocity(300, 0, 600, 4, true, true);
-                            }
+                    // Are we parking?  Where?
+                    if (autoConfig.autoOptions.park) {
+                        if (autoConfig.autoOptions.parkCloseToWall) {
+                            robot.driveLateralVelocity(500, -180, 600, 3, true,false);
+                        } else {
+                            robot.driveLateralVelocity(-700, -180, 600, 3, true,false);
                         }
-                    } else {
-
-                        //If we didn't find the second SkyStone
-                        if (autoConfig.autoOptions.park) {
-                            holdForPark();
-                            if (autoConfig.autoOptions.parkCloseToWall) {
-                                //park near Wall
-                                robot.driveLateralVelocity(750, 0, -500, 4, true,false);
-                                robot.driveAxialVelocity(1400, 0, -1000, 6, true, true);
-                            } else {
-                                //park near bridge code
-                                robot.driveAxialVelocity(1400, 0, -1000, 6, true, true);
-                            }
-                        }
+                        robot.driveAxialVelocity(1200, -180, -1000, 2, true, true);
                     }
                 } else {
-
-                    //If we only decided to find and place one SkyStone
                     if (autoConfig.autoOptions.park) {
-                        holdForPark();
                         if (autoConfig.autoOptions.parkCloseToWall) {
-                            //park near Wall
-                            robot.driveLateralVelocity(600, 0, -500, 4, true,false);
-                            robot.driveAxialVelocity(750, 0, 600, 5, true, true);
+                            robot.driveAxialVelocity(800, -270, -600, 4, true, true);
                         } else {
-                            //park near bridge code
-                            robot.driveAxialVelocity(750, 0, 600, 5, true, true);
+                            robot.driveAxialVelocity(150, -270, -600, 4, true, true);
                         }
-                    }
-                }
-            } else {
-
-                //We did not see ANY SkyStones
-                if (autoConfig.autoOptions.park) {
-                    holdForPark();
-                    if (autoConfig.autoOptions.parkCloseToWall) {
-                        //park near Wall
-                        robot.driveLateralVelocity(750, 0, -500, 4, true,false);
-                        robot.driveAxialVelocity(900, 0, -1250, 4, true, true);
-                    }
-                    else {
-                        //park near bridge code
-                        robot.driveLateralVelocity(150, 0, -600, 3, true, false);
-                        robot.driveAxialVelocity(900, 0, -1250, 4, true, true);
+                        robot.turnToHeading(-180, 2);
+                        robot.driveAxialVelocity(1000, -180, -1000, 2, true, true);
                     }
                 }
             }
-
-             */
         } else {
 
             //Parking under bridge if we choose not to score any SkyStones
@@ -291,11 +247,11 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 if (autoConfig.autoOptions.parkCloseToWall) {
                     //park near Wall
                     robot.driveLateralVelocity(25, 0, 400, 3, true, false);
-                    robot.driveAxialVelocity(400, 0, -400, 4, true, true);
+                    robot.driveAxialVelocity(1300, 0, -400, 4, true, true);
                 } else {
                     //park near bridge code
                     robot.driveLateralVelocity(700, 0, 400, 3, true, false);
-                    robot.driveAxialVelocity(400, 0, -400, 4, true, true);
+                    robot.driveAxialVelocity(1300, 0, -400, 4, true, true);
                 }
             }
         }
@@ -371,4 +327,6 @@ public class GFORCE_Autonomous extends LinearOpMode {
             telemetry.update();
         }
     }
+
+
 }

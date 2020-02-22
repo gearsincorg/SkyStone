@@ -15,15 +15,15 @@ public class GFORCE_TeleOp extends LinearOpMode {
 
     public final double SLOW_AXIAL_JS_SCALE = 0.2;
     public final double NORMAL_AXIAL_JS_SCALE = 0.6;
-    public final double FAST_AXIAL_JS_SCALE = 0.75;
+
 
     public final double SLOW_LATERAL_JS_SCALE = 0.2;
     public final double NORMAL_LATERAL_JS_SCALE = 0.6;
-    public final double FAST_LATERAL_JS_SCALE = 0.75;
+
 
     public final double SLOW_YAW_JS_SCALE = 0.15;
     public final double NORMAL_YAW_JS_SCALE = 0.25;
-    public final double FAST_YAW_JS_SCALE = 0.25;
+
 
 
     private ElapsedTime neutralTime = new ElapsedTime();
