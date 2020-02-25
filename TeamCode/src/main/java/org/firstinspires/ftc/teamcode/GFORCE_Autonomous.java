@@ -122,7 +122,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 robot.driveAxialVelocity(axialDistance,0,-600,3,true);
                 sleep(100);
                 robot.turnToHeading(-135,2);
-                robot.sleepAndHoldHeading(-135,1);
+                // robot.sleepAndHoldHeading(-135,1);
                 robot.transferStone(1);
                 robot.runCollector(1);
 
@@ -134,12 +134,12 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 robot.runCollector(0);
 
                 // Drive to Foundation
-                robot.driveAxialVelocity(1200 + (200 * skyStonePosition),-180,1200,4,true);
+                robot.driveAxialVelocity(1200 + (200 * skyStonePosition),-180,1200,3,true);
                 robot.grabStone(true);
                 robot.stoneInGrasp = true;
-                robot.turnToHeading(-270,2);
+                robot.turnToHeading(-270,1.5);
                 robot.transferStone(0);
-                robot.driveAxialVelocity(300,-270,200,1,true);
+                robot.driveAxialVelocity(400,-270,400,2,true);
                 robot.transferStone(0);
 
                 // Place stone on foundation
@@ -164,7 +164,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
                     // Release foundation and push against back wall
                     robot.grabFoundation(false);
-                    robot.driveAxialVelocity(200, -180, 300, 1, true);
+                    robot.driveAxialVelocity(200, -180, 300, 2, true);
 
                     // Are we parking?  Where?
                     if (autoConfig.autoOptions.park) {
@@ -173,7 +173,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                         } else {
                             robot.driveLateralVelocity(-700, -180, 600, 3,false);
                         }
-                        robot.driveAxialVelocity(1200, -180, -1000, 2,true);
+                        robot.driveAxialVelocity(900, -180, -1000, 3,true);
                     }
                 } else {
                     if (autoConfig.autoOptions.park) {
@@ -183,7 +183,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                             robot.driveAxialVelocity(150, -270, -600, 4,true);
                         }
                         robot.turnToHeading(-180, 2);
-                        robot.driveAxialVelocity(1000, -180, -1000, 2, true);
+                        robot.driveAxialVelocity(900, -180, -1000, 3, true);
                     }
                 }
             } else {
@@ -195,7 +195,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                         robot.driveAxialVelocity(150, -270, -600, 4,true);
                     }
                     robot.turnToHeading(-180, 2);
-                    robot.driveAxialVelocity(1000, -180, -1000, 2, true);
+                    robot.driveAxialVelocity(900, -180, -1000, 3, true);
                 }
             }
 
@@ -211,7 +211,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
                 } else {
                     //park near bridge code
                     robot.driveLateralVelocity(700, 0, 400, 3,  false);
-                    robot.driveAxialVelocity(1300, 0, -400, 4,  true);
+                    robot.driveAxialVelocity(1100, 0, -400, 4,  true);
                 }
             }
         }

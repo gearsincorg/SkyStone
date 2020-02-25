@@ -89,8 +89,8 @@ public class GFORCE_Hardware {
     public final double STONE_RETRACT           = 0.27;  // .25
     public final double FOUNDATION_SAFE_R = 0.5;
     public final double FOUNDATION_SAFE_L = 0.5;
-    public final double FOUNDATION_DOWN_R = 0.2;   // .1
-    public final double FOUNDATION_DOWN_L = 0.8;   // .9
+    public final double FOUNDATION_DOWN_R = 0.16;   // .1
+    public final double FOUNDATION_DOWN_L = 0.84;   // .9
 
     // Driving constants Yaw heading
     final double HEADING_GAIN       = 0.015;  // Was 0.012
@@ -106,7 +106,7 @@ public class GFORCE_Hardware {
 
 
     final double LIFT_GAIN          = 0.1;
-    final double LIFT_IN_LIMIT      = 2;
+    final double LIFT_IN_LIMIT      = 1;
     final double LIFT_UPPER_LIMIT   = 55;
     final double LIFT_LOWER_LIMIT   = 10;
     final double LIFT_MID_SETPOINT  = 30;
@@ -116,7 +116,8 @@ public class GFORCE_Hardware {
     public final double LIFT_COUNTS_PER_DEGREE   = (2786 * 2 * 90) / (30 * 360) ;  // 30-90 gear reduction
     public final double LIFT_START_ANGLE         =  LIFT_LOWER_LIMIT;  //
 
-    final double COLLECTOR_RELEASE  = 5.0;  // Lift by this amount to release collector
+    final double COLLECTOR_RELEASE  = 10.0;  // Lift by this amount to release collector
+    final double LIFT_HOME          = 5.0;  // Lift by this amount to release collector
     final double AUTO_RAISE_POWER = 0.9;
     final double AUTO_LOWER_POWER = -0.6;
 
@@ -860,15 +861,19 @@ public class GFORCE_Hardware {
                     extendStone(!stoneExtended);
                 }
 
+                // check for feeder bot collect event
+                if (myOpMode.gamepad2.right_bumper) {
+                    runCollectors(1,1);
+                }
                 // check for collect event
-                if (myOpMode.gamepad2.right_trigger > 0.5) {
+                else if (myOpMode.gamepad2.right_trigger > 0.5) {
                     runCollectors(1,1);
                     transferStone(1.0);
                     craneState = CraneControl.COLLECTING;
                 }
                 //Reverse Collector and Transfer Wheels
                 else if (myOpMode.gamepad2.left_trigger > 0.5) {
-                    runCollectors(-0.5,-0.5);
+                    runCollectors(-0.75,-0.75);
                     transferStone(-0.75);
                     grabStone(false);
                 } else {
@@ -1053,7 +1058,7 @@ public class GFORCE_Hardware {
             case AUTO:
 
                 if (myOpMode.gamepad2.back && myOpMode.gamepad2.start) {
-                    liftSetpoint += COLLECTOR_RELEASE;
+                    liftSetpoint += LIFT_HOME;
                     liftState = LiftControl.HOME_RAISING;
                     liftTime.reset();  //
                 }
@@ -1077,7 +1082,7 @@ public class GFORCE_Hardware {
                 break;
 
             case HOME_RAISING:
-                if (liftInPosition || (liftTime.time() > 1.0)) {
+                if (liftInPosition || (liftTime.time() > 2.0)) {
                     leftLift.setPower(0);
                     rightLift.setPower(0);
                     leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -1090,8 +1095,8 @@ public class GFORCE_Hardware {
                 break;
 
             case HOME_LOWERING:
-                leftLift.setPower(leftLimitTripped ? 0 : -0.20);
-                rightLift.setPower(rightLimitTripped ? 0 : -0.20);
+                leftLift.setPower(leftLimitTripped ? 0 : -0.05);
+                rightLift.setPower(rightLimitTripped ? 0 : -0.05);
 
                 if ((leftLimitTripped && rightLimitTripped) || (liftTime.time() > 2.0)) {
                     leftLift.setPower(0);
@@ -1109,8 +1114,10 @@ public class GFORCE_Hardware {
         liftSetpoint += COLLECTOR_RELEASE;
         liftState = LiftControl.HOME_RAISING;
         liftTime.reset();  //
+        setLiftPower();
 
         while (liftState != LiftControl.AUTO) {
+            readSensors();
             runLiftControl();
         }
     };
