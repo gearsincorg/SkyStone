@@ -897,6 +897,13 @@ public class GFORCE_Hardware {
                     grabStone(false);
                     craneState = CraneControl.READY_TO_COLLECT;
                 }
+                // check for feeder bot collect event
+                else if (myOpMode.gamepad2.right_bumper) {
+                    runCollectors(1,1);
+                    transferStone(0);
+                    craneState = CraneControl.READY_TO_COLLECT;
+                }
+
 
                 break;
 
@@ -921,6 +928,14 @@ public class GFORCE_Hardware {
                 else if (myOpMode.gamepad2.right_trigger > 0.5) {
                     craneState = CraneControl.COLLECTING;
                 }
+
+                // check for feeder bot collect event
+                else if (myOpMode.gamepad2.right_bumper) {
+                    runCollectors(1,1);
+                    transferStone(0);
+                    craneState = CraneControl.READY_TO_COLLECT;
+                }
+
                 break;
 
             case WAITING_FOR_GRAB:
@@ -928,6 +943,14 @@ public class GFORCE_Hardware {
                     craneState = CraneControl.STONE_GRABBED;
                     runCollectors(0,0);
                     stoneInGrasp = true;
+                }
+
+                // check for feeder bot collect event
+                else if (myOpMode.gamepad2.right_bumper) {
+                    runCollectors(1,1);
+                    transferStone(0);
+                    craneState = CraneControl.READY_TO_COLLECT;
+                    grabStone(false);
                 }
                 break;
 
@@ -955,6 +978,14 @@ public class GFORCE_Hardware {
                     extendStone(true);
                     craneTime.reset();
                     craneState = CraneControl.WAITING_TO_EXTEND;
+                }
+
+                // check for feeder bot collect event
+                else if (myOpMode.gamepad2.right_bumper) {
+                    runCollectors(1,1);
+                    transferStone(0);
+                    craneState = CraneControl.READY_TO_COLLECT;
+                    grabStone(false);
                 }
                 break;
 
