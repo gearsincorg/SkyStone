@@ -1064,7 +1064,7 @@ public class GFORCE_Hardware {
     // --------------------------------------------------------------
     // Lift Control
     // --------------------------------------------------------------
-    public void setLiftSetpoint(double angle){
+    public void setLiftSetpoint(double angle)  {
         liftSetpoint = angle;
     }
 
@@ -1105,7 +1105,7 @@ public class GFORCE_Hardware {
 
                     // Run lift using left Joystick
                     if(Math.abs(myOpMode.gamepad2.left_stick_y) > 0.1 ) {
-                        liftSetpoint -= (myOpMode.gamepad2.left_stick_y * 1.5);  // speed up lift over time;
+                        liftSetpoint -= (myOpMode.gamepad2.left_stick_y * 1.5);
                     }
                 }
 
@@ -1132,26 +1132,29 @@ public class GFORCE_Hardware {
                 if ((leftLimitTripped && rightLimitTripped) || (liftTime.time() > 2.0)) {
                     leftLift.setPower(0);
                     rightLift.setPower(0);
-                    zeroLiftEncoders ();
+                    zeroLiftEncoders (); // also setes mode
                     liftSetpoint = LIFT_LOWER_LIMIT;
-                    leftLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    rightLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
                     liftState = LiftControl.AUTO;
                 }
         }
     }
 
     public void releaseCollectorArms() {
-        liftSetpoint += COLLECTOR_RELEASE;
-        liftState = LiftControl.HOME_RAISING;
-        liftTime.reset();  //
-        setLiftPower();
+        beginReleaseCollectorArms();
 
         while (liftState != LiftControl.AUTO) {
             readSensors();
             runLiftControl();
         }
-    };
+    }
+
+    public void beginReleaseCollectorArms() {
+        liftSetpoint += COLLECTOR_RELEASE;
+        liftState = LiftControl.HOME_RAISING;
+        liftTime.reset();  //
+        setLiftPower();
+    }
+
 
     private void setLiftPower () {
         double leftPower = 0;

@@ -91,7 +91,7 @@ public class GFORCE_Autonomous extends LinearOpMode {
 
             // Move to where you should be able to see skystones 2 or 3 and release collectors
             robot.setSkystoneGrabber(SkystoneGrabberPositions.START);
-            robot.driveLateralVelocity(500, 0, 600, 4,  false);
+            robot.driveLateralVelocity(500, 0, 600, 2,  false);
             robot.releaseCollectorArms();
 
             // Can we see skystones 2 or 3:
