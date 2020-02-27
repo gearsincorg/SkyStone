@@ -68,11 +68,6 @@ public class GFORCE_Navigation
     static final String TAG = "NAV";
     static final boolean LOGGING = false;
 
-    private static final int     MAX_TARGETS         =  13;
-    private static final double  ON_AXIS             =  10;      // Within 1 cm of centerline
-    private static final double  CLOSE_ENOUGH        =  20;      // Within 2.0 cm of final target
-    private static final double  NEAR_CENTER         = 100;      // Within 4 inches of center line
-
     private static final VuforiaLocalizer.CameraDirection CAMERA_CHOICE = VuforiaLocalizer.CameraDirection.BACK;
     private static final boolean PHONE_IS_PORTRAIT = false  ;
 
@@ -202,35 +197,14 @@ public class GFORCE_Navigation
             targetIsVisible(0);
             myRobot.setYawVelocityToHoldHeadingWithUpdate();
             myRobot.moveRobotVelocity();
+            myRobot.runLiftControl();  // Keep the lift in desired position
+
             showNavTelemetry(true);
         }
         myRobot.stopRobot();
         showNavTelemetry(true);
 
         return (targetFound);
-    }
-
-    /***
-     * use target position to determine directions to target
-     * @return true if we are close to target
-     * @param standOffDistance how close do we get to the target(mm)
-     */
-    public boolean targetDirections(double standOffDistance) {
-        // Rotate to always be pointing at the target (for best target retention).
-        // Drive forward based on the desiredHeading target standoff ditance
-        // Drive laterally based on distance from X axis (same as y value)
-        boolean closeEnough;
-        double Y  = (relativeBearing * myRobot.YAW_GAIN);
-        double A  = (-(robotX + standOffDistance) * myRobot.AXIAL_GAIN);
-        double L  =(robotY * myRobot.LATERAL_GAIN);
-
-        myRobot.setYawVelocity(Y);
-        myRobot.setAxialVelocity(A);
-        myRobot.setLateralVelocity(L);
-        closeEnough = ( (Math.abs(robotX + standOffDistance) < CLOSE_ENOUGH) &&
-                (Math.abs(robotY) < ON_AXIS));
-
-        return (closeEnough);
     }
 
     /***

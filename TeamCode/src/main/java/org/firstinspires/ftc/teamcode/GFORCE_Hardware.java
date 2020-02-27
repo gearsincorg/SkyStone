@@ -324,6 +324,7 @@ public class GFORCE_Hardware {
             setLateralVelocity(-lateralMotion);  // Reverse any drift
             setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
+            runLiftControl();  // Keep the lift in desired position
             showEncoders();
         }
 
@@ -380,6 +381,7 @@ public class GFORCE_Hardware {
             setLateralVelocity(getProfileVelocity(vel, getLateralMotion(), absMm));
             setYawVelocityToHoldHeading(heading);
             moveRobotVelocity();
+            runLiftControl();  // Keep the lift in desired position
             showEncoders();
         }
 
@@ -539,6 +541,7 @@ public class GFORCE_Hardware {
             }
 
             moveRobotVelocity();
+            runLiftControl();  // Keep the lift in desired position
             showEncoders();
         }
         stopRobot();
@@ -1068,7 +1071,7 @@ public class GFORCE_Hardware {
         liftSetpoint = angle;
     }
 
-    public void lockLiftInPlacet(){
+    public void lockLiftInPlace(){
         liftSetpoint = liftAngle;
         liftInPosition = true;
     }
@@ -1085,6 +1088,10 @@ public class GFORCE_Hardware {
     }
 
     public void runLiftControl() {
+
+        if (LOGGING) RobotLog.ii(TAG, String.format("RLC state:time:setpoint:angle %s, %6.3f %6.3f %6.3f",
+                                    liftState , liftTime.time(), liftSetpoint, liftAngle));
+
         switch (liftState) {
             case AUTO:
 
@@ -1113,7 +1120,7 @@ public class GFORCE_Hardware {
                 break;
 
             case HOME_RAISING:
-                if (liftInPosition || (liftTime.time() > 2.0)) {
+                if ((liftInPosition && (liftTime.time() > 0.9)) || (liftTime.time() > 2.0)) {
                     leftLift.setPower(0);
                     rightLift.setPower(0);
                     leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -1149,12 +1156,13 @@ public class GFORCE_Hardware {
     }
 
     public void beginReleaseCollectorArms() {
+        readSensors();
         liftSetpoint += COLLECTOR_RELEASE;
         liftState = LiftControl.HOME_RAISING;
+        liftInPosition = false;
         liftTime.reset();  //
         setLiftPower();
     }
-
 
     private void setLiftPower () {
         double leftPower = 0;
@@ -1170,7 +1178,6 @@ public class GFORCE_Hardware {
         leftPower = Range.clip(leftLiftError * LIFT_GAIN, AUTO_LOWER_POWER, AUTO_RAISE_POWER);
         rightPower = Range.clip(rightLiftError * LIFT_GAIN, AUTO_LOWER_POWER, AUTO_RAISE_POWER);
 
-/*
         if ((leftPower < 0) && leftLimitTripped) {
             leftPower = 0;
         }
@@ -1178,7 +1185,6 @@ public class GFORCE_Hardware {
         if ((rightPower < 0) && rightLimitTripped) {
             rightPower = 0;
         }
- */
 
         liftInPosition = (Math.abs(leftLiftError + rightLiftError) < LIFT_IN_LIMIT);
         leftLift.setPower(leftPower);

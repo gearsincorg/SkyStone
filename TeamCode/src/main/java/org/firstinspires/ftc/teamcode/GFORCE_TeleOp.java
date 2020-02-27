@@ -7,7 +7,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 @TeleOp(name="G-FORCE Teleop", group="!Competition")
@@ -55,7 +54,7 @@ public class GFORCE_TeleOp extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
-        robot.lockLiftInPlacet();
+        robot.lockLiftInPlace();
         robot.startMotion();
 
         // Run until the end of the match (Driver presses STOP)
@@ -135,11 +134,11 @@ public class GFORCE_TeleOp extends LinearOpMode {
             robot.grabFoundation(gamepad1.right_trigger > 0.5);
 
             //Co-pilot Lift Controls
-            if (gamepad2.y && robot.stoneInGrasp) {
+            if (gamepad2.y && robot.stoneInGrasp && !gamepad2.start) {
                 robot.setLiftSetpoint(robot.LIFT_HIGH_SETPOINT);
             }
 
-            if (gamepad2.b && robot.stoneInGrasp) {
+            if (gamepad2.b && robot.stoneInGrasp && !gamepad2.start) {
                 robot.setLiftSetpoint(robot.LIFT_MID_SETPOINT);
             }
 
