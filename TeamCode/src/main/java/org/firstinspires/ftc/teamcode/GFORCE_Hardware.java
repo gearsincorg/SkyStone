@@ -1120,7 +1120,7 @@ public class GFORCE_Hardware {
                 break;
 
             case HOME_RAISING:
-                if ((liftInPosition && (liftTime.time() > 0.9)) || (liftTime.time() > 2.0)) {
+                if ((liftInPosition && (liftTime.time() > 0.8)) || (liftTime.time() > 1.0)) {
                     leftLift.setPower(0);
                     rightLift.setPower(0);
                     leftLift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
